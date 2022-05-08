@@ -4,10 +4,11 @@ import requests
 from streamlit_lottie import st_lottie
 import base64
 import os
+from bokeh.models.widgets import Div
 
 cwd = os.getcwd()
 print(cwd)
-st.set_page_config(page_title="My Webpage", page_icon=":tada:", layout="wide")
+st.set_page_config(page_title="My Webpage", page_icon=":computer:", layout="wide")
 with open("style.css") as f:
     st.markdown('<style>{}</style>'.format(f.read()), unsafe_allow_html=True)
 
@@ -31,7 +32,7 @@ st.markdown("""
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav">
       <li class="nav-item active">
-        <a class="nav-link disabled" href="/">Home <span class="sr-only">(current)</span></a>
+        <a class="nav-link disabled" href="#PERSONAL-DETAILS">Home <span class="sr-only">(current)</span></a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="#education-certificate">Education & Certificate</a>
@@ -81,6 +82,7 @@ with st.container():
         st.markdown(
             "<p style='font-size:15px; color: #5D6D7E; text-align: left;margin:0;padding:2;line-height: 1.25em;text-align: left '>Certified TensorFlow developer and Google data analyst with 12 years of experience leading cross-functional teams to ensure accuracy and integrity around data and insights in a variety of industries. Highly skilled in predictive modeling, machine learning, deep learning, and data visualization.</p>",
             unsafe_allow_html=True)
+
         m = st.markdown("""
         <style>
         div.stButton > button:first-child {
@@ -104,10 +106,19 @@ with st.container():
             border-color: #72ab00;
             }        
         </style>""", unsafe_allow_html=True)
+        with open("data/ZA_Resume.pdf", "rb") as file:
 
+            btn = st.download_button(
+                label="RESUME",
+                data=file,
+                file_name="dowloaded.pdf",
+                mime="application/octet-stream"
+            )
         if st.button('My Projects'):
-            link = '(http://localhost:8501/#my-projects)'
-            st.markdown(link, unsafe_allow_html=True)
+            js = "window.location.href = '#my-projects'"
+            html = '<img src onerror="{}">'.format(js)
+            div = Div(text=html)
+            st.bokeh_chart(div)
     with right_column:
         image = Image.open('images/Zubi_2.png')
         st.image(image, width=250)
@@ -486,6 +497,7 @@ I prefer to work on long-term and hourly projects, but I'm open to working on ex
         )
     with right_column:
         st_lottie(lottie_coding, height=400, key="coding")
+
 # ---- CONTACT ----
 with st.container():
     st.write("---")
@@ -507,3 +519,4 @@ with st.container():
         st.markdown(contact_form, unsafe_allow_html=True)
     with right_column:
         st.empty()
+
