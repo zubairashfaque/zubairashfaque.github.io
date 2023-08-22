@@ -490,7 +490,7 @@ with st.container():
     blog_link = "[Project Blog](https://medium.com/p/a31021764fb4)"
     
     # Add GitHub and Medium icons/images with correct relative paths
-    github_image = Image.open("images/github-mark.png")
+    github_image = Image.open("images/icons8-github-48.png")
     #github_image = '<img src="images/github-mark.png" style="vertical-align: middle">'
     blog_image = '<img src="images/github-mark.svg" style="vertical-align: middle">'
     github_link = '[GitHub Repository](https://github.com/yourusername/your-repo-name)'
