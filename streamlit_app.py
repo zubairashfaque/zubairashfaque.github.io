@@ -520,6 +520,15 @@ with st.container():
     
     # Display the images side by side with captions
     st.image([github_image, medium_image], caption=["GitHub Repository", "Medium Project Blog"], width=48)
+    # Load the images
+    github_image = Image.open("images/icons8-github-48.png")
+    medium_image = Image.open("images/icons8-medium-50.png")
+    
+    # Display the images side by side with hyperlinks and captions
+    st.write("## Social Media Links:")
+    st.write(
+        f"[![GitHub Repository](images/icons8-github-48.png)](https://github.com/zubairashfaque/) [![Medium Project Blog](images/icons8-medium-50.png)](https://medium.com/p/a31021764fb4)"
+    )
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
