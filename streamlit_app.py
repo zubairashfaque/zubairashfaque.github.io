@@ -507,6 +507,13 @@ with st.container():
     # Display both links with icons/images side by side
     st.markdown(f"{github_image} GitHub Repository | {blog_image} Project Blog")
     st.markdown(f"{github_link} | {blog_link}")
+    # Display the GitHub image with alt text and a smaller size
+    github_image = Image.open("images/icons8-github-48.png")
+    st.image(github_image, caption="GitHub Repository", width=48)
+    
+    # Display the Medium image with alt text and a smaller size
+    medium_image = Image.open("images/icons8-medium-50.png")
+    st.image(medium_image, caption="Medium Project Blog", width=50)
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
