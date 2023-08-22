@@ -490,8 +490,8 @@ with st.container():
     blog_link = "[Project Blog](https://medium.com/p/a31021764fb4)"
     
     # Add GitHub and Medium icons/images with correct relative paths
-    github_image = '<img src="images/icons8-github-48.png" alt="GitHub" style="vertical-align: middle">'
-    blog_image = '<img src="images/icons8-medium-50.png" alt="Medium" style="vertical-align: middle">'
+    github_image = '<img src="/images/icons8-github-48.png" alt="GitHub" style="vertical-align: middle">'
+    blog_image = '<img src="/images/icons8-medium-50.png" alt="Medium" style="vertical-align: middle">'
     
     # Display both links with icons/images side by side
     st.write(f"{github_image} {github_link} | {blog_image} {blog_link}")
