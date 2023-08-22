@@ -529,7 +529,6 @@ with st.container():
     github_link = "https://github.com/your_github_repo_link"
     medium_link = "https://medium.com/your_medium_blog_link"
     st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link})")
-        )
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
