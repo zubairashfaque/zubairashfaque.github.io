@@ -514,6 +514,12 @@ with st.container():
     # Display the Medium image with alt text and a smaller size
     medium_image = Image.open("images/icons8-medium-50.png")
     st.image(medium_image, caption="Medium Project Blog", width=50)
+    # Load the images
+    github_image = Image.open("images/icons8-github-48.png")
+    medium_image = Image.open("images/icons8-medium-50.png")
+    
+    # Display the images side by side with captions
+    st.image([github_image, medium_image], caption=["GitHub Repository", "Medium Project Blog"], width=48)
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
