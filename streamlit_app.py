@@ -477,15 +477,14 @@ with st.container():
     ## My Projects
     ''')
     #st.header("My Projects")
-    st.write("## coming soon")
      # Add your NLP Sentiment Analysis project here
-    st.header("NLP Sentiment Analysis Project")
+    st.header("NLP - Sentiment Analysis With Naive Bayes")
     
     # Provide project details
-    st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text.")
+    st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text. This project uses the Naïve Bayes algorithm to classify the sentiment of input text and displays the results using a user-friendly Streamlit app.")
     
     # Add a link to your project on GitHub or any other platform
-    st.markdown("[GitHub Repository](https://github.com/yourusername/your-nlp-sentiment-project)")
+    st.markdown("[GitHub Repository](https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit)")
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
