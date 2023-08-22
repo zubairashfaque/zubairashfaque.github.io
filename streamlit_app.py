@@ -491,10 +491,14 @@ with st.container():
     
     # Add GitHub and Medium icons/images with correct relative paths
     github_image = '<img src="images/icons8-github-48.png" alt="GitHub" style="vertical-align: middle">'
+    github_image = '<img src="images/icons8-github-48.png" alt="GitHub" style="vertical-align: middle">'
     blog_image = '<img src="images/icons8-medium-50.png" alt="Medium" style="vertical-align: middle">'
     
     # Display both links with icons/images side by side
     st.write(f"{github_image} {github_link} | {blog_image} {blog_link}")
+    # Display both links with icons/images side by side
+    st.markdown(f"{github_image} GitHub Repository | {blog_image} Project Blog")
+    st.markdown(f"{github_link} | {blog_link}")
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
