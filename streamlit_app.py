@@ -518,17 +518,18 @@ with st.container():
     github_image = Image.open("images/icons8-github-48.png")
     medium_image = Image.open("images/icons8-medium-50.png")
     
-    # Display the images side by side with captions
-    st.image([github_image, medium_image], caption=["GitHub Repository", "Medium Project Blog"], width=48)
     # Load the images
     github_image = Image.open("images/icons8-github-48.png")
     medium_image = Image.open("images/icons8-medium-50.png")
     
-    # Display the images side by side with hyperlinks and captions
-    st.write("## Social Media Links:")
-    st.write(
-        f"[![GitHub Repository](images/icons8-github-48.png)](https://github.com/zubairashfaque/) [![Medium Project Blog](images/icons8-medium-50.png)](https://medium.com/p/a31021764fb4)"
-    )
+    # Display the images side by side with captions and hyperlinks
+    st.image([github_image, medium_image], width=48)
+    
+    # Add clickable links to the captions
+    github_link = "https://github.com/your_github_repo_link"
+    medium_link = "https://medium.com/your_medium_blog_link"
+    st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link})")
+        )
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
