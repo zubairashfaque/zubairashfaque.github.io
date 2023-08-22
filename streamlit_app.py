@@ -529,6 +529,18 @@ with st.container():
     github_link = "https://github.com/your_github_repo_link"
     medium_link = "https://medium.com/your_medium_blog_link"
     st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link})")
+   
+    # Load the images
+    github_image = Image.open("images/icons8-github-48.png")
+    medium_image = Image.open("images/icons8-medium-50.png")
+    
+    # Define the hyperlinks for GitHub and Medium
+    github_link = "https://github.com/your-github-link"
+    medium_link = "https://medium.com/your-medium-link"
+    
+    # Display the images side by side with hyperlinks and captions
+    st.image([github_image, medium_image], caption=["[GitHub Repository](" + github_link + ")", "[Medium Project Blog](" + medium_link + ")"], width=48)
+
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
