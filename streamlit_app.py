@@ -483,63 +483,10 @@ with st.container():
     # Provide project details
     st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text. This project uses the Naïve Bayes algorithm to classify the sentiment of input text and displays the results using a user-friendly Streamlit app.")
     
-    # Add a link to your project on GitHub or any other platform
-    st.markdown("[GitHub Repository](https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit)")
-    # Add links to your project on GitHub and your blog
-    github_link = "[GitHub Repository](https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit)"
-    blog_link = "[Project Blog](https://medium.com/p/a31021764fb4)"
-    
-    # Add GitHub and Medium icons/images with correct relative paths
-    github_image = Image.open("images/icons8-github-48.png")
-    #github_image = '<img src="images/github-mark.png" style="vertical-align: middle">'
-    blog_image = '<img src="images/github-mark.svg" style="vertical-align: middle">'
-    github_link = '[GitHub Repository](https://github.com/yourusername/your-repo-name)'
-    blog_link = '[Project Blog](https://yourblogname.medium.com/)'
-    # Display the GitHub image with alt text
-    github_image = Image.open("images/icons8-github-48.png")
-    st.image(github_image, caption="GitHub Repository", use_column_width=True)
-
-    # Display the Medium image with alt text
-    medium_image = Image.open("images/icons8-medium-50.png")
-    st.image(medium_image, caption="Medium Project Blog", use_column_width=True)
-    
-    st.markdown(f"{github_image} {github_link} | {blog_image} {blog_link}", unsafe_allow_html=True)
-    # Display both links with icons/images side by side
-    st.markdown(f"{github_image} GitHub Repository | {blog_image} Project Blog")
-    st.markdown(f"{github_link} | {blog_link}")
-    # Display the GitHub image with alt text and a smaller size
-    github_image = Image.open("images/icons8-github-48.png")
-    st.image(github_image, caption="GitHub Repository", width=48)
-    
-    # Display the Medium image with alt text and a smaller size
-    medium_image = Image.open("images/icons8-medium-50.png")
-    st.image(medium_image, caption="Medium Project Blog", width=50)
-    # Load the images
-    github_image = Image.open("images/icons8-github-48.png")
-    medium_image = Image.open("images/icons8-medium-50.png")
-    
-    # Load the images
-    github_image = Image.open("images/icons8-github-48.png")
-    medium_image = Image.open("images/icons8-medium-50.png")
-    
-    # Display the images side by side with captions and hyperlinks
-    st.image([github_image, medium_image], width=48)
-    
     # Add clickable links to the captions
-    github_link = "https://github.com/your_github_repo_link"
-    medium_link = "https://medium.com/your_medium_blog_link"
+    github_link = "https://github.com/zubairashfaque"
+    medium_link = "https://medium.com/p/a31021764fb4"
     st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link})")
-   
-    # Load the images
-    github_image = Image.open("images/icons8-github-48.png")
-    medium_image = Image.open("images/icons8-medium-50.png")
-    
-    # Define the hyperlinks for GitHub and Medium
-    github_link = "https://github.com/your-github-link"
-    medium_link = "https://medium.com/your-medium-link"
-    
-    # Display the images side by side with hyperlinks and captions
-    st.image([github_image, medium_image], caption=["[GitHub Repository](" + github_link + ")", "[Medium Project Blog](" + medium_link + ")"], width=48)
 
 # ---- WHAT I DO ----
 with st.container():
