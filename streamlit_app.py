@@ -489,8 +489,8 @@ with st.container():
     github_link = "[GitHub Repository](https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit)"
     blog_link = "[Project Blog](https://medium.com/p/a31021764fb4)"
     
-    # Add GitHub and Medium icons/images
-    github_image = '<img src=images/icons8-github-48.png" alt="GitHub" style="vertical-align: middle">'
+    # Add GitHub and Medium icons/images with correct relative paths
+    github_image = '<img src="images/icons8-github-48.png" alt="GitHub" style="vertical-align: middle">'
     blog_image = '<img src="images/icons8-medium-50.png" alt="Medium" style="vertical-align: middle">'
     
     # Display both links with icons/images side by side
