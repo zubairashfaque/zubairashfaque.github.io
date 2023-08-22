@@ -485,6 +485,16 @@ with st.container():
     
     # Add a link to your project on GitHub or any other platform
     st.markdown("[GitHub Repository](https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit)")
+    # Add links to your project on GitHub and your blog
+    github_link = "[GitHub Repository](https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit)"
+    blog_link = "[Project Blog](https://medium.com/p/a31021764fb4)"
+    
+    # Add GitHub and Medium icons/images
+    github_image = '<img src="https://image-link-for-github-icon.png" alt="GitHub" style="vertical-align: middle">'
+    blog_image = '<img src="https://image-link-for-medium-icon.png" alt="Medium" style="vertical-align: middle">'
+    
+    # Display both links with icons/images side by side
+    st.write(f"{github_image} {github_link} | {blog_image} {blog_link}")
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
