@@ -495,6 +495,13 @@ with st.container():
     blog_image = '<img src="images/github-mark.svg" style="vertical-align: middle">'
     github_link = '[GitHub Repository](https://github.com/yourusername/your-repo-name)'
     blog_link = '[Project Blog](https://yourblogname.medium.com/)'
+    # Display the GitHub image with alt text
+    github_image = Image.open("images/icons8-github-48.png")
+    st.image(github_image, caption="GitHub Repository", use_column_width=True)
+
+    # Display the Medium image with alt text
+    medium_image = Image.open("images/icons8-medium-50.png")
+    st.image(medium_image, caption="Medium Project Blog", use_column_width=True)
     
     st.markdown(f"{github_image} {github_link} | {blog_image} {blog_link}", unsafe_allow_html=True)
     # Display both links with icons/images side by side
