@@ -478,7 +478,14 @@ with st.container():
     ''')
     #st.header("My Projects")
     st.write("## coming soon")
-
+     # Add your NLP Sentiment Analysis project here
+    st.header("NLP Sentiment Analysis Project")
+    
+    # Provide project details
+    st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text.")
+    
+    # Add a link to your project on GitHub or any other platform
+    st.markdown("[GitHub Repository](https://github.com/yourusername/your-nlp-sentiment-project)")
 # ---- WHAT I DO ----
 with st.container():
     st.write("---")
