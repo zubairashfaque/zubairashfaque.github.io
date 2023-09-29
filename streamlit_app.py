@@ -497,7 +497,7 @@ with st.container():
     st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
 
      # Add your NLP Sentiment Analysis project here
-    st.header("Imbalanced Datasets - Road Accident Severity Misclassification Problem")
+    st.header("Dealing with Imbalanced Data - Road Accident Severity Prediction")
     
     # Provide project details
 # Provide project details
