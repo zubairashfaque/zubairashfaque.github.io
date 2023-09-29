@@ -500,8 +500,10 @@ with st.container():
     st.header("Imbalanced Datasets - Road Accident Severity Misclassification Problem")
     
     # Provide project details
-    st.write("In the Road Accident Severity Misclassification Problem, I tackled the challenge of imbalanced data when classifying accident severity. To mitigate this issue, I used oversampling, undersampling, and a combination of both techniques to balance the dataset. This involved generating synthetic data for the minority class while reducing the majority class's dominance. After balancing the data, I applied a range of machine learning models, including Decision Tree, Random Forest, Gradient Boosting Machine (GBM), AdaBoost, Gradient Tree Boosting (GTB), Extra Trees, XGBoost, LightGBM, CatBoost, and HistGradientBoosting, to address the Road Accident Severity Misclassification Problem. These models were leveraged to tackle the challenge of classifying accident severity, considering the imbalance in the dataset. The goal was to identify the most suitable model and data sampling techniques to train an effective predictive model and deploy it successfully.")
-    
+# Provide project details
+    st.write("I addressed the challenge of imbalanced data in the 'Road Accident Severity Misclassification Problem' by employing oversampling, undersampling, and a hybrid approach to balance the dataset. These techniques involved the generation of synthetic data for the minority class while reducing the dominance of the majority class.")
+    st.write("Once the dataset was balanced, I applied various machine learning models, including Decision Tree, Random Forest, Gradient Boosting Machine (GBM), AdaBoost, Gradient Tree Boosting (GTB), Extra Trees, XGBoost, LightGBM, CatBoost, and HistGradientBoosting. These models were employed to tackle the task of accident severity classification while considering the dataset's inherent imbalance. The primary objective was to determine the most suitable model and data sampling strategies for training an effective predictive model, ultimately leading to successful deployment.")
+
     # Add clickable links to the captions
     github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
     medium_link = "https://medium.com/p/a31021764fb4"
