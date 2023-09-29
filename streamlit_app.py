@@ -8,6 +8,13 @@ from bokeh.models.widgets import Div
 
 cwd = os.getcwd()
 print(cwd)
+# Set page configurations
+st.set_page_config(
+    page_title="Zubair Ashfaque's Portfolio",
+    page_icon=":computer:",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
 st.set_page_config(page_title="My Webpage", page_icon=":computer:", layout="wide")
 with open("style.css") as f:
     st.markdown('<style>{}</style>'.format(f.read()), unsafe_allow_html=True)
