@@ -486,7 +486,8 @@ with st.container():
     # Add clickable links to the captions
     github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
     medium_link = "https://medium.com/p/a31021764fb4"
-    st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link})")
+    streamlit_link = "https://rtadeployment-za.streamlit.app/"
+    st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
 
 # ---- WHAT I DO ----
 with st.container():
