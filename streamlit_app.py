@@ -484,31 +484,43 @@ with st.container():
     ## My Projects
     ''')
     #st.header("My Projects")
-     # Add your NLP Sentiment Analysis project here
-    st.header("NLP - Sentiment Analysis With Naive Bayes")
-    
-    # Provide project details
-    st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text. This project uses the Naïve Bayes algorithm to classify the sentiment of input text and displays the results using a user-friendly Streamlit app.")
-    
-    # Add clickable links to the captions
-    github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
-    medium_link = "https://medium.com/p/a31021764fb4"
-    streamlit_link = "https://rtadeployment-za.streamlit.app/"
-    st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
+# NLP Sentiment Analysis with Naive Bayes
+st.header("NLP - Sentiment Analysis With Naive Bayes")
 
-     # Add your NLP Sentiment Analysis project here
-    st.header("Dealing with Imbalanced Data - Road Accident Severity Prediction")
-    
-    # Provide project details
 # Provide project details
-    st.write("I addressed the challenge of imbalanced data in the 'Road Accident Severity Misclassification Problem' by employing oversampling, undersampling, and a hybrid approach to balance the dataset. These techniques involved the generation of synthetic data for the minority class while reducing the dominance of the majority class.")
-    st.write("Once the dataset was balanced, I applied various machine learning models, including Decision Tree, Random Forest, Gradient Boosting Machine (GBM), AdaBoost, Gradient Tree Boosting (GTB), Extra Trees, XGBoost, LightGBM, CatBoost, and HistGradientBoosting. These models were employed to tackle the task of accident severity classification while considering the dataset's inherent imbalance. The primary objective was to determine the most suitable model and data sampling strategies for training an effective predictive model, ultimately leading to successful deployment.")
+st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text. This project uses the Naïve Bayes algorithm to classify the sentiment of input text and displays the results using a user-friendly Streamlit app.")
 
-    # Add clickable links to the captions
-    github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
-    medium_link = "https://medium.com/p/a31021764fb4"
-    streamlit_link = "https://rtadeployment-za.streamlit.app/"
-    st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
+# Add clickable links to the captions
+github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
+medium_link = "https://medium.com/p/a31021764fb4"
+streamlit_link = "https://rtadeployment-za.streamlit.app/"
+st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
+
+# NLP Sentiment Analysis with Deep Learning Models
+st.header("NLP - Sentiment Analysis With Deep-Learning Models")
+
+# Provide project details
+st.write("This project involved performing sentiment analysis on a dataset of text data to determine the sentiment (positive, negative, or neutral) of each piece of text. I used multiple deep learning models (Bidirectional GRU, Bidirectional LSTM, Stacked Bidirectional LSTM, 1D Convolutional Neural Network, Flattened Embedding with Dense Layers, 1D Convolutional Neural Network with Global Max Pooling, and 1D Convolutional Neural Network with Global Max Pooling and Attention) to classify text sentiment, and I deployed them in a user-friendly Streamlit app. The app allows you to select a model, explore its architecture, view class probabilities, and make predictions.")
+
+# Add clickable links to the captions
+github_link = "https://github.com/zubairashfaque/Text-Sentiment-Classification-App"
+medium_link = "https://medium.com/p/a31021764fb4"
+streamlit_link = "https://text-sentiment-classification-app-8ff9cwfxmypymnubslbwly.streamlit.app/"
+st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
+
+# Road Accident Severity Prediction with Imbalanced Data
+st.header("Dealing with Imbalanced Data - Road Accident Severity Prediction")
+
+# Provide project details
+st.write("I addressed the challenge of imbalanced data in the 'Road Accident Severity Misclassification Problem' by employing oversampling, undersampling, and a hybrid approach to balance the dataset. These techniques involved the generation of synthetic data for the minority class while reducing the dominance of the majority class.")
+st.write("Once the dataset was balanced, I applied various machine learning models, including Decision Tree, Random Forest, Gradient Boosting Machine (GBM), AdaBoost, Gradient Tree Boosting (GTB), Extra Trees, XGBoost, LightGBM, CatBoost, and HistGradientBoosting. These models were employed to tackle the task of accident severity classification while considering the dataset's inherent imbalance. The primary objective was to determine the most suitable model and data sampling strategies for training an effective predictive model, ultimately leading to successful deployment.")
+
+# Add clickable links to the captions
+github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
+medium_link = "https://medium.com/p/a31021764fb4"
+streamlit_link = "https://rtadeployment-za.streamlit.app/"
+st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
+
 
 # ---- WHAT I DO ----
 with st.container():
