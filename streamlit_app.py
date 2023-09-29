@@ -493,7 +493,7 @@ st.write("This project involved performing sentiment analysis on a dataset of te
 # Add clickable links to the captions
 github_link = "https://github.com/zubairashfaque/Sentiment-Analysis-with-Naive-Bayes-Streamlit"
 medium_link = "https://medium.com/p/a31021764fb4"
-streamlit_link = "https://rtadeployment-za.streamlit.app/"
+streamlit_link = "https://sentiment-analysis-with-naive-bayes-app-7hc2xakk3ijihvjbnh49vg.streamlit.app/"
 st.markdown(f"[GitHub Repository]({github_link}) | [Medium Project Blog]({medium_link}) | [Deployed Application Link]({streamlit_link})")
 
 # NLP Sentiment Analysis with Deep Learning Models
