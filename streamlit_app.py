@@ -12,7 +12,7 @@ from bokeh.models.widgets import Div
 # Set page configurations
 st.set_page_config(
     page_title="Zubair Ashfaque's Portfolio",
-    page_icon=":computer:",
+    page_icon="🧑‍🔬",
     layout="wide",
     initial_sidebar_state="auto"
 )
