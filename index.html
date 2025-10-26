@@ -511,6 +511,7 @@
                     icon: 'fa-brain',
                     color: 'from-violet-500 to-fuchsia-500',
                     github: 'https://github.com/zubairashfaque/vivarium',
+                    blog: 'blog/vivarium-multi-agent-ai.html',
                     demo: true
                 }
             ];
@@ -584,6 +585,22 @@
                                                 <span className="bg-slate-800 text-gray-400 px-3 py-1 rounded-full text-xs">
                                                     +{project.tech.length - 3} more
                                                 </span>
+                                            )}
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-3 mt-4">
+                                            {project.github && (
+                                                <a href={project.github} target="_blank" rel="noopener noreferrer"
+                                                   className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all text-center text-sm font-semibold">
+                                                    <i className="fab fa-github mr-2"></i>GitHub
+                                                </a>
+                                            )}
+                                            {project.blog && (
+                                                <a href={project.blog}
+                                                   className="flex-1 px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:shadow-lg hover:shadow-violet-500/50 text-white rounded-lg transition-all text-center text-sm font-semibold">
+                                                    <i className="fas fa-book-open mr-2"></i>Read Article
+                                                </a>
                                             )}
                                         </div>
                                     </div>
@@ -836,7 +853,8 @@
                     readTime: '8 min read',
                     tags: ['Multi-Agent', 'LangGraph', 'Claude AI', 'Emergent Behavior'],
                     color: 'from-violet-500 to-fuchsia-500',
-                    icon: 'fa-brain'
+                    icon: 'fa-brain',
+                    link: 'blog/vivarium-multi-agent-ai.html'
                 },
                 {
                     title: 'The Art of Prompt Engineering in Production Systems',
@@ -899,9 +917,10 @@
                         {/* Journal Entries Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredEntries.map((entry, index) => (
-                                <div
+                                <a
+                                    href={entry.link || '#'}
                                     key={index}
-                                    className="bg-slate-800 rounded-xl overflow-hidden card-hover group cursor-pointer"
+                                    className="bg-slate-800 rounded-xl overflow-hidden card-hover group cursor-pointer block no-underline"
                                 >
                                     {/* Header with gradient */}
                                     <div className={`h-2 bg-gradient-to-r ${entry.color}`}></div>
@@ -950,11 +969,11 @@
                                         </div>
 
                                         {/* Read More Button */}
-                                        <button className="mt-6 w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 opacity-0 group-hover:opacity-100">
+                                        <div className="mt-6 w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 opacity-0 group-hover:opacity-100 text-center">
                                             Read Article
-                                        </button>
+                                        </div>
                                     </div>
-                                </div>
+                                </a>
                             ))}
                         </div>
 

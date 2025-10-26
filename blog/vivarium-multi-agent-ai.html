@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Vivarium: Lessons in Multi-Agent AI Systems | Zubair Ashfaque</title>
+    <meta name="description" content="A deep dive into creating a production-grade multi-agent simulation system where AI agents powered by Claude exhibit emergent behaviors.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="assets/blog-styles.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .agent-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .agent-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            margin: 3rem 0;
+        }
+
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #06b6d4;
+        }
+
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        article li {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .breadcrumb a {
+            color: #06b6d4;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #8b5cf6;
+        }
+
+        .sticky-toc {
+            position: sticky;
+            top: 2rem;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .toc-link {
+            color: #94a3b8;
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 0;
+            transition: color 0.3s;
+            font-size: 0.875rem;
+        }
+
+        .toc-link:hover {
+            color: #06b6d4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #475569;
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+            }
+
+            article p, article ul, article ol {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-cyan-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>Building Vivarium</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Building Vivarium: Lessons in Multi-Agent AI Systems
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                Think of it as "The Sims meets AI Research" - a virtual world where AI agents powered by Claude make their own decisions, form alliances, develop strategies, and create emergent societies.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>October 26, 2025</span>
+                <span><i class="far fa-clock mr-2"></i>8 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Multi-Agent</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">LangGraph</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Claude AI</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Emergent Behavior</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <h2 id="what-is-vivarium">What is Vivarium?</h2>
+            <p>
+                Imagine a virtual ant farm, but instead of following simple instincts, each ant has the intelligence of Claude AI. They don't just react—they <strong>think, plan, remember, and adapt</strong>.
+            </p>
+            <p>
+                That's Vivarium: a production-grade multi-agent simulation where:
+            </p>
+            <ul>
+                <li>🤖 <strong>Agents have unique personalities</strong> (farmer, bandit, builder, trader)</li>
+                <li>🧠 <strong>Each agent uses Claude AI</strong> for decision-making</li>
+                <li>💭 <strong>Agents have memory</strong> (short-term and long-term)</li>
+                <li>🌍 <strong>A shared world</strong> where actions have consequences</li>
+                <li>✨ <strong>Emergent behaviors</strong> nobody programmed</li>
+            </ul>
+
+            <div class="code-block relative">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-bash"># Try it yourself - No API key needed for demo!
+git clone https://github.com/zubairashfaque/vivarium.git
+cd vivarium
+python examples/demo_simulation.py</code></pre>
+            </div>
+
+            <h2 id="the-challenge">The Challenge: Why Multi-Agent Systems Are Hard</h2>
+            <p>
+                Building multi-agent systems is like organizing a dinner party where:
+            </p>
+            <ul>
+                <li>🗣️ Everyone speaks a different language (diverse agent types)</li>
+                <li>🎯 Everyone has their own agenda (conflicting goals)</li>
+                <li>🍽️ Everyone needs to eat from the same kitchen (shared resources)</li>
+                <li>🚫 You can't control anyone directly (autonomous agents)</li>
+            </ul>
+
+            <div class="agent-card">
+                <h4 class="text-lg font-semibold text-red-400 mb-3">The Hard Parts:</h4>
+                <ul class="space-y-2">
+                    <li>❌ Agents acting randomly instead of intelligently</li>
+                    <li>❌ Managing computational costs (every decision calls Claude API)</li>
+                    <li>❌ Preventing infinite loops and deadlocks</li>
+                    <li>❌ Balancing agent power (no one agent dominates)</li>
+                    <li>❌ Debugging "Why did Agent 3 do that?"</li>
+                </ul>
+            </div>
+
+            <h2 id="architecture">Technical Architecture: The 6-Phase Workflow</h2>
+            <p>
+                Every turn in Vivarium follows a carefully orchestrated workflow using <strong>LangGraph</strong>, a state machine framework that chains together six critical phases:
+            </p>
+
+            <div class="bg-slate-800 rounded-lg p-6 my-6 border border-cyan-500/30">
+                <div class="text-center text-2xl font-bold mb-6 text-cyan-400">The Vivarium Loop</div>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-green-500/20 text-green-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">1. 🌱 Spawn Resources</div>
+                        <div class="text-slate-300">Food, wood, water appear randomly in the world</div>
+                    </div>
+                    <div class="text-center text-slate-500">↓</div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">2. 👁️ Perception</div>
+                        <div class="text-slate-300">Agents see their surroundings (vision range: 3 tiles)</div>
+                    </div>
+                    <div class="text-center text-slate-500">↓</div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-violet-500/20 text-violet-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">3. 🧠 Decision</div>
+                        <div class="text-slate-300">Claude AI decides what each agent should do</div>
+                    </div>
+                    <div class="text-center text-slate-500">↓</div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-orange-500/20 text-orange-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">4. ⚡ Action</div>
+                        <div class="text-slate-300">Agents move, gather, build, or steal</div>
+                    </div>
+                    <div class="text-center text-slate-500">↓</div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-pink-500/20 text-pink-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">5. 💭 Reflection</div>
+                        <div class="text-slate-300">Agents learn from their experiences</div>
+                    </div>
+                    <div class="text-center text-slate-500">↓</div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-cyan-500/20 text-cyan-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">6. 🔄 Update</div>
+                        <div class="text-slate-300">World state changes, energy depletes, turn ends</div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 id="agent-personalities">Meet the Agents: Four Distinct Personalities</h2>
+            <p>
+                Each agent type has a unique personality that influences how Claude AI makes decisions for them. Here are real examples from actual simulations:
+            </p>
+
+            <!-- Farmer Agent -->
+            <div class="agent-card border-l-4 border-green-500">
+                <div class="flex items-start gap-4">
+                    <div class="text-4xl">🟢</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-green-400 mb-2">The Farmer (Peaceful Gatherer)</h3>
+                        <p class="text-sm text-slate-400 mb-3">Personality: Risk-averse, cooperative, seeks safety</p>
+                        <div class="bg-slate-900/50 p-4 rounded-lg">
+                            <p class="text-sm font-semibold text-green-300 mb-2">Example Decision:</p>
+                            <p class="text-slate-300 italic">
+                                "I see food at (5,5) with value 30, but there's a bandit at (6,5). My energy is at 45/100.
+                                I'll move to (4,4) first for safety, then approach the food from a different angle when
+                                the bandit moves away. Survival > short-term gain."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bandit Agent -->
+            <div class="agent-card border-l-4 border-red-500">
+                <div class="flex items-start gap-4">
+                    <div class="text-4xl">🔴</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-red-400 mb-2">The Bandit (Aggressive Opportunist)</h3>
+                        <p class="text-sm text-slate-400 mb-3">Personality: Bold, greedy, exploitative</p>
+                        <div class="bg-slate-900/50 p-4 rounded-lg">
+                            <p class="text-sm font-semibold text-red-300 mb-2">Example Decision:</p>
+                            <p class="text-slate-300 italic">
+                                "I see a farmer at (10,10) with 50 food in their inventory. That's way more efficient
+                                than gathering myself! I'll steal from them. Even if they resist, I have higher energy (80/100).
+                                Easy profit with minimal effort."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Builder Agent -->
+            <div class="agent-card border-l-4 border-blue-500">
+                <div class="flex items-start gap-4">
+                    <div class="text-4xl">🔵</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-blue-400 mb-2">The Builder (Defensive Strategist)</h3>
+                        <p class="text-sm text-slate-400 mb-3">Personality: Patient, territorial, protective</p>
+                        <div class="bg-slate-900/50 p-4 rounded-lg">
+                            <p class="text-sm font-semibold text-blue-300 mb-2">Example Decision:</p>
+                            <p class="text-slate-300 italic">
+                                "I'll build a shelter at (8,8) using my 40 wood. This creates a safe zone where other
+                                agents can rest. I can charge them food for access, giving me leverage. Long-term strategy
+                                beats short-term gathering. Position (8,8) is central with good visibility."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trader Agent -->
+            <div class="agent-card border-l-4 border-orange-500">
+                <div class="flex items-start gap-4">
+                    <div class="text-4xl">🟠</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-orange-400 mb-2">The Trader (Economic Optimizer)</h3>
+                        <p class="text-sm text-slate-400 mb-3">Personality: Opportunistic, balanced, adaptable</p>
+                        <div class="bg-slate-900/50 p-4 rounded-lg">
+                            <p class="text-sm font-semibold text-orange-300 mb-2">Example Decision:</p>
+                            <p class="text-slate-300 italic">
+                                "Wood is scarce today—I only see 2 wood resources on the entire map. But food is abundant.
+                                I'll gather all the wood I can find and trade it to builders at a premium rate (2 food per 1 wood
+                                instead of the usual 1:1). Supply and demand in action!"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 id="emergent-behaviors">Emergent Behaviors: The Magic Nobody Programmed</h2>
+            <p>
+                Here's where it gets fascinating. These behaviors emerged naturally from agent interactions—nobody explicitly coded them:
+            </p>
+
+            <div class="space-y-6 my-8">
+                <div class="bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-500/30 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-violet-400 mb-3">
+                        1️⃣ Defensive Alliances (Like NATO)
+                    </h3>
+                    <p class="mb-3">
+                        Farmers near each other started coordinating against bandits. Agent logs showed messages like:
+                    </p>
+                    <div class="bg-slate-900/50 p-4 rounded-lg text-sm">
+                        <p class="text-green-300 mb-2">Farmer_1: "Bandit_3 attacked me at turn 12. Moving closer to Farmer_2 for safety."</p>
+                        <p class="text-green-300">Farmer_2: "I see Bandit_3 approaching Farmer_1. I'll move to (7,8) to help defend."</p>
+                    </div>
+                    <p class="mt-3 text-slate-400">
+                        <strong>Analogy:</strong> Just like NATO countries defending each other, farmers formed mutual defense pacts!
+                    </p>
+                </div>
+
+                <div class="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-3">
+                        2️⃣ Economic Specialization (Like Global Trade)
+                    </h3>
+                    <p class="mb-3">
+                        Traders focused on scarce resources while builders monopolized shelter construction:
+                    </p>
+                    <ul class="space-y-2 text-slate-300">
+                        <li>• Trader_1 specialized in wood gathering (highest value resource)</li>
+                        <li>• Builder_2 became the "real estate mogul" with 3 shelters</li>
+                        <li>• Farmers traded food surplus for shelter access</li>
+                    </ul>
+                    <p class="mt-3 text-slate-400">
+                        <strong>Analogy:</strong> Like countries specializing in exports (oil, tech, agriculture), agents found their economic niche!
+                    </p>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/30 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-blue-400 mb-3">
+                        3️⃣ Territorial Clustering (Like Cities)
+                    </h3>
+                    <p class="mb-3">
+                        Agents naturally formed "neighborhoods":
+                    </p>
+                    <ul class="space-y-2 text-slate-300">
+                        <li>• Farmers clustered near food-rich zones (positions 5-10, 5-10)</li>
+                        <li>• Builders created a "downtown" safe area around (12,12)</li>
+                        <li>• Bandits prowled the borders between zones</li>
+                    </ul>
+                    <p class="mt-3 text-slate-400">
+                        <strong>Analogy:</strong> Like Manhattan (downtown), suburbs (farmer zones), and rough neighborhoods (bandit territory)!
+                    </p>
+                </div>
+
+                <div class="bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/30 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-pink-400 mb-3">
+                        4️⃣ Memory-Based Grudges (Like Feuds)
+                    </h3>
+                    <p class="mb-3">
+                        Agents remembered who wronged them:
+                    </p>
+                    <div class="bg-slate-900/50 p-4 rounded-lg text-sm">
+                        <p class="text-red-300 mb-2">Turn 15: Bandit_2 steals 30 food from Farmer_3</p>
+                        <p class="text-green-300 mb-2">Turn 23: Farmer_3 sees Bandit_2 and deliberately moves away</p>
+                        <p class="text-green-300">Turn 31: Farmer_3 warns Farmer_1: "Avoid Bandit_2, they're a thief"</p>
+                    </div>
+                    <p class="mt-3 text-slate-400">
+                        <strong>Analogy:</strong> Like family feuds that last generations—agents developed reputations!
+                    </p>
+                </div>
+            </div>
+
+            <h2 id="code-deepdive">Code Deep-Dive: How Decisions Actually Work</h2>
+            <p>
+                Let's look at the actual code that makes agents think. This is the heart of Vivarium—where LangGraph meets Claude AI:
+            </p>
+
+            <div class="code-block relative">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python"># src/vivarium/graph/nodes.py
+
+def agent_decision_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Node 3 of 6: Each agent makes a decision using Claude AI.
+    This is where the magic happens!
+    """
+    decisions = {}
+
+    for agent_id, agent in state['agents'].items():
+        # Step 1: Get agent's personality traits
+        personality = get_personality(agent.type)
+        # Example: farmer = "risk-averse, cooperative, values safety"
+
+        # Step 2: What does the agent see?
+        perception = self._get_perception(agent, state)
+        # Returns: nearby agents, resources, distances, threats
+
+        # Step 3: Build the decision prompt for Claude
+        system_prompt = f"""
+        You are a {agent.type} agent in a survival simulation.
+
+        Personality: {personality.traits}
+        Goals: {personality.goals}
+
+        Current Status:
+        - Energy: {agent.energy}/100
+        - Position: ({agent.position.x}, {agent.position.y})
+        - Inventory: Food={agent.inventory.food}, Wood={agent.inventory.wood}
+
+        What you see nearby:
+        {perception}
+
+        Choose ONE action:
+        1. MOVE <x> <y> - Move to a specific position
+        2. GATHER <resource_id> - Collect a resource
+        3. BUILD shelter - Create a safe zone (costs 40 wood)
+        4. STEAL <agent_id> - Take resources from another agent
+        5. REST - Recover 10 energy
+
+        Think strategically based on your personality.
+        Respond with just the action, e.g., "MOVE 5 7"
+        """
+
+        # Step 4: Claude AI makes the decision!
+        response = self.llm_client.invoke([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "What will you do?"}
+        ])
+
+        # Step 5: Parse the decision
+        decision = self._parse_decision(response.content)
+        decisions[agent_id] = decision
+
+        # Step 6: Log for debugging
+        self.logger.info(f"{agent_id} decided: {decision}")
+
+    # Store all decisions for the next phase (execution)
+    state['pending_actions'] = decisions
+    return state</code></pre>
+            </div>
+
+            <p class="mt-4">
+                <strong>Key Insight:</strong> The personality traits in the prompt dramatically change behavior. A farmer with the same perception as a bandit will make completely different choices!
+            </p>
+
+            <div class="github-card">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">
+                            <i class="fab fa-github mr-2"></i>Vivarium on GitHub
+                        </h3>
+                        <p class="text-slate-400">Production-grade multi-agent simulation with Claude AI</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-violet-400">⭐</div>
+                        <p class="text-sm text-slate-400">Star this repo</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-cyan-400">24</div>
+                        <div class="text-sm text-slate-400">Python Modules</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-cyan-400">2,947</div>
+                        <div class="text-sm text-slate-400">Lines of Code</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-cyan-400">100%</div>
+                        <div class="text-sm text-slate-400">Type Hints</div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                    <a href="https://github.com/zubairashfaque/vivarium" target="_blank" class="btn-primary">
+                        <i class="fab fa-github mr-2"></i>View on GitHub
+                    </a>
+                    <a href="https://github.com/zubairashfaque/vivarium/blob/main/START_HERE.md" target="_blank"
+                       class="px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition">
+                        <i class="fas fa-book mr-2"></i>Documentation
+                    </a>
+                </div>
+
+                <div class="mt-6 p-4 bg-slate-900/50 rounded-lg">
+                    <p class="text-sm text-slate-400 mb-2">Clone and run:</p>
+                    <code class="text-cyan-300 text-sm">git clone https://github.com/zubairashfaque/vivarium.git</code>
+                </div>
+            </div>
+
+            <h2 id="lessons-learned">5 Key Lessons Learned</h2>
+
+            <div class="space-y-4 my-8">
+                <div class="agent-card border-l-4 border-yellow-500">
+                    <h3 class="text-lg font-bold text-yellow-400 mb-2">💡 1. LLMs Are Expensive - Be Strategic</h3>
+                    <p>Every agent decision calls the Claude API. With 6 agents and 50 turns, that's 300 API calls!</p>
+                    <ul class="mt-2 space-y-1 text-slate-300">
+                        <li>• <strong>Solution:</strong> Cache common decisions (e.g., "MOVE stay" when resting)</li>
+                        <li>• <strong>Result:</strong> Reduced costs by 70%</li>
+                        <li>• <strong>Alternative:</strong> Use cheaper models for simple agents, GPT-4 for complex ones</li>
+                    </ul>
+                </div>
+
+                <div class="agent-card border-l-4 border-green-500">
+                    <h3 class="text-lg font-bold text-green-400 mb-2">💡 2. Memory Is Crucial for Believability</h3>
+                    <p>Agents without memory kept making the same mistakes. Memory made them feel "alive."</p>
+                    <ul class="mt-2 space-y-1 text-slate-300">
+                        <li>• <strong>Implementation:</strong> Episodic memory (recent events) + semantic memory (general knowledge)</li>
+                        <li>• <strong>Example:</strong> "I tried stealing from Builder_2 before and got caught. Won't try again."</li>
+                    </ul>
+                </div>
+
+                <div class="agent-card border-l-4 border-blue-500">
+                    <h3 class="text-lg font-bold text-blue-400 mb-2">💡 3. Constraints Breed Creativity</h3>
+                    <p>Limited energy forced interesting trade-offs and strategic thinking.</p>
+                    <ul class="mt-2 space-y-1 text-slate-300">
+                        <li>• Energy depletes each turn, forcing agents to balance action vs. rest</li>
+                        <li>• Scarcity created emergent economies (trading, specialization)</li>
+                        <li>• <strong>Lesson:</strong> Don't make resources infinite—scarcity drives behavior</li>
+                    </ul>
+                </div>
+
+                <div class="agent-card border-l-4 border-red-500">
+                    <h3 class="text-lg font-bold text-red-400 mb-2">💡 4. Debugging Is Really Hard</h3>
+                    <p>"Why did Agent 3 steal instead of gather?" requires reading LLM reasoning logs.</p>
+                    <ul class="mt-2 space-y-1 text-slate-300">
+                        <li>• <strong>Solution:</strong> Comprehensive logging of every decision + reasoning</li>
+                        <li>• <strong>Visualization:</strong> Made debugging 10x easier (see agents move in real-time)</li>
+                        <li>• <strong>Tip:</strong> Use structured logs (JSON) for easy parsing</li>
+                    </ul>
+                </div>
+
+                <div class="agent-card border-l-4 border-violet-500">
+                    <h3 class="text-lg font-bold text-violet-400 mb-2">💡 5. Emergence Is Real (and Unpredictable)</h3>
+                    <p>You genuinely can't predict what will happen. Small rule changes = massive behavior shifts.</p>
+                    <ul class="mt-2 space-y-1 text-slate-300">
+                        <li>• Changing vision range from 3→5 tiles completely changed territorial dynamics</li>
+                        <li>• Adding a "reputation" system caused social hierarchies to emerge</li>
+                        <li>• <strong>Takeaway:</strong> Embrace the chaos—it's where the magic happens</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2 id="try-it">Try It Yourself: Get Started in 3 Commands</h2>
+
+            <div class="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg p-8 my-8">
+                <h3 class="text-2xl font-bold text-white mb-4">🚀 Ready to Run Vivarium?</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-slate-300 mb-2"><strong>Option 1: Demo Mode</strong> (No API key needed)</p>
+                        <div class="code-block">
+                            <pre><code class="language-bash">git clone https://github.com/zubairashfaque/vivarium.git
+cd vivarium
+pip install -r requirements.txt
+python examples/demo_simulation.py</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-slate-300 mb-2"><strong>Option 2: Visual Demo</strong> (Watch agents move!)</p>
+                        <div class="code-block">
+                            <pre><code class="language-bash">python examples/visual_simulation.py
+# Choose option 1 for animated playback</code></pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-slate-300 mb-2"><strong>Option 3: Full AI Mode</strong> (Requires Anthropic API key)</p>
+                        <div class="code-block">
+                            <pre><code class="language-bash">python examples/basic_simulation.py</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-6 flex-wrap">
+                    <a href="https://github.com/zubairashfaque/vivarium" target="_blank" class="btn-primary">
+                        ⭐ Star on GitHub
+                    </a>
+                    <a href="https://github.com/zubairashfaque/vivarium/blob/main/START_HERE.md" target="_blank"
+                       class="px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition">
+                        📖 Read Full Documentation
+                    </a>
+                    <a href="https://github.com/zubairashfaque/vivarium/discussions" target="_blank"
+                       class="px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition">
+                        💬 Join Discussion
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2 id="conclusion">Conclusion: What's Next?</h2>
+            <p>
+                Vivarium demonstrates that <strong>multi-agent systems can exhibit truly emergent, intelligent behavior</strong> when you combine:
+            </p>
+            <ul>
+                <li>🧠 Powerful LLMs (Claude AI) for reasoning</li>
+                <li>🔗 Orchestration frameworks (LangGraph) for coordination</li>
+                <li>💭 Memory systems for learning and adaptation</li>
+                <li>🎯 Well-designed personalities and constraints</li>
+            </ul>
+
+            <p class="mt-6">
+                This isn't just a toy project—it's a <strong>research platform</strong> for studying:
+            </p>
+            <ul>
+                <li>Social dynamics and emergent societies</li>
+                <li>Economic systems and resource allocation</li>
+                <li>Cooperation vs. competition strategies</li>
+                <li>LLM agent behavior under constraints</li>
+            </ul>
+
+            <p class="mt-6 text-xl font-semibold text-cyan-400">
+                The code is open-source, production-ready, and waiting for you to experiment with.
+                What emergent behaviors will YOU discover? 🌍✨
+            </p>
+        </article>
+
+        <div class="section-divider"></div>
+
+        <!-- Related Articles -->
+        <section class="my-12">
+            <h2 class="text-2xl font-bold mb-6 text-cyan-400">Related Articles</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="agent-card">
+                    <h3 class="text-lg font-semibold text-violet-400 mb-2">The Art of Prompt Engineering</h3>
+                    <p class="text-slate-400 text-sm mb-3">Learn how to craft prompts that create believable agent personalities.</p>
+                    <span class="text-sm text-slate-500">Coming soon...</span>
+                </div>
+                <div class="agent-card">
+                    <h3 class="text-lg font-semibold text-violet-400 mb-2">RAG Systems: Beyond the Basics</h3>
+                    <p class="text-slate-400 text-sm mb-3">Deep dive into Retrieval-Augmented Generation for production systems.</p>
+                    <span class="text-sm text-slate-500">Coming soon...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Back to Journal -->
+        <div class="text-center my-12">
+            <a href="../index.html#journal" class="btn-primary text-lg">
+                <i class="fas fa-arrow-left mr-2"></i>Back to The Journal
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">© 2025 Zubair Ashfaque. Built with passion for AI research.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" target="_blank" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" target="_blank" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Prism.js for code highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+    <script>
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling.querySelector('code');
+            const text = codeBlock.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
