@@ -290,43 +290,223 @@ python examples/demo_simulation.py</code></pre>
                 </ul>
             </div>
 
-            <h2 id="architecture">Technical Architecture: The 6-Phase Workflow</h2>
+            <h2 id="architecture">Technical Architecture: The Complete Simulation Cycle</h2>
             <p>
-                Every turn in Vivarium follows a carefully orchestrated workflow using <strong>LangGraph</strong>, a state machine framework that chains together six critical phases:
+                Every turn in Vivarium follows a carefully orchestrated workflow using <strong>LangGraph</strong>, creating a continuous loop where autonomous AI agents perceive, reason, act, and learn—generating emergent behaviors and complex social dynamics through natural interactions.
             </p>
 
-            <div class="bg-slate-800 rounded-lg p-6 my-6 border border-cyan-500/30">
-                <div class="text-center text-2xl font-bold mb-6 text-cyan-400">The Vivarium Loop</div>
-                <div class="space-y-4">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-green-500/20 text-green-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">1. 🌱 Spawn Resources</div>
-                        <div class="text-slate-300">Food, wood, water appear randomly in the world</div>
+            <!-- Comprehensive Interactive Flow Diagram -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-violet-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 mb-3">
+                        🌍 Multi-Agent Simulation Cycle
+                    </h3>
+                    <p class="text-slate-400 max-w-3xl mx-auto">
+                        A continuous loop where agents create their own world through reasoning, not rules
+                    </p>
+                </div>
+
+                <!-- Phase 1: Initialize -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-violet-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                        <path d="M12 8v8M8 12h8"/>
+                                    </svg>
+                                </div>
+                                <span class="text-violet-300 font-semibold">Initialize</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Setup world & spawn agents</p>
+                        </div>
                     </div>
-                    <div class="text-center text-slate-500">↓</div>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">2. 👁️ Perception</div>
-                        <div class="text-slate-300">Agents see their surroundings (vision range: 3 tiles)</div>
+                    <div class="text-violet-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24"/>
+                                    </svg>
+                                </div>
+                                <span class="text-cyan-300 font-semibold">Perceive</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Agent scans environment</p>
+                        </div>
                     </div>
-                    <div class="text-center text-slate-500">↓</div>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-violet-500/20 text-violet-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">3. 🧠 Decision</div>
-                        <div class="text-slate-300">Claude AI decides what each agent should do</div>
+                    <div class="text-cyan-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-blue-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8"/>
+                                        <polyline points="7.5 4.21 12 6.81 16.5 4.21"/>
+                                    </svg>
+                                </div>
+                                <span class="text-blue-300 font-semibold">Reason</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Claude AI makes decision</p>
+                        </div>
                     </div>
-                    <div class="text-center text-slate-500">↓</div>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-orange-500/20 text-orange-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">4. ⚡ Action</div>
-                        <div class="text-slate-300">Agents move, gather, build, or steal</div>
+                </div>
+
+                <!-- The Main Loop -->
+                <div class="bg-gradient-to-br from-orange-500/10 to-yellow-500/10 border-3 border-dashed border-orange-400 rounded-2xl p-6 relative mb-8">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white px-6 py-2 rounded-full font-bold text-sm tracking-wider shadow-lg">
+                        SIMULATION LOOP
                     </div>
-                    <div class="text-center text-slate-500">↓</div>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-pink-500/20 text-pink-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">5. 💭 Reflection</div>
-                        <div class="text-slate-300">Agents learn from their experiences</div>
+
+                    <!-- Loop Row 1 -->
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 mt-8 mb-6">
+                        <div class="flex-1 max-w-xs">
+                            <div class="bg-slate-700/50 border-2 border-orange-400 rounded-xl p-4 hover:scale-105 transition-transform">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 bg-orange-400/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">⚡</span>
+                                    </div>
+                                    <span class="text-orange-300 font-semibold">Execute</span>
+                                </div>
+                                <p class="text-sm text-slate-400">Perform chosen action</p>
+                            </div>
+                        </div>
+                        <div class="text-orange-400 text-2xl">→</div>
+                        <div class="flex-1 max-w-xs">
+                            <div class="bg-slate-700/50 border-2 border-orange-400 rounded-xl p-4 hover:scale-105 transition-transform">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 bg-orange-400/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">🛡️</span>
+                                    </div>
+                                    <span class="text-orange-300 font-semibold">Update State</span>
+                                </div>
+                                <p class="text-sm text-slate-400">Modify world & resources</p>
+                            </div>
+                        </div>
+                        <div class="text-orange-400 text-2xl">→</div>
+                        <div class="flex-1 max-w-xs">
+                            <div class="bg-slate-700/50 border-2 border-orange-400 rounded-xl p-4 hover:scale-105 transition-transform">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 bg-orange-400/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">👥</span>
+                                    </div>
+                                    <span class="text-orange-300 font-semibold">Social Update</span>
+                                </div>
+                                <p class="text-sm text-slate-400">Track relationships</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-center text-slate-500">↓</div>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-cyan-500/20 text-cyan-300 px-4 py-2 rounded-lg font-semibold min-w-[200px]">6. 🔄 Update</div>
-                        <div class="text-slate-300">World state changes, energy depletes, turn ends</div>
+
+                    <!-- Loop Row 2 -->
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                        <div class="flex-1 max-w-xs">
+                            <div class="bg-slate-700/50 border-2 border-yellow-400 rounded-xl p-4 hover:scale-105 transition-transform">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 bg-yellow-400/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">💾</span>
+                                    </div>
+                                    <span class="text-yellow-300 font-semibold">Memory</span>
+                                </div>
+                                <p class="text-sm text-slate-400">Store experiences</p>
+                            </div>
+                        </div>
+                        <div class="text-yellow-400 text-2xl">→</div>
+                        <div class="flex-1 max-w-xs">
+                            <div class="bg-slate-700/50 border-2 border-yellow-400 rounded-xl p-4 hover:scale-105 transition-transform">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 bg-yellow-400/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">💭</span>
+                                    </div>
+                                    <span class="text-yellow-300 font-semibold">Reflect</span>
+                                </div>
+                                <p class="text-sm text-slate-400">Learn from outcomes</p>
+                            </div>
+                        </div>
+                        <div class="text-yellow-400 text-2xl">→</div>
+                        <div class="flex-1 max-w-xs">
+                            <div class="bg-slate-700/50 border-2 border-yellow-400 rounded-xl p-4 hover:scale-105 transition-transform">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 bg-yellow-400/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">📊</span>
+                                    </div>
+                                    <span class="text-yellow-300 font-semibold">Log Metrics</span>
+                                </div>
+                                <p class="text-sm text-slate-400">Track patterns & stats</p>
+                            </div>
+                        </div>
                     </div>
+
+                    <div class="text-center py-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                        <p class="text-yellow-300 font-semibold text-sm">
+                            💡 Agents iterate through this loop each turn, learning and adapting!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Loop Back Arrow -->
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center gap-3 bg-red-500/20 border-2 border-red-400 rounded-full px-6 py-3">
+                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span class="text-red-300 font-bold">Continue Loop</span>
+                    </div>
+                </div>
+
+                <!-- Emergence Section -->
+                <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-3 border-green-400 rounded-2xl p-6">
+                    <div class="text-center mb-6">
+                        <h4 class="text-2xl font-bold text-green-400 mb-2">✨ Emergent Behaviors Detected!</h4>
+                        <p class="text-slate-400">Complex macro-level patterns emerge from simple micro-level interactions</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-700/30 border border-green-400/50 rounded-lg p-4 text-center hover:scale-105 transition-transform">
+                            <div class="text-3xl mb-2">🤝</div>
+                            <p class="text-green-300 font-semibold text-sm">Defensive Alliances</p>
+                        </div>
+                        <div class="bg-slate-700/30 border border-green-400/50 rounded-lg p-4 text-center hover:scale-105 transition-transform">
+                            <div class="text-3xl mb-2">💰</div>
+                            <p class="text-green-300 font-semibold text-sm">Trade Networks</p>
+                        </div>
+                        <div class="bg-slate-700/30 border border-green-400/50 rounded-lg p-4 text-center hover:scale-105 transition-transform">
+                            <div class="text-3xl mb-2">🎯</div>
+                            <p class="text-green-300 font-semibold text-sm">Strategy Adaptation</p>
+                        </div>
+                        <div class="bg-slate-700/30 border border-green-400/50 rounded-lg p-4 text-center hover:scale-105 transition-transform">
+                            <div class="text-3xl mb-2">🏘️</div>
+                            <p class="text-green-300 font-semibold text-sm">Social Structures</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Features Box -->
+                <div class="mt-8 bg-slate-700/30 rounded-xl p-6 border border-slate-600">
+                    <h4 class="text-xl font-bold text-violet-400 mb-4">🔬 Key Features in the Loop:</h4>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex items-start gap-2">
+                            <span class="text-violet-400">▸</span>
+                            <span><strong>LangGraph Checkpointing:</strong> Every state saved for reproducibility</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-cyan-400">▸</span>
+                            <span><strong>Episodic Memory:</strong> Agents remember all experiences</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-400">▸</span>
+                            <span><strong>Strategic Reflection:</strong> Periodic meta-cognition</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-orange-400">▸</span>
+                            <span><strong>Social Tracking:</strong> Trust scores evolve naturally</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-yellow-400">▸</span>
+                            <span><strong>Resource Scarcity:</strong> Economic pressure drives behavior</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
