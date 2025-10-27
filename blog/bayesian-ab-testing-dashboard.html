@@ -274,6 +274,273 @@
                 Combines rigorous Bayesian inference using PyMC with an intuitive Streamlit interface, making complex statistical concepts visual and actionable.
             </div>
 
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-book-open mr-3"></i>📖 Technical Terms Explained</h2>
+
+            <p>
+                Before diving into the technical details, let's demystify the key terms and abbreviations you'll encounter. Think of this as your friendly dictionary - no PhD required!
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-vial mr-2"></i>A/B Testing
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A method of comparing two versions (A and B) of something to see which performs better.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Imagine you have two button colors on your website - blue and green. You show blue to 50% of users and green to the other 50%. After a week, you check which one got more clicks. That's A/B testing!
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> It's like flipping two coins to see which one lands on heads more often - except your "coins" are website features and "heads" is users taking action.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-brain mr-2"></i>Bayesian Statistics
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A statistical approach that updates beliefs based on new evidence. It answers "What's the probability of X being true?"
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You think it rains 30% of days (your prior belief). Then you see dark clouds (new evidence). Now you think it's 80% likely to rain today (updated belief). That's Bayesian thinking!
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Like being a detective who starts with a hunch and refines it as more clues appear. Your certainty evolves with evidence.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-chart-area mr-2"></i>PyMC (Probabilistic Programming in Python)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Full Name:</strong> PyMC (formerly PyMC3, now version 5.25.1)
+                </p>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A Python library for building Bayesian statistical models. It's the engine that does the mathematical heavy lifting.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Instead of writing hundreds of lines of math, you tell PyMC: "Here's my data, here's what I believe, now calculate the probabilities." PyMC handles the complex calculations automatically.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> PyMC is like having a genius math tutor who solves complicated probability problems for you while you focus on asking the right questions.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-random mr-2"></i>MCMC (Markov Chain Monte Carlo)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Abbreviation:</strong> MCMC = Markov Chain Monte Carlo
+                </p>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A clever algorithm that explores complex probability distributions by taking smart random walks through possible values.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Imagine you're in a dark room searching for treasure. MCMC is like taking steps where each step depends on the last one, gradually moving toward areas with more treasure. After thousands of steps, you've mapped where the treasure is most likely located.
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Think of it as an intelligent drunk person's walk - they stumble randomly, but they're more likely to stumble toward interesting places. After many stumbles, the path reveals where they spent most time (the high-probability regions).
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Why we need it:</strong> Some probability calculations are mathematically impossible to solve directly. MCMC approximates the answer by simulating millions of scenarios.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-bolt mr-2"></i>NUTS Sampler (No-U-Turn Sampler)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Abbreviation:</strong> NUTS = No-U-Turn Sampler
+                </p>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> An advanced MCMC algorithm that efficiently explores probability distributions. It's the "smart walker" method inside PyMC.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Instead of wandering aimlessly, NUTS is like a hiker with a compass and GPS. It takes bigger steps in promising directions and stops before going backwards (no U-turns!), making exploration 10x faster than basic MCMC.
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Imagine searching for gold in a mountain range. Basic MCMC is like walking randomly. NUTS is like having a metal detector that beeps louder near gold - you naturally move toward it and avoid backtracking.
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Why it matters:</strong> NUTS is the reason PyMC can analyze complex models in seconds instead of hours. It's the Ferrari of MCMC samplers.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-chart-pie mr-2"></i>Posterior Distribution
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The updated probability distribution after seeing the data. It's your "final answer" showing what values are most likely.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Before testing, you guessed conversion rate was around 20% (prior). After seeing 100 visitors with 25 conversions, the posterior shows it's most likely 25%, but could reasonably be anywhere from 22% to 28%.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Like predicting tomorrow's weather. Your initial forecast (prior) gets updated with today's observations (data) to create tomorrow's prediction (posterior).
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-compress-arrows-alt mr-2"></i>HDI (Highest Density Interval)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Abbreviation:</strong> HDI = Highest Density Interval (also called Credible Interval)
+                </p>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A range that contains the most probable values with a specified probability (usually 95%). It's Bayesian's version of a confidence interval.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> After your A/B test, the 95% HDI for conversion rate is [22%, 28%]. This means: "I'm 95% confident the true conversion rate is somewhere in this range, and values in this range are the most probable."
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Imagine you're guessing someone's age. Instead of saying "exactly 30," you say "95% sure they're between 28 and 32." The HDI is that age range.
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Key difference from frequentist CI:</strong> You can actually say "95% probability the value is in this range" - which is what everyone thinks confidence intervals mean (but they don't in frequentist stats!).
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-ruler-horizontal mr-2"></i>ROPE (Region of Practical Equivalence)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Abbreviation:</strong> ROPE = Region of Practical Equivalence
+                </p>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A range of values you consider "too small to matter." It separates statistical significance from practical significance.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You set ROPE to ±1%. If variant B improves conversion rate by only 0.3%, it's "statistically different" but falls inside ROPE - meaning it's not worth implementing because the improvement is tiny.
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Like paying $1000 to gain $10. Sure, you "gain money" (statistically significant), but it's a terrible business decision (not practically significant). ROPE prevents you from celebrating meaningless wins.
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Why it's powerful:</strong> Forces you to define "How much improvement actually matters to my business?" before looking at results. Prevents chasing tiny, worthless gains.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-dna mr-2"></i>Beta Distribution
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A probability distribution that models percentages/proportions. It's bounded between 0 and 1, making it perfect for conversion rates, click-through rates, etc.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Beta(3, 7) represents: "I saw 3 successes and 7 failures, so I think the true rate is around 30% (3 ÷ 10), but I'm not super confident yet because my sample is small."
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Like a rubber band stretched between 0% and 100%. The parameters (α and β) determine where it bulges most - that's your best guess for the true percentage.
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Why it's used:</strong> Beta distributions have a magical property - when you multiply them with binomial data (success/failure), the math works out perfectly. No complex calculations needed!
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-layer-group mr-2"></i>Beta-Binomial Model
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The combination of Beta prior + Binomial likelihood = Beta posterior. It's the foundation of Bayesian A/B testing for conversion rates.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong><br>
+                    • <strong>Prior:</strong> Beta(1, 1) = "I think conversion rate is somewhere between 0-100%, no strong belief"<br>
+                    • <strong>Data:</strong> 20 conversions out of 100 visitors<br>
+                    • <strong>Posterior:</strong> Beta(1+20, 1+80) = Beta(21, 81) = "Now I think it's around 20%, with some uncertainty"
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Like updating a weather forecast. Your morning prediction (prior) + today's observations (data) = tonight's updated forecast (posterior). The Beta-Binomial model is the formula that does this update automatically.
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Why it's elegant:</strong> This is called a "conjugate prior" - it means the posterior has the same form as the prior (both Beta). You can update your beliefs infinitely as new data arrives, and the math always stays simple.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-check-double mr-2"></i>Convergence Diagnostics
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> Tools to check if your MCMC sampler has explored the probability space enough to give reliable answers.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Key Metrics:</strong><br>
+                    • <strong>R-hat (R̂):</strong> Should be < 1.01. Measures if multiple chains agree. Think of it as "Do 4 different hikers all find the same treasure location?"<br>
+                    • <strong>ESS (Effective Sample Size):</strong> Should be > 400. Measures how many "independent" samples you have. Like checking if your survey respondents are actually different people, not the same person filling it out 1000 times.
+                </p>
+                <p class="text-gray-400 text-sm mb-3">
+                    <strong>Analogy:</strong> Like checking if your coffee is fully brewed. Convergence diagnostics tell you: "Yes, the mixing is complete, your results are reliable" or "No, keep brewing, it's not ready yet."
+                </p>
+                <p class="text-gray-400 text-sm italic">
+                    <strong>Why it matters:</strong> MCMC can give you wrong answers if you stop it too early. These diagnostics are your safety check, like a smoke detector for bad statistics.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-chart-line mr-2"></i>ArviZ (Exploratory Analysis of Bayesian Models)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Full Name:</strong> ArviZ (pronounced "arviz")
+                </p>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A Python library for analyzing and visualizing Bayesian models. It calculates HDI, creates trace plots, computes diagnostics, and makes beautiful visualizations.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> After PyMC runs your model, ArviZ creates the graphs showing your posterior distributions, calculates the 95% HDI, checks R-hat values, and generates trace plots - all with one line of code.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> If PyMC is the race car that runs the calculations, ArviZ is the dashboard that shows you speed, fuel level, and GPS location in easy-to-read gauges.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-expand-arrows-alt mr-2"></i>Prior Distribution (Prior)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> Your initial belief about a parameter before seeing any data. It encodes what you know (or don't know) before running the experiment.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong><br>
+                    • <strong>Uninformative:</strong> Beta(1, 1) = "I have no idea what the conversion rate is"<br>
+                    • <strong>Weakly Informative:</strong> Beta(3, 7) = "I think it's around 30%, but I'm open to the data changing my mind"<br>
+                    • <strong>Informative:</strong> Beta(30, 70) = "Based on 5 years of history, I'm pretty sure it's 30% ± 5%"
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Like entering a courtroom. The prior is your opinion before hearing witnesses. Some people come in neutral (uninformative), others have a hunch (weakly informative), others are already 90% convinced (informative). The data is the testimony that may or may not change your mind.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-percentage mr-2"></i>Conjugate Prior
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A prior that, when combined with a specific likelihood, produces a posterior of the same family. It's a mathematical convenience that makes calculations instant.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Beta prior + Binomial likelihood = Beta posterior. No MCMC needed! The formula is: Beta(α, β) + [k successes, n trials] = Beta(α+k, β+n-k).
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Like LEGO blocks that click together perfectly. Conjugate priors are "compatible" with certain data types, making the math fit together seamlessly without glue (MCMC).
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
             <h2><i class="fas fa-cogs mr-3"></i>Technical Architecture</h2>
 
             <h3>The Stack</h3>
