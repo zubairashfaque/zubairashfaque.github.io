@@ -790,6 +790,184 @@ def fit(self, control_conversions, control_trials,
 
             <div class="section-divider"></div>
 
+            <h2><i class="fas fa-images mr-3"></i>📸 Dashboard Walkthrough</h2>
+
+            <p>
+                The following screenshots showcase the complete Bayesian A/B Testing Dashboard workflow, from initial data exploration through final analysis and decision making. Each image captures a critical step in turning raw data into actionable insights.
+            </p>
+
+            <h3>Welcome Page</h3>
+            <p>
+                The landing page provides an overview of the complete Bayesian analysis workflow and highlights key advantages over traditional frequentist methods.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/dashboard_home.png" alt="Dashboard Home" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The homepage introduces users to the five-step workflow: Upload Data, Configure Analysis, Run Analysis, View Results, and Make Decisions. It emphasizes the intuitive interpretation of results with direct probability statements rather than confusing p-values.
+            </p>
+
+            <h3>Data Explorer Page</h3>
+            <p>
+                Before running any analysis, the Data Explorer page helps you understand your dataset through comprehensive visualizations and quality checks.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/data_explorer.png" alt="Data Explorer Overview" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> Dataset overview showing 90,189 total users split between control (gate_30: 44,700 users) and treatment (gate_40: 45,489 users) groups. The interface displays sample data with columns for user ID, variant assignment, game rounds played, and retention metrics.
+            </p>
+
+            <h4 class="text-lg font-semibold text-blue-400 mt-6 mb-3">Distribution Analysis Tab</h4>
+            <p>
+                The first tab provides deep insights into how game rounds are distributed across the entire dataset and by experimental variant.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/exploratory_distribution_analysis.png" alt="Distribution Analysis" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Distribution Analysis tab reveals the distribution of game rounds with two complementary views. The left histogram shows that the overall distribution is heavily right-skewed with most users playing fewer than 10 rounds, while the right panel displays box plots comparing game rounds by variant. Summary statistics at the bottom reveal that gate_30 users averaged 52.46 rounds with a standard deviation of 256.72, while gate_40 users averaged 51.29 rounds with a standard deviation of 103.29. Both variants show similar median values (5 rounds) but gate_30 exhibits higher variability with a maximum of 49,854 rounds compared to gate_40's maximum of 2,640 rounds.
+            </p>
+
+            <h4 class="text-lg font-semibold text-blue-400 mt-6 mb-3">Retention Comparison Tab</h4>
+            <p>
+                The second tab focuses specifically on retention metrics, comparing both 1-day and 7-day retention rates between experimental groups.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/exploratory_retention_comparison.png" alt="Retention Comparison" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Retention Comparison tab presents side-by-side bar charts showing retention rates for both variants. For gate_30, the 1-day retention is 44.82% and 7-day retention is 19.02% (based on 44,700 users). For gate_40, the 1-day retention is 44.23% and 7-day retention is 18.20% (based on 45,489 users). The visual comparison makes it immediately clear that while both variants have similar 1-day retention, the control group (gate_30) maintains a slightly higher 7-day retention rate, which is the primary metric of interest for the A/B test.
+            </p>
+
+            <h4 class="text-lg font-semibold text-blue-400 mt-6 mb-3">Engagement Analysis Tab</h4>
+            <p>
+                The third tab segments users by engagement level to understand how player behavior relates to retention outcomes.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/exploratory_engagement_analysis.png" alt="Engagement Analysis" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Engagement Analysis tab categorizes users into four engagement levels based on game rounds played: Low (0-20 rounds), Medium (20-50 rounds), Very High (100+ rounds), and High (50-100 rounds). The pie chart on the left shows that 53.1% of users fall into the Low engagement category, 20.4% are Medium, 12.1% are High, and 14.4% are Very High. The bar chart on the right reveals a critical insight: 7-day retention increases dramatically with engagement level, rising from around 10% for Low engagement users to approximately 90% for Very High engagement users. This strong positive correlation suggests that strategies to increase early engagement could substantially improve long-term retention.
+            </p>
+
+            <h4 class="text-lg font-semibold text-blue-400 mt-6 mb-3">Data Quality Tab</h4>
+            <p>
+                The fourth tab performs comprehensive data validation to ensure the dataset is clean and ready for statistical analysis.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/exploratory_data_quality.png" alt="Data Quality" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Data Quality Check tab confirms that the dataset passes all validation requirements with a green success message: "Data validation passed - no issues found!" The dashboard shows zero missing values, zero duplicate user IDs, and confirms all data types are valid. This rigorous quality check provides confidence that the subsequent Bayesian analysis will be based on clean, reliable data. The expandable "Column Information" section allows users to examine detailed metadata about each variable in the dataset.
+            </p>
+
+            <h3>Bayesian Analysis Page</h3>
+            <p>
+                The core analysis page provides complete control over prior selection, MCMC parameters, and decision thresholds.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/bayesian_analysis.png" alt="Bayesian Analysis Configuration" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> Analysis configuration interface showing the Cookie Cats experiment results: Control group (35,760 users, 19.24% retention) vs Treatment group (36,391 users, 18.29% retention). The sidebar allows selection of prior distributions, ROPE bounds, MCMC sampling parameters, and decision thresholds.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/prior_selection_6.png" alt="Prior Selection Options" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Prior Type dropdown menu offers six carefully crafted prior distributions: Uninformative (Flat), Weakly Informative, Mobile Game Default, Informative, Skeptical, Pessimistic, and Optimistic. Each prior encodes different levels of prior knowledge and assumptions about expected retention rates.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/posterior_distributions.png" alt="Posterior Distributions" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> Posterior distribution plots for control and treatment groups show overlapping probability distributions. The control group (p_control) has a mean of 0.19 (19% retention) while the treatment group (p_treatment) has a mean of 0.18 (18% retention). The 95% Highest Density Interval (HDI) provides the range of plausible values for each group's true retention rate.
+            </p>
+
+            <h3>Effect Size Analysis</h3>
+            <p>
+                Understanding the difference between groups is crucial for making informed decisions.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/effect_size_full_view.png" alt="Effect Size Distribution" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The effect size distribution provides a complete picture of the difference between treatment and control groups. The distribution is centered at a mean of negative 0.0095 (shown by the solid green vertical line), indicating the treatment group has slightly lower retention. The 95% HDI ranges from negative 0.0152 to negative 0.0036, displayed at the top of the chart. The shaded light blue region represents the ROPE (Region of Practical Equivalence), which captures differences considered too small to matter practically. A critical insight emerges from the statistics displayed: only 0.04% of the distribution falls above zero (meaning treatment is better than control), while a full 57% of the distribution falls within the ROPE. The red dashed vertical line at zero represents no effect. This visualization elegantly combines the direction of effect (negative), magnitude (small), statistical confidence (95% HDI), and practical significance (ROPE), giving decision-makers all the information they need in a single, interpretable chart.
+            </p>
+
+            <h3>Results Summary</h3>
+            <p>
+                The comprehensive summary report combines all key visualizations and statistics in a publication-ready format.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/summary_report_complete.png" alt="Complete Summary Report" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Bayesian A/B Test Summary Report presents a holistic view that synthesizes all analysis results into one comprehensive visualization. The top panel displays the posterior distributions for both control (blue) and treatment (red) groups with dashed vertical lines marking the observed retention rates at 19.24% and 18.29% respectively. The solid colored histograms represent our updated beliefs after incorporating the data with our prior knowledge. The bottom-left panel shows the effect size distribution as a green histogram centered at negative 0.0095, with the red dashed line at zero clearly visible to the right of most of the distribution mass. The bottom-right panel contains a fascinating probability plot showing a horizontal line at approximately 0.04, representing the vanishingly small probability that treatment performs better than control. The comprehensive metrics table at the bottom provides exact numbers: control has an observed rate of 0.1924 and posterior mean of 0.1926 with 95% HDI of [0.1884, 0.1966], while treatment shows observed rate of 0.1829 and posterior mean of 0.1831 with 95% HDI of [0.1791, 0.1872]. The difference column confirms the mean effect of negative 0.0095 with credible interval [negative 0.0152, negative 0.0036].
+            </p>
+
+            <h3>Detailed Statistics and Decision Recommendation</h3>
+            <p>
+                Beyond visualizations, the dashboard provides comprehensive numerical statistics and actionable business recommendations.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/detailed_statistics_full.png" alt="Detailed Statistics" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Detailed Statistics tab organizes all numerical results in a clear, scannable table format. For the control group (gate_30), the posterior mean is 0.1926 with a standard deviation of 0.0021, and the 95% HDI spans from 0.1884 to 0.1966. The treatment group (gate_40) shows a posterior mean of 0.1831 with standard deviation of 0.0021 and 95% HDI of [0.1791, 0.1872]. The Effect Size section reveals a mean difference of negative 0.0095 with standard deviation of 0.0029 and 95% HDI ranging from negative 0.0152 to negative 0.0036. The Relative Uplift section translates these absolute differences into percentage terms, showing a mean relative change of negative 4.91% with 95% HDI spanning from negative 7.77% to negative 1.90%. These statistics provide stakeholders with precise numerical values for presentations, reports, and decision-making documentation.
+            </p>
+
+            <div style="margin: 2rem 0; text-align: center;">
+                <img src="images/decision_recommendation.png" alt="Decision Recommendation" style="width: 100%; max-width: 900px; border-radius: 0.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+            </div>
+
+            <p class="text-gray-400 text-sm italic" style="margin-top: 1rem;">
+                <strong>Caption:</strong> The Decision section delivers the actionable bottom line: "CONTROL BETTER" with a clear recommendation stating "Control is better with 100.0% probability. Expected drop: negative 0.95%". This removes all ambiguity and translates complex statistical analysis into straightforward business guidance. The Prior Used section maintains complete transparency by documenting exactly which prior distribution informed the analysis: a Skeptical prior with parameters μ equals 0.48, alpha equals 16.0, beta equals 24.0, mean equals 0.400, and standard deviation equals 0.077. This documentation ensures reproducibility and allows other analysts to understand and critique the assumptions underlying the analysis. The yellow tip at the bottom encourages experimentation: "Try different priors and see how they affect the results. Bayesian analysis naturally incorporates prior beliefs!" This educational element reminds users that one of Bayesian methods' greatest strengths is the ability to formally incorporate domain knowledge through prior selection.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>Key Insights from Analysis:</strong>
+                <p class="mt-2">
+                    The Bayesian analysis of the Cookie Cats experiment reveals a nuanced story that goes beyond simple "statistically significant" or "not significant" labels. The posterior distributions show that while there is overlap between the control and treatment groups, the data provides strong evidence that the control group (gate at level 30) performs better than the treatment group (gate at level 40) in terms of 7-day retention.
+                </p>
+                <p class="mt-2">
+                    The effect size analysis is particularly illuminating. With a mean difference of negative 0.95 percentage points and a 95% HDI that ranges entirely below zero (from negative 1.52 to negative 0.36 percentage points), we can be highly confident that moving the gate from level 30 to level 40 actually decreases player retention. The probability that treatment is better than control is vanishingly small at just 0.04%, which translates to overwhelming evidence favoring the control variant.
+                </p>
+                <p class="mt-2">
+                    However, the practical significance is where the analysis becomes truly interesting. A full 57% of the effect size distribution falls within the ROPE (Region of Practical Equivalence), suggesting that while the difference is real, it may not be large enough to warrant immediate action. This is the beauty of Bayesian analysis: rather than forcing a binary decision, it provides the full probability distribution that captures both the direction and magnitude of effects, along with our uncertainty about them.
+                </p>
+                <p class="mt-2">
+                    The decision recommendation is clear: "CONTROL BETTER" with 100.0% probability. This means that based on the data and our prior beliefs, we should maintain the gate at level 30 rather than moving it to level 40. The expected negative impact of negative 0.95 percentage points may seem small, but at scale with millions of players, this translates to thousands of additional retained players by keeping the gate at the earlier level.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
             <h2><i class="fas fa-wrench mr-3"></i>Technical Challenges & Solutions</h2>
 
             <h3>Challenge 1: MCMC Convergence</h3>
