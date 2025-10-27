@@ -513,6 +513,21 @@
                     github: 'https://github.com/zubairashfaque/vivarium',
                     blog: 'blog/vivarium-multi-agent-ai.html',
                     demo: true
+                },
+                {
+                    title: 'Bayesian A/B Testing Dashboard',
+                    company: 'Personal Project',
+                    description: 'Production-ready Bayesian A/B testing framework with interactive Streamlit dashboard. Combines statistical rigor with intuitive visualization.',
+                    challenge: 'Making complex Bayesian inference accessible to non-statisticians while maintaining mathematical correctness.',
+                    solution: 'Built 4-page Streamlit app with PyMC inference engine, 6 calibrated priors, ROPE-based decision framework, and comprehensive educational content.',
+                    impact: '46 unit tests (95%+ coverage), real-world Cookie Cats analysis (90K+ users), interactive prior exploration, and MCMC convergence diagnostics.',
+                    tech: ['PyMC', 'Streamlit', 'ArviZ', 'Plotly', 'Bayesian Statistics', 'MCMC'],
+                    tags: ['Research', 'Predictive', 'ML'],
+                    icon: 'fa-chart-line',
+                    color: 'from-cyan-500 to-blue-500',
+                    github: 'https://github.com/zubairashfaque/bayesian-ab-testing-dashboard',
+                    blog: 'blog/bayesian-ab-testing-dashboard.html',
+                    demo: true
                 }
             ];
 
@@ -846,6 +861,17 @@
 
             const journalEntries = [
                 {
+                    title: 'Building a Bayesian A/B Testing Dashboard: From Theory to Production',
+                    date: 'October 27, 2025',
+                    category: 'Data Science',
+                    excerpt: 'A comprehensive journey of building a production-ready Bayesian A/B testing framework with an interactive Streamlit dashboard. Exploring the intersection of statistical rigor, modern Python tooling, and practical data science.',
+                    readTime: '12 min read',
+                    tags: ['Bayesian Statistics', 'PyMC', 'Streamlit', 'A/B Testing'],
+                    color: 'from-cyan-500 to-blue-500',
+                    icon: 'fa-chart-line',
+                    link: 'blog/bayesian-ab-testing-dashboard.html'
+                },
+                {
                     title: 'Building Vivarium: Lessons in Multi-Agent AI Systems',
                     date: 'October 26, 2025',
                     category: 'AI Research',
@@ -878,7 +904,7 @@
                 }
             ];
 
-            const categories = ['All', 'AI Research', 'LLM Engineering', 'AI Architecture'];
+            const categories = ['All', 'AI Research', 'Data Science', 'LLM Engineering', 'AI Architecture'];
 
             const filteredEntries = selectedCategory === 'All'
                 ? journalEntries
