@@ -324,7 +324,7 @@
                 <h4 class="text-xl font-semibold text-cyan-400 mb-3">
                     <i class="fas fa-layer-group mr-2"></i>Top-K Selection
                 </h4>
-                <p class="text-gray-300 mb-2">
+                <p class="text-base text-gray-300 mb-2">
                     <strong>Definition:</strong> The process of choosing exactly K documents from your vector database based on their similarity scores to the query. When a user submits a question, your embedding model converts that question into a numerical vector, then searches your document collection to find the K most similar document vectors. The K in Top-K is simply a number you configure, typically ranging from five to fifty depending on your use case.
                 </p>
                 <p class="text-gray-400 text-sm mb-2">
@@ -339,7 +339,7 @@
                 <h4 class="text-xl font-semibold text-cyan-400 mb-3">
                     <i class="fas fa-sort-amount-down mr-2"></i>Ranking and Relevance Scoring
                 </h4>
-                <p class="text-gray-300 mb-2">
+                <p class="text-base text-gray-300 mb-2">
                     <strong>Definition:</strong> The process of ordering retrieved documents by their relevance to the query, where relevance scoring provides the numerical measure that determines this order. After Top-K selection retrieves your candidate documents, ranking ensures that the most relevant documents appear first in the list that gets passed to your language model. The relevance score is typically a number between zero and one, where one means "perfect match" and zero means "completely unrelated."
                 </p>
                 <p class="text-gray-400 text-sm mb-2">
@@ -354,7 +354,7 @@
                 <h4 class="text-xl font-semibold text-cyan-400 mb-3">
                     <i class="fas fa-vector-square mr-2"></i>Vector Embeddings
                 </h4>
-                <p class="text-gray-300 mb-2">
+                <p class="text-base text-gray-300 mb-2">
                     <strong>Definition:</strong> Numerical representations of text that capture semantic meaning in a format that computers can mathematically compare. When you convert a sentence or document into a vector embedding, you transform it into a list of several hundred or thousand numbers that encode its meaning, not just its keywords.
                 </p>
                 <p class="text-gray-400 text-sm mb-2">
@@ -369,7 +369,7 @@
                 <h4 class="text-xl font-semibold text-cyan-400 mb-3">
                     <i class="fas fa-link mr-2"></i>Semantic Similarity
                 </h4>
-                <p class="text-gray-300 mb-2">
+                <p class="text-base text-gray-300 mb-2">
                     <strong>Definition:</strong> A measure of how close two pieces of text are in meaning, regardless of whether they use the same words. This is the fundamental capability that makes modern RAG systems superior to traditional keyword search. It's calculated using vector embeddings and distance metrics like cosine similarity.
                 </p>
                 <p class="text-gray-400 text-sm mb-2">
@@ -384,7 +384,7 @@
                 <h4 class="text-xl font-semibold text-cyan-400 mb-3">
                     <i class="fas fa-robot mr-2"></i>Retrieval-Augmented Generation (RAG)
                 </h4>
-                <p class="text-gray-300 mb-2">
+                <p class="text-base text-gray-300 mb-2">
                     <strong>Definition:</strong> An AI architecture that combines information retrieval with language model generation. Instead of relying solely on the language model's training data, RAG systems first retrieve relevant documents from an external knowledge base, then use those documents as context for generating the final answer.
                 </p>
                 <p class="text-gray-400 text-sm mb-2">
