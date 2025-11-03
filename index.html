@@ -867,6 +867,7 @@
         // The Journal Section Component
         const JournalSection = () => {
             const [selectedCategory, setSelectedCategory] = useState('All');
+            const [subscribeEmail, setSubscribeEmail] = useState('');
 
             const journalEntries = [
                 {
@@ -918,6 +919,16 @@
             const filteredEntries = selectedCategory === 'All'
                 ? journalEntries
                 : journalEntries.filter(entry => entry.category === selectedCategory);
+
+            const handleSubscribe = (e) => {
+                e.preventDefault();
+                if (subscribeEmail) {
+                    const mailtoLink = `mailto:mianashfaque@gmail.com?subject=Newsletter Subscription Request&body=Hi, I would like to subscribe to your newsletter.%0D%0A%0D%0AMy email: ${encodeURIComponent(subscribeEmail)}`;
+                    window.location.href = mailtoLink;
+                    setSubscribeEmail('');
+                    alert('Thank you for subscribing! You will be notified of new articles.');
+                }
+            };
 
             return (
                 <section id="journal" className="py-20 bg-slate-900">
@@ -1029,16 +1040,19 @@
                                 <p className="text-gray-300 mb-6">
                                     Get notified when new articles are published
                                 </p>
-                                <div className="flex gap-4">
+                                <form onSubmit={handleSubscribe} className="flex gap-4">
                                     <input
                                         type="email"
                                         placeholder="Enter your email"
+                                        value={subscribeEmail}
+                                        onChange={(e) => setSubscribeEmail(e.target.value)}
+                                        required
                                         className="flex-1 px-6 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-cyan-500 focus:outline-none transition-colors"
                                     />
-                                    <button className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300">
+                                    <button type="submit" className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300">
                                         Subscribe
                                     </button>
-                                </div>
+                                </form>
                             </div>
                         </div>
                     </div>
