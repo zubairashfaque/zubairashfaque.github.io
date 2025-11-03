@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Top-K Selection and Ranking in RAG Systems | Zubair Ashfaque</title>
+    <meta name="description" content="A beginner-friendly guide to understanding how Top-K selection and ranking work in Retrieval-Augmented Generation (RAG) systems using simple analogies and real-world examples.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="assets/blog-styles.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .analogy-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .takeaway-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            margin: 3rem 0;
+        }
+
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #06b6d4;
+        }
+
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        article li {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .breadcrumb a {
+            color: #06b6d4;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #8b5cf6;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #475569;
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+            }
+
+            article p, article ul, article ol {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-cyan-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>Top-K Selection and Ranking in RAG</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Understanding Top-K Selection and Ranking in RAG Systems
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                Ever wondered how AI finds the perfect answers in seconds? Let's demystify the magic behind RAG systems using simple analogies you'll actually remember.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>November 3, 2025</span>
+                <span><i class="far fa-clock mr-2"></i>6 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">RAG</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Retrieval</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">AI</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Top-K</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Ranking</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <h2 id="opening-hook">Your AI-Powered Library Assistant</h2>
+            <p>
+                Imagine walking into a massive library with <strong>millions of books</strong>. You ask the librarian, "What are the health benefits of green tea?" Instead of handing you every book that mentions tea, a skilled librarian would:
+            </p>
+            <ul>
+                <li>📚 <strong>Pick the 5 most relevant books</strong> (that's Top-K selection)</li>
+                <li>📊 <strong>Arrange them by relevance</strong> (that's ranking)</li>
+                <li>✨ <strong>Hand you the best match first</strong> (optimized results)</li>
+            </ul>
+            <p>
+                This is exactly how modern AI systems work! By the end of this guide, you'll understand how <strong>Retrieval-Augmented Generation (RAG)</strong> systems use Top-K selection and ranking to deliver accurate answers lightning-fast.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2 id="core-concepts">Breaking Down the Magic: Core Concepts</h2>
+
+            <h3>What is Top-K Selection?</h3>
+            <p>
+                Think of <strong>Top-K selection</strong> as your smart filter. When you search for something, the AI doesn't just grab everything—it intelligently picks the <strong>K best matches</strong>. The "K" is just a number (like 5 or 10) that determines how many results to consider.
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-lg font-semibold text-cyan-400 mb-3">🎯 Top-K in Simple Terms:</h4>
+                <p class="text-slate-300 mb-2">
+                    If you have <strong>10,000 documents</strong> about health and ask about green tea, Top-K selection says:
+                </p>
+                <p class="text-slate-300 italic">
+                    "Hey, let me grab the <strong>best 5 documents</strong> (K=5) that actually talk about green tea's health benefits, not just any document that mentions the word 'green' or 'tea'."
+                </p>
+            </div>
+
+            <p>
+                This is crucial because:
+            </p>
+            <ul>
+                <li>⚡ <strong>Speed</strong>: Processing 5 documents is way faster than 10,000</li>
+                <li>💰 <strong>Cost</strong>: Each document processed costs money and computational power</li>
+                <li>🎯 <strong>Accuracy</strong>: More focused results mean better answers</li>
+            </ul>
+
+            <h3>How Does Ranking Work?</h3>
+            <p>
+                Once we have our Top-K results, we need to <strong>order them by relevance</strong>. This is where ranking comes in. Every document gets a <strong>relevance score</strong>—think of it as a grade from 0 to 1, where 1 means "perfect match."
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-lg font-semibold text-violet-400 mb-3">📊 Ranking in Action:</h4>
+                <p class="text-slate-300">
+                    The AI looks at each document and asks: <em>"How closely does this answer the question?"</em>
+                </p>
+                <ul class="mt-3 space-y-1 text-slate-300">
+                    <li>🥇 <strong>Document A</strong>: 0.95 (talks specifically about green tea health benefits)</li>
+                    <li>🥈 <strong>Document B</strong>: 0.87 (discusses tea antioxidants)</li>
+                    <li>🥉 <strong>Document C</strong>: 0.82 (mentions green tea in broader health context)</li>
+                </ul>
+            </div>
+
+            <p>
+                The system uses sophisticated algorithms (like <strong>cosine similarity</strong> or <strong>semantic embeddings</strong>) to calculate these scores. But here's the beautiful part: <strong>you don't need to understand the math to grasp the concept!</strong> Just think of it as the AI measuring "how well does this document answer my question?"
+            </p>
+
+            <h3>Why Both Matter for AI Accuracy</h3>
+            <p>
+                Here's where the magic happens. <strong>Top-K selection</strong> and <strong>ranking</strong> work together like a dynamic duo:
+            </p>
+            <ul>
+                <li>🔍 <strong>Top-K</strong> filters the noise (cuts 10,000 documents down to 5)</li>
+                <li>📈 <strong>Ranking</strong> prioritizes the signal (puts the best answer first)</li>
+                <li>🎯 <strong>Together</strong>: You get fast, accurate, and contextually relevant answers</li>
+            </ul>
+
+            <p>
+                Without Top-K, you'd be overwhelmed with information. Without ranking, you wouldn't know which result to trust. Together, they create the seamless AI experience you enjoy every day.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2 id="real-world-example">Real-World Example: Green Tea Query</h2>
+
+            <p>
+                Let's walk through exactly what happens when you ask: <strong>"What are the health benefits of green tea?"</strong>
+            </p>
+
+            <h3>Step-by-Step Journey:</h3>
+
+            <div class="concept-card">
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">1️⃣</span>
+                            <h4 class="text-lg font-semibold text-cyan-400">User Query</h4>
+                        </div>
+                        <p class="text-slate-300 pl-11">You type: "What are the health benefits of green tea?"</p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">2️⃣</span>
+                            <h4 class="text-lg font-semibold text-cyan-400">Document Retrieval</h4>
+                        </div>
+                        <p class="text-slate-300 pl-11">System searches through <strong>50,000 health documents</strong> in its database</p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">3️⃣</span>
+                            <h4 class="text-lg font-semibold text-violet-400">Top-K Selection (K=5)</h4>
+                        </div>
+                        <p class="text-slate-300 pl-11">AI narrows down to the <strong>5 most relevant documents</strong></p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">4️⃣</span>
+                            <h4 class="text-lg font-semibold text-violet-400">Ranking by Relevance</h4>
+                        </div>
+                        <p class="text-slate-300 pl-11">System scores and orders documents:</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-block relative">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code># Ranked Results (Highest to Lowest Relevance Score)
+
+Document 1: "Green Tea Antioxidants and Health"
+Score: 0.94
+Snippet: "Green tea contains powerful antioxidants called catechins..."
+
+Document 2: "Benefits of Daily Green Tea Consumption"
+Score: 0.89
+Snippet: "Studies show green tea improves metabolism and heart health..."
+
+Document 3: "Comparative Analysis: Green Tea vs Black Tea"
+Score: 0.85
+Snippet: "Green tea shows higher polyphenol content..."
+
+Document 4: "Herbal Teas and Wellness"
+Score: 0.78
+Snippet: "Green tea ranks among the healthiest beverages..."
+
+Document 5: "Traditional Chinese Medicine: Tea Benefits"
+Score: 0.72
+Snippet: "Ancient practices highlight green tea's healing properties..."</code></pre>
+            </div>
+
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-cyan-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-3">
+                        🔄 RAG System Flowchart
+                    </h3>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-4">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-search text-cyan-400 text-xl"></i>
+                                </div>
+                                <span class="text-cyan-300 font-semibold">Query</span>
+                            </div>
+                            <p class="text-sm text-slate-400">User asks question</p>
+                        </div>
+                    </div>
+                    <div class="text-cyan-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-blue-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-database text-blue-400 text-xl"></i>
+                                </div>
+                                <span class="text-blue-300 font-semibold">Retrieval</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Search 50K documents</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-violet-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-filter text-violet-400 text-xl"></i>
+                                </div>
+                                <span class="text-violet-300 font-semibold">Top-K Selection</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Select best 5 matches</p>
+                        </div>
+                    </div>
+                    <div class="text-violet-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-fuchsia-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-fuchsia-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-sort-amount-down text-fuchsia-400 text-xl"></i>
+                                </div>
+                                <span class="text-fuchsia-300 font-semibold">Ranking</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Order by relevance score</p>
+                        </div>
+                    </div>
+                    <div class="text-fuchsia-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-green-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                                </div>
+                                <span class="text-green-300 font-semibold">Final Answer</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Generate response</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>5️⃣ Final Answer Generation:</strong> The AI uses the top-ranked document to generate a comprehensive, accurate answer about green tea's health benefits—all in milliseconds!
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2 id="everyday-analogy">The Restaurant Recommendation Analogy</h2>
+
+            <div class="analogy-card">
+                <h3 class="text-2xl font-bold text-cyan-400 mb-4">🍽️ Finding the Perfect Restaurant</h3>
+
+                <p class="text-slate-300 mb-4">
+                    Let's say you're visiting a new city with <strong>500+ restaurants</strong>. You tell a friend: <em>"I want authentic Italian food with outdoor seating, under $50."</em>
+                </p>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-800/50 rounded-lg p-4">
+                        <h4 class="text-lg font-semibold text-violet-400 mb-2">🎯 Top-K Selection = Shortlisting</h4>
+                        <p class="text-slate-300">
+                            Your friend doesn't list all 500 restaurants. Instead, they <strong>shortlist the top 5</strong> that match your criteria:
+                        </p>
+                        <ul class="mt-2 text-slate-300 space-y-1">
+                            <li>✅ Italian cuisine</li>
+                            <li>✅ Outdoor seating available</li>
+                            <li>✅ Fits budget</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-slate-800/50 rounded-lg p-4">
+                        <h4 class="text-lg font-semibold text-fuchsia-400 mb-2">📊 Ranking = Ordering by Match Quality</h4>
+                        <p class="text-slate-300">
+                            Now your friend ranks these 5 based on how perfectly they match your preferences:
+                        </p>
+                        <ul class="mt-2 text-slate-300 space-y-1">
+                            <li>🥇 <strong>La Dolce Vita</strong> - 95% match (perfect Italian, great patio, $45 average)</li>
+                            <li>🥈 <strong>Trattoria Roma</strong> - 88% match (authentic, small terrace, $48 average)</li>
+                            <li>🥉 <strong>Bella Napoli</strong> - 82% match (good food, sidewalk seating, $40 average)</li>
+                            <li>4️⃣ <strong>Italiano Express</strong> - 75% match (casual, patio seating, $35 average)</li>
+                            <li>5️⃣ <strong>Pasta House</strong> - 68% match (Italian-inspired, outdoor area, $30 average)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p class="text-slate-300 mt-4">
+                    <strong>The magic?</strong> Without Top-K and ranking, you'd be scrolling through hundreds of restaurants with no idea which one fits best. Instead, you get a curated, prioritized list where the <strong>best match is right at the top</strong>!
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2 id="key-takeaways">Key Takeaways</h2>
+
+            <div class="takeaway-box">
+                <h3 class="text-2xl font-bold text-violet-400 mb-4">💡 Remember These Core Concepts:</h3>
+
+                <ul class="space-y-4 text-slate-300">
+                    <li class="flex gap-3">
+                        <span class="text-cyan-400 font-bold text-xl">1.</span>
+                        <div>
+                            <strong class="text-cyan-400">Top-K Selection is Your Smart Filter:</strong> Instead of processing thousands of documents, it intelligently picks the K most relevant ones—saving time, money, and computational power.
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-violet-400 font-bold text-xl">2.</span>
+                        <div>
+                            <strong class="text-violet-400">Ranking Orders Results by Relevance:</strong> Each document gets a score (0-1) measuring how well it answers your question. The highest-scoring document goes first, ensuring you get the best answer immediately.
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-fuchsia-400 font-bold text-xl">3.</span>
+                        <div>
+                            <strong class="text-fuchsia-400">Together, They Power Accurate AI:</strong> Top-K narrows the search space, ranking optimizes the results. This combination is why modern RAG systems deliver lightning-fast, contextually accurate answers.
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="mt-6 p-4 bg-cyan-500/10 border-l-4 border-cyan-400 rounded">
+                    <h4 class="text-lg font-semibold text-cyan-400 mb-2">🚀 Practical Tip for RAG Builders:</h4>
+                    <p class="text-slate-300">
+                        When building your own RAG system, start with K=5 and adjust based on your use case. <strong>Too low (K=2)?</strong> You might miss important context. <strong>Too high (K=20)?</strong> You'll waste resources and introduce noise. Experiment to find your sweet spot!
+                    </p>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Call to Action -->
+            <div class="analogy-card text-center">
+                <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-400 mb-4">
+                    🌟 Want to Learn More?
+                </h3>
+                <p class="text-slate-300 mb-6">
+                    Now that you understand Top-K and ranking, you're ready to explore advanced RAG techniques, vector databases, and semantic search algorithms. Stay curious!
+                </p>
+                <a href="../index.html#journal" class="btn-primary">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to All Posts
+                </a>
+            </div>
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">© 2025 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
