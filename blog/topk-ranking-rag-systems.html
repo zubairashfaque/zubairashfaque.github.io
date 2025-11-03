@@ -232,7 +232,39 @@
 
         <!-- Main Article Content -->
         <article>
-            <h2>🎯 The Challenge</h2>
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Retrieval-Augmented Generation is transforming how AI systems access and leverage knowledge. But here's the uncomfortable truth: most RAG implementations are leaving massive value on the table. Companies invest heavily in collecting documents, training embedding models, and deploying vector databases, only to discover that their systems return mediocre results. Users ask precise questions and get vague answers. Critical information sits in the database but never reaches the language model. The promise of intelligent retrieval collides with the reality of poor configuration.
+            </p>
+
+            <p>
+                The culprit is almost never the embedding model or the vector database. It's the retrieval strategy. Specifically, it's how you configure <strong>Top-K selection</strong> and <strong>ranking mechanisms</strong>. These two parameters determine which documents actually make it from your knowledge base to your language model's context window. Get them right, and your RAG system delivers precise, comprehensive answers backed by the most relevant sources. Get them wrong, and you have an expensive system that performs worse than keyword search.
+            </p>
+
+            <p>
+                This matters because <strong>context is everything</strong> in RAG systems. Language models can only work with what you give them. If you retrieve five documents when you need ten, you miss critical information. If you retrieve fifty documents when you need five, you overwhelm the model with noise and irrelevant context. If your ranking is misconfigured, the most relevant document ends up in position twenty, far beyond what the language model can effectively process. The questions this article answers are:
+            </p>
+
+            <ul class="list-disc">
+                <li>"How do I determine the optimal number of documents to retrieve for my use case?"</li>
+                <li>"What's the difference between initial vector search ranking and sophisticated reranking?"</li>
+                <li>"How do I balance relevance, diversity, and recency in my retrieval strategy?"</li>
+                <li>"What metrics should I track to know if my retrieval pipeline is actually working?"</li>
+            </ul>
+
+            <p>
+                I built this guide to provide a systematic blueprint for configuring production-grade retrieval that actually works. No hand-waving about "tune your parameters." Instead, you'll get a step-by-step implementation with real code, evaluation metrics, and concrete strategies for optimizing Top-K selection and ranking in RAG systems.
+            </p>
+
+            <div class="highlight-box" style="background: rgba(139, 92, 246, 0.1); border-left: 4px solid #8b5cf6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+                This article provides a complete seven-step blueprint that combines fast vector search, sophisticated reranking, metadata boosting, and diversity-based selection into a production-ready pipeline. You'll learn not just what to configure, but exactly how and why each component matters.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-bullseye mr-3"></i>🎯 The Challenge</h2>
 
             <p>
                 The <strong>challenge</strong> is that most Retrieval-Augmented Generation systems fail not because of poor language models or insufficient data, but because they retrieve the wrong documents at the wrong time. You build a RAG application, feed it thousands of carefully curated documents, connect it to a state-of-the-art embedding model, and yet when users ask questions, the system returns irrelevant results or misses the most important information entirely.
@@ -248,7 +280,7 @@
 
             <div class="section-divider"></div>
 
-            <h2>💡 Lucifying the Problem</h2>
+            <h2><i class="fas fa-search mr-3"></i>💡 Lucifying the Problem</h2>
 
             <p>
                 Let's <strong>lucify</strong> this concept using an analogy from everyday life that captures the essence of the retrieval problem.
@@ -282,66 +314,96 @@
 
             <div class="section-divider"></div>
 
-            <h2>📖 Lucifying the Tech Terms</h2>
+            <h2><i class="fas fa-book-open mr-3"></i>📖 Lucifying the Tech Terms</h2>
 
             <p>
                 To solve this problem effectively, we first need to <strong>lucify</strong> the key technical terms that appear throughout RAG retrieval systems. Understanding these terms clearly will make the blueprint implementation much easier to follow.
             </p>
 
-            <h3>🎯 Top-K Selection</h3>
-            <p>
-                <strong>Top-K selection</strong> is the process of choosing exactly K documents from your vector database based on their similarity scores to the query. In practical terms, when a user submits a question, your embedding model converts that question into a numerical vector, then searches your document collection to find the K most similar document vectors. The K in Top-K is simply a number you configure, typically ranging from five to fifty depending on your use case.
-            </p>
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-layer-group mr-2"></i>Top-K Selection
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The process of choosing exactly K documents from your vector database based on their similarity scores to the query. When a user submits a question, your embedding model converts that question into a numerical vector, then searches your document collection to find the K most similar document vectors. The K in Top-K is simply a number you configure, typically ranging from five to fifty depending on your use case.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Imagine searching for "best Italian restaurants" on Yelp. If you set K=5, Yelp shows you the top 5 restaurants ranked by relevance to your search. If K=20, you get 20 results. With K=5, you get quick, focused choices. With K=20, you have more options but need more time to review them all. The trade-off is the same in RAG systems.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of Top-K selection like setting the number of search results you want to see on Google. If Google only showed you one result (K=1), you might miss better pages that rank second or third. If it showed you one thousand results (K=1000), you would be overwhelmed and unable to identify the truly relevant pages. Higher K values give you more context but increase computational cost and potential noise. Lower K values are faster and cleaner but risk missing important information.
+                </p>
+            </div>
 
-            <p>
-                Think of Top-K selection like setting the number of search results you want to see on Google. If Google only showed you one result (K=1), you might miss better pages that rank second or third. If it showed you one thousand results (K=1000), you would be overwhelmed and unable to identify the truly relevant pages. Top-K selection makes the same trade-off between coverage and manageability. Higher K values give you more context but increase computational cost and potential noise. Lower K values are faster and cleaner but risk missing important information.
-            </p>
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-sort-amount-down mr-2"></i>Ranking and Relevance Scoring
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The process of ordering retrieved documents by their relevance to the query, where relevance scoring provides the numerical measure that determines this order. After Top-K selection retrieves your candidate documents, ranking ensures that the most relevant documents appear first in the list that gets passed to your language model. The relevance score is typically a number between zero and one, where one means "perfect match" and zero means "completely unrelated."
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You search Amazon for "wireless headphones." Amazon retrieves 100 products (Top-K), then ranks them by relevance. A product titled "Sony Wireless Bluetooth Headphones" gets a high relevance score (0.95) and appears first. A product titled "Headphone Case" gets a lower score (0.45) and appears on page 3. The ranking determines what you see first.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of ranking like sorting a playlist of songs. You might sort by release date, popularity, or how well each song matches your current mood. In RAG systems, you rank by relevance to the user's query. These scores come from similarity calculations between the query vector and document vectors, often using metrics like cosine similarity or dot product.
+                </p>
+            </div>
 
-            <h3>📊 Ranking and Relevance Scoring</h3>
-            <p>
-                <strong>Ranking</strong> is the process of ordering retrieved documents by their relevance to the query, where <strong>relevance scoring</strong> provides the numerical measure that determines this order. After Top-K selection retrieves your candidate documents, ranking ensures that the most relevant documents appear first in the list that gets passed to your language model.
-            </p>
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-vector-square mr-2"></i>Vector Embeddings
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> Numerical representations of text that capture semantic meaning in a format that computers can mathematically compare. When you convert a sentence or document into a vector embedding, you transform it into a list of several hundred or thousand numbers that encode its meaning, not just its keywords.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> The sentence "The cat sat on the mat" might become a vector like [0.23, -0.45, 0.67, ..., 0.12] with 1,536 numbers. A similar sentence "A feline rested on the rug" would have a similar vector like [0.25, -0.43, 0.65, ..., 0.14]. Even though they use different words, their vectors are mathematically close because their meanings are similar.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of vector embeddings like GPS coordinates for meaning. Just as GPS converts a physical location into latitude and longitude numbers that can be mathematically compared to find distances, embeddings convert text meaning into numerical coordinates in a high-dimensional space. Texts with similar meanings end up close together in this space, while texts with different meanings end up far apart.
+                </p>
+            </div>
 
-            <p>
-                Think of ranking like sorting a playlist of songs. You might sort by release date, popularity, or how well each song matches your current mood. In RAG systems, you rank by relevance to the user's query. The relevance score is typically a number between zero and one, where one means "perfect match" and zero means "completely unrelated." These scores come from similarity calculations between the query vector and document vectors, often using metrics like cosine similarity or dot product.
-            </p>
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-link mr-2"></i>Semantic Similarity
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A measure of how close two pieces of text are in meaning, regardless of whether they use the same words. This is the fundamental capability that makes modern RAG systems superior to traditional keyword search. It's calculated using vector embeddings and distance metrics like cosine similarity.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You search for "affordable laptop." A traditional keyword search would only find documents containing those exact words. But semantic similarity finds documents about "budget-friendly computers," "inexpensive notebooks," and "low-cost portable PCs" because it recognizes these phrases mean the same thing as your query, even though they use completely different words.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of semantic similarity like recognizing that "physician" and "doctor" mean essentially the same thing, even though they are different words. Traditional keyword search would miss documents that use "physician" when you search for "doctor." Semantic similarity recognizes that these terms are conceptually equivalent and retrieves relevant documents regardless of exact wording. This is why asking "What are the health benefits of green tea?" can successfully retrieve documents that discuss "wellness advantages of consuming Camellia sinensis."
+                </p>
+            </div>
 
-            <h3>🔢 Vector Embeddings</h3>
-            <p>
-                <strong>Vector embeddings</strong> are numerical representations of text that capture semantic meaning in a format that computers can mathematically compare. When you convert a sentence or document into a vector embedding, you transform it into a list of several hundred or thousand numbers that encode its meaning, not just its keywords.
-            </p>
-
-            <p>
-                Think of vector embeddings like GPS coordinates for meaning. Just as GPS converts a physical location into latitude and longitude numbers that can be mathematically compared to find distances, embeddings convert text meaning into numerical coordinates in a high-dimensional space. Texts with similar meanings end up close together in this space, while texts with different meanings end up far apart. This allows retrieval systems to find documents based on conceptual similarity rather than just keyword matching.
-            </p>
-
-            <h3>🔗 Semantic Similarity</h3>
-            <p>
-                <strong>Semantic similarity</strong> measures how close two pieces of text are in meaning, regardless of whether they use the same words. This is the fundamental capability that makes modern RAG systems superior to traditional keyword search.
-            </p>
-
-            <p>
-                Think of semantic similarity like recognizing that "physician" and "doctor" mean essentially the same thing, even though they are different words. Traditional keyword search would miss documents that use "physician" when you search for "doctor." Semantic similarity, calculated using vector embeddings, recognizes that these terms are conceptually equivalent and retrieves relevant documents regardless of exact wording. This is why asking "What are the health benefits of green tea?" can successfully retrieve documents that discuss "wellness advantages of consuming Camellia sinensis."
-            </p>
-
-            <h3>🤖 Retrieval-Augmented Generation (RAG)</h3>
-            <p>
-                <strong>Retrieval-Augmented Generation</strong> is an AI architecture that combines information retrieval with language model generation. Instead of relying solely on the language model's training data, RAG systems first retrieve relevant documents from an external knowledge base, then use those documents as context for generating the final answer.
-            </p>
-
-            <p>
-                Think of RAG like a student taking an open-book exam rather than a closed-book exam. In a closed-book exam, the student must rely entirely on memorized information, which may be incomplete or outdated. In an open-book exam, the student can reference textbooks and notes to provide more accurate, detailed, and current answers. RAG systems are the open-book approach to AI: they retrieve relevant reference materials before generating responses, resulting in more accurate and verifiable answers than language models operating from memory alone.
-            </p>
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-robot mr-2"></i>Retrieval-Augmented Generation (RAG)
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> An AI architecture that combines information retrieval with language model generation. Instead of relying solely on the language model's training data, RAG systems first retrieve relevant documents from an external knowledge base, then use those documents as context for generating the final answer.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You ask a chatbot: "What were the company's Q4 earnings?" Without RAG, the chatbot can only answer based on data it was trained on (which might be outdated). With RAG, the chatbot first searches your company's financial documents, retrieves the Q4 earnings report, then generates an answer based on that specific document. The answer is current, accurate, and can cite the source.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of RAG like a student taking an open-book exam rather than a closed-book exam. In a closed-book exam, the student must rely entirely on memorized information, which may be incomplete or outdated. In an open-book exam, the student can reference textbooks and notes to provide more accurate, detailed, and current answers. RAG systems are the open-book approach to AI: they retrieve relevant reference materials before generating responses.
+                </p>
+            </div>
 
             <div class="section-divider"></div>
 
-            <h2>🏗️ Making the Blueprint</h2>
+            <h2><i class="fas fa-drafting-compass mr-3"></i>🏗️ Making the Blueprint</h2>
 
             <p>
                 Now, let's <strong>make the blueprint</strong> for implementing an effective Top-K selection and ranking strategy in a production RAG system. This systematic approach can be applied to virtually any retrieval-augmented application.
             </p>
 
-            <h3>📋 The Seven-Step RAG Retrieval Blueprint</h3>
+            <h3><i class="fas fa-clipboard-list mr-2"></i>📋 The Seven-Step RAG Retrieval Blueprint</h3>
 
             <div class="blueprint-box">
                 <p class="text-lg font-semibold text-violet-300 mb-4">Overview: Building a Complete Retrieval Pipeline</p>
@@ -398,7 +460,7 @@
                 </div>
             </div>
 
-            <h3>🔄 Visual Flow: The Complete RAG Retrieval Pipeline</h3>
+            <h3><i class="fas fa-project-diagram mr-2"></i>🔄 Visual Flow: The Complete RAG Retrieval Pipeline</h3>
 
             <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-cyan-500/50 shadow-2xl">
                 <div class="text-center mb-8">
@@ -537,7 +599,7 @@
 
             <div class="section-divider"></div>
 
-            <h2>⚙️ Executing the Blueprint</h2>
+            <h2><i class="fas fa-cogs mr-3"></i>⚙️ Executing the Blueprint</h2>
 
             <p>
                 <strong>Let's carry out the blueprint plan.</strong> I have prepared a complete Python implementation of this retrieval pipeline that demonstrates each step with production-ready code. The full implementation with sample data and helper functions is available on my GitHub repository at <a href="https://github.com/zubairashfaque/rag-topk-ranking" class="text-cyan-400 hover:text-cyan-300 underline">github.com/zubairashfaque/rag-topk-ranking</a>. The main notebook is <code>rag_retrieval_pipeline.ipynb</code>, and I have included a <code>requirements.txt</code> file for environment setup.
@@ -547,7 +609,7 @@
                 Let me walk you through the key code for each step of our blueprint.
             </p>
 
-            <h3>📚 Step One: Configure Document Collection and Embedding Model</h3>
+            <h3><i class="fas fa-database mr-2"></i>📚 Step One: Configure Document Collection and Embedding Model</h3>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
@@ -629,7 +691,7 @@ print(f"Indexed {len(documents)} documents successfully")</code></pre>
                 This initialization step is foundational. We choose text-embedding-3-small because it provides good semantic understanding at reasonable cost. The Pinecone setup uses cosine similarity as the distance metric, which is standard for semantic search. Notice how we store both the embedding vector and the original text plus metadata, as we will need all of this information during retrieval.
             </p>
 
-            <h3>🔍 Step Two: Establish Baseline Top-K Value and Initial Retrieval</h3>
+            <h3><i class="fas fa-search-plus mr-2"></i>🔍 Step Two: Establish Baseline Top-K Value and Initial Retrieval</h3>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
@@ -683,7 +745,7 @@ print(f"Top result text: {initial_results[0]['text'][:100]}...")</code></pre>
                 This retrieval function encapsulates the core vector search operation. We start with K=10 as our baseline, which is conservative enough to avoid overwhelming the language model while providing sufficient context. The cosine similarity scores returned by Pinecone range from zero to one, where higher values indicate greater semantic similarity between query and document.
             </p>
 
-            <h3>🎯 Step Three and Four: Initial Ranking and Reranking</h3>
+            <h3><i class="fas fa-sort-numeric-down mr-2"></i>🎯 Step Three and Four: Initial Ranking and Reranking</h3>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
@@ -745,7 +807,7 @@ for i, doc in enumerate(reranked_results, 1):
                 The reranking step often produces significant improvements in result quality. While the initial cosine similarity is computed on independently encoded query and document vectors, the cross-encoder sees both texts together and can identify subtle relevance signals. You will frequently see documents with lower initial scores move to the top after reranking because the cross-encoder recognizes semantic relationships that the embedding model missed.
             </p>
 
-            <h3>🏷️ Step Five: Metadata Filtering and Boosting</h3>
+            <h3><i class="fas fa-tags mr-2"></i>🏷️ Step Five: Metadata Filtering and Boosting</h3>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
@@ -804,7 +866,7 @@ for i, doc in enumerate(final_results, 1):
                 Metadata boosting allows you to encode business logic and user preferences into your ranking. The recency boost here is just one example. You might also boost documents from specific departments, penalize documents flagged as outdated, or prioritize content that matches the user's role or permissions. The key is to apply these adjustments after initial ranking but before final selection, and to make the multipliers configurable so you can tune them based on user feedback.
             </p>
 
-            <h3>🔗 Complete Pipeline Function</h3>
+            <h3><i class="fas fa-stream mr-2"></i>🔗 Complete Pipeline Function</h3>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
@@ -874,7 +936,7 @@ for i, doc in enumerate(retrieved_context, 1):
                 This complete pipeline function ties together all our blueprint steps into a single, reusable interface. In a production application, you would call this function for each user query, then pass the returned documents as context to your language model. The pipeline is modular enough that you can easily adjust parameters like initial_k and final_n, enable or disable boosting, or swap out individual components like the reranking model.
             </p>
 
-            <h3>📊 Evaluation and Iteration (Step Seven)</h3>
+            <h3><i class="fas fa-chart-bar mr-2"></i>📊 Evaluation and Iteration (Step Seven)</h3>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
@@ -955,7 +1017,7 @@ print(f"Mean Reciprocal Rank: {eval_results['mean_reciprocal_rank']:.3f}")</code
 
             <div class="section-divider"></div>
 
-            <h2>🎬 Conclusion and Next Steps</h2>
+            <h2><i class="fas fa-flag-checkered mr-3"></i>🎬 Conclusion and Next Steps</h2>
 
             <p>
                 We have built a complete, production-ready RAG retrieval pipeline that systematically addresses the challenge of document selection and ranking. By following the seven-step blueprint—from embedding configuration through evaluation—you now have a framework that balances retrieval coverage with precision, leverages both fast similarity search and sophisticated reranking, and incorporates business logic through metadata boosting.
