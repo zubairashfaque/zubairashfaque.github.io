@@ -293,19 +293,13 @@
                 return () => clearInterval(timer);
             }, []);
 
-            const stats = [
-                { value: '30%', label: 'Reduction in Readmissions' },
-                { value: '50%', label: 'Faster Information Retrieval' },
-                { value: '$0.8M', label: 'Annual Revenue Impact' }
-            ];
-
             return (
                 <section id="home" className="min-h-screen animated-bg flex items-center justify-center relative">
                     <div className="container mx-auto px-4 py-20 relative z-10">
                         <div className="text-center fade-in-up">
                             <div className="mb-6">
-                                <div className="w-32 h-32 mx-auto bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-2xl">
-                                    ZA
+                                <div className="w-40 h-40 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-cyan-400/50 card-hover">
+                                    <img src="images/me.png" alt="Zubair Ashfaque" className="w-full h-full object-cover" />
                                 </div>
                             </div>
                             
@@ -332,14 +326,29 @@
                                 </a>
                             </div>
 
-                            {/* Stats */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                                {stats.map((stat, index) => (
-                                    <div key={index} className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 card-hover">
-                                        <div className="text-4xl font-bold gradient-text mb-2">{stat.value}</div>
-                                        <div className="text-gray-300">{stat.label}</div>
+                            {/* Key Focus Areas */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 card-hover border border-cyan-500/20">
+                                    <div className="text-cyan-400 text-3xl mb-3">
+                                        <i className="fas fa-robot"></i>
                                     </div>
-                                ))}
+                                    <h3 className="text-lg font-bold text-white mb-2">LLM & Agentic Systems</h3>
+                                    <p className="text-gray-400 text-sm">Building intelligent multi-agent ecosystems and RAG pipelines</p>
+                                </div>
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 card-hover border border-purple-500/20">
+                                    <div className="text-purple-400 text-3xl mb-3">
+                                        <i className="fas fa-heartbeat"></i>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white mb-2">Healthcare AI</h3>
+                                    <p className="text-gray-400 text-sm">Predictive analytics and clinical decision support systems</p>
+                                </div>
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 card-hover border border-blue-500/20">
+                                    <div className="text-blue-400 text-3xl mb-3">
+                                        <i className="fas fa-chart-line"></i>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white mb-2">Business Impact</h3>
+                                    <p className="text-gray-400 text-sm">Delivering measurable ROI through data-driven solutions</p>
+                                </div>
                             </div>
 
                             {/* Social Links */}
