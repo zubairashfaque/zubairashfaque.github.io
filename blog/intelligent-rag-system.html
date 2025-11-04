@@ -262,6 +262,31 @@
                 This system combines YAML-driven configuration, dual-database architecture (ChromaDB + SQLite), permanent embedding caching, and two-stage retrieval to create a flexible, cost-efficient RAG platform that scales from personal projects to enterprise knowledge bases.
             </div>
 
+            <div class="github-card" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 1rem; padding: 2rem; margin: 2rem 0;">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0">
+                        <i class="fab fa-github text-5xl text-cyan-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <i class="fas fa-code-branch mr-2 text-cyan-400"></i>
+                            Open Source Project
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            Full source code with comprehensive documentation, 13 YAML-configurable strategies, 4-page Streamlit dashboard, and example scripts. Built with modern Python best practices and production-grade architecture.
+                        </p>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="https://github.com/zubairashfaque/intelligent-rag-system" target="_blank" class="btn-primary">
+                                <i class="fab fa-github mr-2"></i>View on GitHub
+                            </a>
+                            <a href="https://github.com/zubairashfaque/intelligent-rag-system#quick-start" target="_blank" class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);">
+                                <i class="fas fa-rocket mr-2"></i>Quick Start Guide
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="section-divider"></div>
 
             <h2><i class="fas fa-desktop mr-3"></i>The Production Dashboard</h2>
@@ -335,6 +360,51 @@
 
             <p>
                 The dashboard is not just a pretty interface—it's a complete experimentation platform. Every document you process and every query you run gets tracked with metadata about which strategies were used, how long operations took, and what results were produced. This enables real-world A/B testing of different RAG configurations without writing a single line of code.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-cogs mr-3"></i>Technical Architecture</h2>
+
+            <h3 style="font-size: 1.5rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; color: #8b5cf6;"><i class="fas fa-layer-group mr-2"></i>The Stack</h3>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 2rem 0;">
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fab fa-python text-3xl text-cyan-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Python 3.10+</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-link text-3xl text-blue-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">LangChain</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-database text-3xl text-purple-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">ChromaDB</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-brain text-3xl text-green-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">OpenAI API</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-desktop text-3xl text-pink-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Streamlit</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-server text-3xl text-orange-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">SQLite</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-chart-line text-3xl text-indigo-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Sentence Transformers</div>
+                </div>
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 0.75rem; text-align: center; border: 1px solid #334155;">
+                    <i class="fas fa-code text-3xl text-teal-400 mb-2" style="display: block;"></i>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Poetry</div>
+                </div>
+            </div>
+
+            <p>
+                The system leverages a carefully selected technology stack optimized for production RAG deployments. Python 3.10+ provides the foundation with type hints and modern async capabilities. LangChain handles document loading and text splitting with battle-tested abstractions. ChromaDB delivers fast vector similarity search with automatic HNSW indexing. OpenAI's embedding and generation APIs power semantic understanding. Streamlit creates the interactive 4-page dashboard. SQLite manages metadata and analytics with ACID compliance. Sentence Transformers provide CPU-optimized cross-encoder reranking. Poetry ensures reproducible dependency management across environments.
             </p>
 
             <div class="section-divider"></div>
@@ -484,6 +554,71 @@
                     <strong>Analogy:</strong> Think of YAML configuration like adjusting settings in a video game versus modifying the game's source code. In a game, you can change difficulty, graphics quality, and control schemes through a settings menu without touching any code. YAML files are like those settings menus for your RAG system. You're adjusting how the system behaves without needing to understand or modify the underlying Python implementation.
                 </p>
             </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-folder-tree mr-3"></i>Project Structure</h2>
+
+            <p>
+                The intelligent RAG system follows a modular architecture with clear separation of concerns. Here's the complete directory structure with inline documentation explaining each component's role:
+            </p>
+
+            <div class="code-block">
+                <pre class="text-sm text-gray-300"><code>intelligent-rag-system/
+├── src/
+│   ├── rag_system/                 # Core RAG implementation
+│   │   ├── config/                 # YAML strategy loaders & validators
+│   │   │   ├── loader.py           # Config parsing with caching
+│   │   │   └── models.py           # Pydantic validation models
+│   │   ├── ingestion/              # Document loading pipeline
+│   │   │   ├── loaders.py          # PDF, DOCX, TXT, HTML, MD loaders
+│   │   │   └── preprocessor.py     # Text cleaning & normalization
+│   │   ├── chunking/               # Text splitting strategies
+│   │   │   ├── recursive.py        # Hierarchical splitter (default)
+│   │   │   ├── semantic.py         # Embedding-based chunker
+│   │   │   └── fixed.py            # Simple fixed-size chunker
+│   │   ├── embedding/              # Vector generation with caching
+│   │   │   ├── generator.py        # OpenAI API integration
+│   │   │   └── cache.py            # SHA-256 content hash cache
+│   │   ├── storage/                # Dual-database architecture
+│   │   │   ├── vector_store.py     # ChromaDB interface
+│   │   │   └── metadata_store.py   # SQLite analytics & tracking
+│   │   ├── retrieval/              # Multi-strategy retrieval
+│   │   │   ├── vector.py           # Pure cosine similarity
+│   │   │   ├── reranking.py        # Cross-encoder two-stage
+│   │   │   ├── hybrid.py           # Vector + BM25 fusion
+│   │   │   └── multistage.py       # Query expansion + MMR
+│   │   └── generation/             # AI answer synthesis
+│   │       ├── generator.py        # GPT-3.5/GPT-4 integration
+│   │       └── citations.py        # Source attribution logic
+│   └── streamlit_app/              # 4-page interactive dashboard
+│       ├── Home.py                 # Landing page & getting started
+│       └── pages/
+│           ├── 1_📤_Upload.py      # Document ingestion UI
+│           ├── 2_⚙️_Configure.py   # Strategy selection interface
+│           ├── 3_🔍_Query.py       # Natural language search
+│           └── 4_📊_Analytics.py   # Performance metrics & insights
+├── config/strategies/              # YAML configuration files
+│   ├── chunking.yaml               # 3 chunking strategies
+│   ├── enrichment.yaml             # 3 enrichment levels
+│   ├── embedding.yaml              # 3 embedding models
+│   └── retrieval.yaml              # 4 retrieval approaches
+├── tests/                          # Comprehensive test suite
+│   └── unit/                       # Unit tests for core modules
+├── examples/                       # Runnable demo scripts
+│   ├── basic_rag_demo.py          # Simple query example
+│   └── compare_strategies.py       # A/B testing workflow
+├── data/                           # Data directory (gitignored)
+│   ├── raw/                        # Uploaded documents
+│   ├── processed/                  # Generated embeddings
+│   └── chroma_db/                  # Vector store persistence
+├── pyproject.toml                  # Poetry dependencies
+└── README.md                       # Full documentation</code></pre>
+            </div>
+
+            <p>
+                This structure enables clear separation between core RAG logic (src/rag_system/), user interface (streamlit_app/), configuration (config/), and testing (tests/). Each module has a single responsibility, making the system maintainable and extensible. The YAML config files live separately from code, allowing non-developers to experiment with different strategies without touching Python.
+            </p>
 
             <div class="section-divider"></div>
 
@@ -877,433 +1012,105 @@
                 <strong>Let's carry out the blueprint plan.</strong> I have implemented this complete RAG system with production-ready code. The full implementation with configuration files, Streamlit dashboard, and deployment instructions is available on my GitHub repository at <a href="https://github.com/zubairashfaque/intelligent-rag-system" class="text-cyan-400 hover:text-cyan-300 underline">github.com/zubairashfaque/intelligent-rag-system</a>.
             </p>
 
-            <h3><i class="fas fa-file-code mr-2"></i>Stage One & Two: Document Ingestion and Chunking</h3>
+            <h3><i class="fas fa-download mr-2"></i>Installation & Setup</h3>
+
+            <p>
+                Getting started with the intelligent RAG system takes less than 5 minutes. The system uses Poetry for dependency management, ensuring reproducible installations across all environments.
+            </p>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
                     <i class="far fa-copy mr-1"></i>Copy
                 </button>
-                <pre><code class="language-python">from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-import hashlib
-from pathlib import Path
+                <pre><code class="language-bash"># Clone the repository
+git clone https://github.com/zubairashfaque/intelligent-rag-system.git
+cd intelligent-rag-system
 
-def load_document(file_path: str, source_filename: str):
-    """
-    Load document with format detection and metadata preservation.
+# Install dependencies with Poetry
+poetry install
 
-    Args:
-        file_path: Path to the document
-        source_filename: Original filename for metadata tracking
-
-    Returns:
-        List of LangChain documents with metadata
-    """
-    file_ext = Path(file_path).suffix.lower()
-
-    # Select appropriate loader based on file extension
-    loaders = {
-        '.pdf': PyPDFLoader,
-        '.docx': Docx2txtLoader,
-        '.txt': TextLoader,
-    }
-
-    if file_ext not in loaders:
-        raise ValueError(f"Unsupported file type: {file_ext}")
-
-    # Load document with appropriate loader
-    loader = loaders[file_ext](file_path)
-    documents = loader.load()
-
-    # Add original filename to metadata for citation tracking
-    for doc in documents:
-        doc.metadata['original_filename'] = source_filename
-        doc.metadata['file_type'] = file_ext
-
-    return documents
-
-def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
-    """
-    Split documents into chunks while preserving context.
-
-    Uses recursive character splitting: tries to break at paragraphs first,
-    then sentences, then words, then characters.
-    """
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        separators=["\n\n", "\n", ". ", " ", ""],  # Hierarchical splitting
-        length_function=len,
-    )
-
-    chunks = text_splitter.split_documents(documents)
-
-    # Add chunk-specific metadata
-    for i, chunk in enumerate(chunks):
-        chunk.metadata['chunk_id'] = i
-        chunk.metadata['chunk_size'] = len(chunk.page_content)
-
-    return chunks
-
-# Example usage
-file_path = "uploads/research_paper.pdf"
-original_name = "Machine_Learning_Basics.pdf"
-
-# Load and chunk the document
-documents = load_document(file_path, original_name)
-chunks = chunk_documents(documents, chunk_size=1000, chunk_overlap=200)
-
-print(f"Loaded {len(documents)} pages")
-print(f"Created {len(chunks)} chunks")
-print(f"First chunk: {chunks[0].page_content[:100]}...")
-print(f"Metadata: {chunks[0].metadata}")</code></pre>
+# Verify installation
+poetry run python -c "from rag_system.config import get_config_loader; print('✅ Setup complete!')"</code></pre>
             </div>
 
             <p>
-                This code handles document loading with automatic format detection and creates semantically coherent chunks. The recursive splitter respects document structure by trying to break at natural boundaries. Crucially, we preserve the original filename in metadata so that when users see an answer, they know exactly which document it came from.
+                The installation command pulls all required dependencies including LangChain, ChromaDB, OpenAI SDK, Streamlit, and Sentence Transformers. Poetry creates an isolated virtual environment and locks dependency versions for reproducibility. The verification step confirms that the core configuration system loads correctly.
             </p>
 
-            <h3><i class="fas fa-brain mr-2"></i>Stage Three: Embedding Generation with Caching</h3>
+            <h3><i class="fas fa-rocket mr-2"></i>Launch the Dashboard</h3>
+
+            <p>
+                The Streamlit dashboard provides an intuitive interface for the entire RAG workflow. Launch it with a single command:
+            </p>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
                     <i class="far fa-copy mr-1"></i>Copy
                 </button>
-                <pre><code class="language-python">import openai
-import hashlib
-import sqlite3
-import pickle
-import numpy as np
+                <pre><code class="language-bash"># Start the Streamlit dashboard
+poetry run streamlit run streamlit_app/Home.py
 
-class EmbeddingCache:
-    """
-    Permanent cache for embeddings using content-hash deduplication.
-    """
-
-    def __init__(self, cache_db_path="data/embedding_cache.db"):
-        self.cache_db_path = cache_db_path
-        self._init_cache_db()
-
-    def _init_cache_db(self):
-        """Create cache table if it doesn't exist."""
-        conn = sqlite3.connect(self.cache_db_path)
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS embedding_cache (
-                content_hash TEXT PRIMARY KEY,
-                embedding BLOB NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.commit()
-        conn.close()
-
-    def get_hash(self, text: str) -> str:
-        """Generate SHA-256 hash of text content."""
-        return hashlib.sha256(text.encode()).hexdigest()
-
-    def get(self, content_hash: str):
-        """Retrieve cached embedding if it exists."""
-        conn = sqlite3.connect(self.cache_db_path)
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT embedding FROM embedding_cache WHERE content_hash = ?",
-            (content_hash,)
-        )
-        result = cursor.fetchone()
-        conn.close()
-
-        if result:
-            return pickle.loads(result[0])
-        return None
-
-    def store(self, content_hash: str, embedding):
-        """Store embedding in cache."""
-        conn = sqlite3.connect(self.cache_db_path)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT OR REPLACE INTO embedding_cache (content_hash, embedding) VALUES (?, ?)",
-            (content_hash, pickle.dumps(embedding))
-        )
-        conn.commit()
-        conn.close()
-
-def generate_embeddings_with_cache(chunks, model="text-embedding-3-small"):
-    """
-    Generate embeddings for chunks with permanent caching.
-
-    Returns:
-        List of embeddings and cache statistics
-    """
-    cache = EmbeddingCache()
-    embeddings = []
-    cache_hits = 0
-    api_calls = 0
-
-    for chunk in chunks:
-        # Compute content hash
-        content_hash = cache.get_hash(chunk.page_content)
-
-        # Check cache first
-        cached_embedding = cache.get(content_hash)
-
-        if cached_embedding is not None:
-            embeddings.append(cached_embedding)
-            cache_hits += 1
-        else:
-            # Cache miss - call OpenAI API
-            response = openai.embeddings.create(
-                input=chunk.page_content,
-                model=model
-            )
-            embedding = response.data[0].embedding
-
-            # Store in cache for future use
-            cache.store(content_hash, embedding)
-            embeddings.append(embedding)
-            api_calls += 1
-
-    stats = {
-        'total_chunks': len(chunks),
-        'cache_hits': cache_hits,
-        'api_calls': api_calls,
-        'cache_hit_rate': cache_hits / len(chunks) if chunks else 0,
-        'estimated_savings': cache_hits * 0.0001  # Rough estimate
-    }
-
-    return embeddings, stats
-
-# Example usage
-embeddings, stats = generate_embeddings_with_cache(chunks)
-
-print(f"Cache Statistics:")
-print(f"  Total chunks: {stats['total_chunks']}")
-print(f"  Cache hits: {stats['cache_hits']}")
-print(f"  API calls: {stats['api_calls']}")
-print(f"  Cache hit rate: {stats['cache_hit_rate']:.1%}")
-print(f"  Estimated savings: ${stats['estimated_savings']:.4f}")</code></pre>
+# Dashboard opens automatically at http://localhost:8501
+# Navigate through 4 pages: Upload → Configure → Query → Analytics</code></pre>
             </div>
 
             <p>
-                The embedding cache uses SHA-256 content hashing to detect duplicate chunks across all documents. The first time you process a chunk, you pay the API cost. Every subsequent time that exact content appears (even in a different document), you retrieve the embedding from cache for free. This typically saves 85-95% of embedding costs in production.
+                Once the dashboard loads, you can upload documents via drag-and-drop, configure strategies through radio buttons, query your knowledge base with natural language, and view performance analytics—all without writing code. The dashboard handles the entire RAG pipeline internally while providing real-time feedback on processing status and results.
             </p>
 
-            <h3><i class="fas fa-database mr-2"></i>Stage Four & Five: Dual Storage and Two-Stage Retrieval</h3>
+            <h3><i class="fas fa-sliders-h mr-2"></i>Configure Strategies via YAML</h3>
+
+            <p>
+                One of the system's most powerful features is YAML-driven configuration. Change chunking, enrichment, embedding, or retrieval strategies without touching Python code:
+            </p>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
                     <i class="far fa-copy mr-1"></i>Copy
                 </button>
-                <pre><code class="language-python">import chromadb
-from sentence_transformers import CrossEncoder
-import numpy as np
+                <pre><code class="language-bash"># Edit chunking strategy (no code changes needed!)
+nano config/strategies/chunking.yaml
 
-class RAGRetriever:
-    """
-    Two-stage retrieval with ChromaDB vector search and cross-encoder reranking.
-    """
+# Change chunk_size from 1000 to 800
+# Save and restart dashboard - new strategy is active
 
-    def __init__(self, collection_name="documents"):
-        # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(path="data/chroma_db")
-        self.collection = self.client.get_or_create_collection(
-            name=collection_name,
-            metadata={"hnsw:space": "cosine"}  # Use cosine similarity
-        )
-
-        # Initialize cross-encoder for reranking (CPU-optimized)
-        self.reranker = CrossEncoder(
-            'cross-encoder/ms-marco-MiniLM-L-6-v2',
-            device='cpu'  # Prevents GPU errors, minimal performance impact
-        )
-
-    def add_documents(self, chunks, embeddings):
-        """Store chunks and embeddings in ChromaDB."""
-        ids = [f"chunk_{i}" for i in range(len(chunks))]
-        documents = [chunk.page_content for chunk in chunks]
-        metadatas = [chunk.metadata for chunk in chunks]
-
-        self.collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas
-        )
-
-        print(f"Stored {len(chunks)} chunks in ChromaDB")
-
-    def retrieve(self, query, top_k_initial=50, top_k_final=10):
-        """
-        Two-stage retrieval: fast vector search + precise reranking.
-
-        Args:
-            query: User's question
-            top_k_initial: Number of candidates from vector search
-            top_k_final: Number of results after reranking
-
-        Returns:
-            List of top reranked results with scores
-        """
-        # Generate query embedding
-        response = openai.embeddings.create(
-            input=query,
-            model="text-embedding-3-small"
-        )
-        query_embedding = response.data[0].embedding
-
-        # Stage 1: Fast vector search (50-100ms)
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k_initial,
-            include=['documents', 'metadatas', 'distances']
-        )
-
-        # Extract candidates
-        candidates = []
-        for i in range(len(results['ids'][0])):
-            candidates.append({
-                'id': results['ids'][0][i],
-                'text': results['documents'][0][i],
-                'metadata': results['metadatas'][0][i],
-                'vector_score': 1 - results['distances'][0][i]  # Convert distance to similarity
-            })
-
-        # Stage 2: Cross-encoder reranking (200-300ms)
-        if len(candidates) > 0:
-            pairs = [(query, cand['text']) for cand in candidates]
-            rerank_scores = self.reranker.predict(pairs)
-
-            # Add rerank scores and sort
-            for i, cand in enumerate(candidates):
-                cand['rerank_score'] = float(rerank_scores[i])
-
-            candidates.sort(key=lambda x: x['rerank_score'], reverse=True)
-
-        # Return top N after reranking
-        return candidates[:top_k_final]
-
-# Example usage
-retriever = RAGRetriever(collection_name="my_documents")
-
-# Store documents
-retriever.add_documents(chunks, embeddings)
-
-# Query the system
-query = "What are the main benefits of machine learning?"
-results = retriever.retrieve(query, top_k_initial=50, top_k_final=10)
-
-print(f"\nTop Results:")
-for i, result in enumerate(results[:3], 1):
-    print(f"\n{i}. Score: {result['rerank_score']:.4f}")
-    print(f"   Source: {result['metadata']['original_filename']}")
-    print(f"   Text: {result['text'][:150]}...")</code></pre>
+# Try different strategies from the YAML files:
+# Chunking: recursive_character (default) | semantic_chunking | fixed_size
+# Retrieval: vector_only | vector_with_reranking | hybrid_search | multistage</code></pre>
             </div>
 
             <p>
-                The two-stage retrieval combines speed with accuracy. Vector search is extremely fast but sometimes returns false positives. Cross-encoder reranking is slower but catches subtle semantic relationships. By applying the expensive reranking only to the top 50 candidates instead of all documents, we get high accuracy at reasonable computational cost.
+                The YAML files are self-documenting with inline comments explaining each parameter. You can create custom strategies by copying existing ones and modifying parameters. The Analytics dashboard then tracks performance across all configurations, showing which strategies work best for your specific documents and queries.
             </p>
 
-            <h3><i class="fas fa-robot mr-2"></i>Stage Six: AI Answer Generation with Citations</h3>
+            <h3><i class="fas fa-play-circle mr-2"></i>Run Example Scripts</h3>
+
+            <p>
+                The repository includes runnable examples demonstrating key workflows:
+            </p>
 
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">
                     <i class="far fa-copy mr-1"></i>Copy
                 </button>
-                <pre><code class="language-python">import openai
+                <pre><code class="language-bash"># Run basic RAG demo with sample documents
+poetry run python examples/basic_rag_demo.py
 
-def generate_answer_with_citations(query, retrieved_chunks, model="gpt-3.5-turbo"):
-    """
-    Generate AI answer from retrieved context with source citations.
+# Compare different chunking strategies
+poetry run python examples/compare_strategies.py
 
-    Args:
-        query: User's question
-        retrieved_chunks: List of retrieved document chunks
-        model: OpenAI model to use
+# Test embedding cache performance
+poetry run python examples/test_cache_efficiency.py
 
-    Returns:
-        Dictionary with answer, citations, and confidence score
-    """
-    # Build context from retrieved chunks
-    context_parts = []
-    for i, chunk in enumerate(retrieved_chunks, 1):
-        source = chunk['metadata']['original_filename']
-        text = chunk['text']
-        context_parts.append(f"[Source {i}: {source}]\n{text}\n")
-
-    context = "\n".join(context_parts)
-
-    # Construct prompt with explicit citation instructions
-    prompt = f"""You are a helpful research assistant. Answer the user's question based ONLY on the provided context.
-
-IMPORTANT RULES:
-1. Only use information from the provided sources
-2. Cite your sources using [Source N] notation
-3. If the context doesn't contain enough information, say so
-4. Be concise but comprehensive
-
-Context:
-{context}
-
-Question: {query}
-
-Provide a clear, well-structured answer with citations:"""
-
-    # Call OpenAI API
-    response = openai.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a helpful research assistant that provides accurate answers with proper citations."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3,  # Lower temperature for more factual responses
-        max_tokens=500
-    )
-
-    answer = response.choices[0].message.content
-
-    # Calculate confidence score based on number of sources cited
-    cited_sources = len([s for s in retrieved_chunks if f"[Source" in answer])
-    confidence = "High" if cited_sources >= 3 else "Medium" if cited_sources >= 1 else "Low"
-
-    # Extract source citations
-    citations = []
-    for i, chunk in enumerate(retrieved_chunks, 1):
-        if f"[Source {i}]" in answer:
-            citations.append({
-                'source_id': i,
-                'filename': chunk['metadata']['original_filename'],
-                'relevance_score': chunk['rerank_score']
-            })
-
-    return {
-        'answer': answer,
-        'confidence': confidence,
-        'citations': citations,
-        'num_sources_used': len(citations),
-        'total_sources_available': len(retrieved_chunks)
-    }
-
-# Example usage
-result = generate_answer_with_citations(query, results)
-
-print(f"\n{'='*80}")
-print(f"ANSWER:")
-print(f"{'='*80}")
-print(result['answer'])
-print(f"\n{'='*80}")
-print(f"CONFIDENCE: {result['confidence']}")
-print(f"SOURCES USED: {result['num_sources_used']}/{result['total_sources_available']}")
-print(f"\nCITATIONS:")
-for citation in result['citations']:
-    print(f"  - {citation['filename']} (relevance: {citation['relevance_score']:.3f})")</code></pre>
+# All examples include detailed console output explaining each step</code></pre>
             </div>
 
             <p>
-                The answer generation stage transforms retrieved chunks into a coherent response with explicit source attribution. By instructing the model to cite sources and only use provided context, we prevent hallucinations while maintaining natural language quality. Users can verify every claim by checking the cited documents.
+                The examples use pre-configured strategies and sample documents to demonstrate end-to-end RAG workflows. Output includes processing times, chunk counts, embedding costs, retrieval scores, and final AI-generated answers with source citations. These scripts serve as templates for building your own custom RAG applications.
             </p>
 
             <p>
-                The complete implementation includes a Streamlit dashboard with drag-and-drop upload, YAML configuration editing, query interface, and analytics. Visit the GitHub repository for the full code, setup instructions, and deployment guide.
+                The complete implementation showcases a production-ready architecture with modular components, comprehensive error handling, and extensive logging. The system is battle-tested with real documents and provides detailed analytics to help you optimize your RAG pipeline for your specific use case.
             </p>
 
             <h3><i class="fas fa-file-code mr-2"></i>YAML Configuration Example</h3>
@@ -1374,6 +1181,32 @@ vector_with_reranking:
                 To change strategies, simply edit the YAML file and restart the dashboard. No Python code changes required. The system offers <strong>108 possible configurations</strong> (3 chunking × 3 enrichment × 3 embedding × 4 retrieval strategies) to experiment with.
             </p>
 
+            <h3><i class="fas fa-code mr-2"></i>Quick API Usage Example</h3>
+
+            <p>
+                For developers who want to integrate the RAG system programmatically, here's a minimal example showing the Python API:
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python"># Initialize RAG pipeline from YAML configs
+from rag_system import RAGPipeline
+
+rag = RAGPipeline.from_yaml("config/strategies/")
+rag.ingest_documents("data/raw/")  # Process all docs in folder
+
+# Query with natural language
+answer = rag.query("What are the benefits of RAG?")
+print(answer.text)  # AI-generated answer
+print(answer.sources)  # Source citations with filenames</code></pre>
+            </div>
+
+            <p>
+                This 7-line example demonstrates the core API. The RAGPipeline class handles all complexity internally—document loading, chunking, embedding generation with caching, vector storage, retrieval, and answer generation. The system automatically uses whichever strategies you've configured in the YAML files.
+            </p>
+
             <div class="section-divider"></div>
 
             <h2><i class="fas fa-chart-bar mr-3"></i>Strategy Comparison Dashboard</h2>
@@ -1439,6 +1272,34 @@ vector_with_reranking:
 
                 <div class="mt-4 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
                     <p class="text-sm text-slate-300"><strong>💡 Real-World A/B Testing:</strong> The dashboard enables you to test different configurations without code changes. Upload documents with Strategy A, then upload the same documents with Strategy B. The analytics dashboard automatically compares their performance, showing which configuration works better for your specific content.</p>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="github-card" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 1rem; padding: 2rem; margin: 3rem 0;">
+                <h3 class="text-2xl font-bold text-white mb-4 text-center">
+                    <i class="fab fa-github mr-3 text-cyan-400"></i>
+                    Explore the Full Project
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+                    <div>
+                        <i class="fas fa-code text-3xl text-cyan-400 mb-2" style="display: block;"></i>
+                        <p class="text-gray-300 text-sm">13 YAML-configurable strategies across 4 types</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-desktop text-3xl text-green-400 mb-2" style="display: block;"></i>
+                        <p class="text-gray-300 text-sm">4-page interactive Streamlit dashboard</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-book text-3xl text-purple-400 mb-2" style="display: block;"></i>
+                        <p class="text-gray-300 text-sm">Comprehensive docs & runnable examples</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <a href="https://github.com/zubairashfaque/intelligent-rag-system" target="_blank" class="btn-primary text-lg" style="display: inline-block;">
+                        <i class="fab fa-github mr-2"></i>View Repository on GitHub
+                    </a>
                 </div>
             </div>
 
