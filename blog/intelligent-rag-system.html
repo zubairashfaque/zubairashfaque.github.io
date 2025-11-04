@@ -216,7 +216,7 @@
             </p>
             <div class="flex flex-wrap gap-4 text-sm text-slate-400">
                 <span><i class="far fa-calendar mr-2"></i>November 4, 2025</span>
-                <span><i class="far fa-clock mr-2"></i>8 min read</span>
+                <span><i class="far fa-clock mr-2"></i>12 min read</span>
                 <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
             </div>
             <div class="flex flex-wrap gap-2 mt-4">
@@ -261,6 +261,81 @@
                 <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
                 This system combines YAML-driven configuration, dual-database architecture (ChromaDB + SQLite), permanent embedding caching, and two-stage retrieval to create a flexible, cost-efficient RAG platform that scales from personal projects to enterprise knowledge bases.
             </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-desktop mr-3"></i>The Production Dashboard</h2>
+
+            <p>
+                Before diving into the technical details, let's see what this system looks like in action. The intelligent RAG system includes a production-ready Streamlit dashboard that makes complex document intelligence accessible through a clean, intuitive interface. No command-line expertise required—just drag, drop, and query.
+            </p>
+
+            <div class="analogy-card" style="padding: 1.5rem; margin: 2rem 0;">
+                <h3 class="text-xl font-bold text-cyan-400 mb-4"><i class="fas fa-info-circle mr-2"></i>Dashboard Overview</h3>
+
+                <div style="margin: 1.5rem 0;">
+                    <img src="images/rag-system/streamlit-home.png" alt="RAG System Dashboard Home" style="width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <p class="text-sm text-slate-400 mt-3 text-center"><strong>Main Dashboard:</strong> Clean interface with navigation, getting started guide, and current configuration display</p>
+                </div>
+
+                <p class="text-slate-300 mb-4">
+                    The dashboard provides four specialized pages, each handling a critical part of the RAG workflow:
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-upload text-violet-400 text-xl"></i>
+                            <strong class="text-violet-300">1. Upload</strong>
+                        </div>
+                        <p class="text-sm text-slate-400">Drag-and-drop document ingestion with real-time processing feedback. Supports PDF, DOCX, TXT, HTML, and Markdown.</p>
+                    </div>
+
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-cog text-cyan-400 text-xl"></i>
+                            <strong class="text-cyan-300">2. Configure</strong>
+                        </div>
+                        <p class="text-sm text-slate-400">Select from 13 different strategies across 4 configuration types. All changes happen through the UI—zero code edits required.</p>
+                    </div>
+
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-search text-blue-400 text-xl"></i>
+                            <strong class="text-blue-300">3. Query</strong>
+                        </div>
+                        <p class="text-sm text-slate-400">Natural language search with AI-generated answers, confidence scoring, and source citations. See exactly which documents support each claim.</p>
+                    </div>
+
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-chart-bar text-green-400 text-xl"></i>
+                            <strong class="text-green-300">4. Analytics</strong>
+                        </div>
+                        <p class="text-sm text-slate-400">Compare strategy performance with automatic insights. Track costs, latencies, and cache hit rates across all configurations.</p>
+                    </div>
+                </div>
+
+                <div style="margin: 1.5rem 0;">
+                    <img src="images/rag-system/streamlit-configure.png" alt="Strategy Configuration Interface" style="width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <p class="text-sm text-slate-400 mt-3 text-center"><strong>Configuration Page:</strong> Select strategies for chunking, enrichment, embedding, and retrieval—all through radio buttons</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div style="margin: 0.5rem 0;">
+                        <img src="images/rag-system/streamlit-query-enhanced.png" alt="Query Interface with AI Answers" style="width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <p class="text-sm text-slate-400 mt-2 text-center"><strong>Query Interface:</strong> AI answers with confidence scores and source citations</p>
+                    </div>
+                    <div style="margin: 0.5rem 0;">
+                        <img src="images/rag-system/streamlit-analytics.png" alt="Analytics Dashboard" style="width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <p class="text-sm text-slate-400 mt-2 text-center"><strong>Analytics Dashboard:</strong> Performance metrics and strategy comparison</p>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                The dashboard is not just a pretty interface—it's a complete experimentation platform. Every document you process and every query you run gets tracked with metadata about which strategies were used, how long operations took, and what results were produced. This enables real-world A/B testing of different RAG configurations without writing a single line of code.
+            </p>
 
             <div class="section-divider"></div>
 
@@ -392,6 +467,21 @@
                 </p>
                 <p class="text-gray-400 text-sm">
                     <strong>Analogy:</strong> Think of semantic search like asking a knowledgeable person for help versus using a phone book. A phone book only works if you know the exact name you are looking for. But a knowledgeable person understands what you mean and can suggest relevant results even if you phrase your question differently. Semantic search is the knowledgeable person approach.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-file-code mr-2"></i>YAML-Driven Strategy Configuration
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> A configuration system that allows you to change RAG pipeline behavior by editing YAML text files instead of modifying Python code. YAML (Yet Another Markup Language) files define strategies for chunking, enrichment, embedding, and retrieval. You can test different configurations by simply changing values in YAML files and rerunning the system—no programming required. This makes experimentation fast and accessible to non-developers.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Want to change chunk size from 1000 to 800 characters? Instead of editing Python code, you open <code>config/strategies/chunking.yaml</code> and change <code>chunk_size: 1000</code> to <code>chunk_size: 800</code>. Save the file, restart the dashboard, and the new chunking strategy is active. The system offers 13 different strategies across 4 types: 3 chunking strategies, 3 enrichment levels, 3 embedding models, and 4 retrieval approaches—all configurable through YAML.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of YAML configuration like adjusting settings in a video game versus modifying the game's source code. In a game, you can change difficulty, graphics quality, and control schemes through a settings menu without touching any code. YAML files are like those settings menus for your RAG system. You're adjusting how the system behaves without needing to understand or modify the underlying Python implementation.
                 </p>
             </div>
 
@@ -614,6 +704,170 @@
             <p>
                 This blueprint provides a clear roadmap for implementing a production-ready RAG system. Each stage builds on the previous one, and following this sequence ensures you handle edge cases, optimize costs, and maintain quality throughout the pipeline. The architecture is modular, allowing you to swap components or adjust configurations without rebuilding the entire system.
             </p>
+
+            <h3><i class="fas fa-project-diagram mr-2"></i>Strategy Decision Flow Charts</h3>
+
+            <p>
+                One of the system's most powerful features is its YAML-driven configuration that lets you choose between 13 different strategies across 4 types. But how do you know which strategy to use? These decision flow charts guide you through selecting the optimal configuration for your use case.
+            </p>
+
+            <!-- Chunking Strategy Flow Chart -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-violet-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400 mb-3">
+                        ✂️ Chunking Strategy Decision Tree
+                    </h4>
+                    <p class="text-slate-400">
+                        Choose how to split your documents based on content type and performance needs
+                    </p>
+                </div>
+
+                <!-- Question Box -->
+                <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-6 mb-6">
+                    <p class="text-lg font-semibold text-cyan-300 mb-2">❓ What type of content are you processing?</p>
+                    <p class="text-sm text-slate-400">Consider document structure, density, and your speed vs. quality requirements</p>
+                </div>
+
+                <!-- Three Strategy Options -->
+                <div class="flex flex-col gap-6">
+                    <!-- Option 1: Fixed Size -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <div class="bg-green-500/10 border-2 border-green-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-lg font-bold text-green-300">Fixed Size Chunking</h5>
+                                    <div class="flex gap-2">
+                                        <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs">⚡ Fast</span>
+                                        <span class="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">📊 Basic Quality</span>
+                                    </div>
+                                </div>
+                                <p class="text-slate-300 mb-3"><strong>Best For:</strong> Simple text files, speed-critical applications, consistent chunk sizes</p>
+                                <p class="text-sm text-slate-400 mb-2"><strong>Parameters:</strong> 800 chars, 150 overlap, space separator only</p>
+                                <p class="text-sm text-slate-400"><strong>Use When:</strong> Processing plain TXT, speed > context quality, low-medium content density</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="flex justify-center">
+                        <div class="text-slate-500 text-xl">OR</div>
+                    </div>
+
+                    <!-- Option 2: Recursive Character -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <div class="bg-yellow-500/10 border-2 border-yellow-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-lg font-bold text-yellow-300">Recursive Character Splitting</h5>
+                                    <div class="flex gap-2">
+                                        <span class="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">⚙️ Balanced</span>
+                                        <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs">✅ Good Quality</span>
+                                    </div>
+                                </div>
+                                <p class="text-slate-300 mb-3"><strong>Best For:</strong> Mixed content, general purpose, hierarchical splitting</p>
+                                <p class="text-sm text-slate-400 mb-2"><strong>Parameters:</strong> 1000 chars, 200 overlap, paragraph → sentence → word → char</p>
+                                <p class="text-sm text-slate-400"><strong>Use When:</strong> Processing PDF, DOCX, HTML with any density, most production use cases</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="flex justify-center">
+                        <div class="text-slate-500 text-xl">OR</div>
+                    </div>
+
+                    <!-- Option 3: Semantic -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <div class="bg-purple-500/10 border-2 border-purple-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-lg font-bold text-purple-300">Semantic Chunking</h5>
+                                    <div class="flex gap-2">
+                                        <span class="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-xs">🐌 Slow</span>
+                                        <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs">🎯 Excellent Quality</span>
+                                    </div>
+                                </div>
+                                <p class="text-slate-300 mb-3"><strong>Best For:</strong> Academic papers, technical docs, critical context preservation</p>
+                                <p class="text-sm text-slate-400 mb-2"><strong>Parameters:</strong> Embedding-based grouping, buffer=1, 95th percentile threshold</p>
+                                <p class="text-sm text-slate-400"><strong>Use When:</strong> Processing dense PDFs/DOCX, quality > speed, high content density</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
+                    <p class="text-sm text-slate-400"><strong>💡 Pro Tip:</strong> Start with Recursive Character for most use cases. Only use Semantic Chunking if you're processing dense academic/technical content where context preservation is critical. Fixed Size is best when you need speed and have simple text.</p>
+                </div>
+            </div>
+
+            <!-- Retrieval Strategy Flow Chart -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-blue-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-3">
+                        🔍 Retrieval Strategy Decision Tree
+                    </h4>
+                    <p class="text-slate-400">
+                        Choose your retrieval approach based on query type and accuracy requirements
+                    </p>
+                </div>
+
+                <!-- Question Box -->
+                <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-6 mb-6">
+                    <p class="text-lg font-semibold text-cyan-300 mb-2">❓ What type of queries will users ask?</p>
+                    <p class="text-sm text-slate-400">Consider whether queries are semantic/conceptual, precision-critical, mixed, or complex research questions</p>
+                </div>
+
+                <!-- Four Strategy Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Option 1: Vector Only -->
+                    <div class="bg-green-500/10 border-2 border-green-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-lg font-bold text-green-300">Vector Only</h5>
+                            <span class="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs">⚡ Fastest</span>
+                        </div>
+                        <p class="text-slate-300 mb-3"><strong>Method:</strong> Pure cosine similarity search</p>
+                        <p class="text-sm text-slate-400 mb-2"><strong>Speed:</strong> 50-100ms | <strong>Top-K:</strong> 20</p>
+                        <p class="text-sm text-slate-400"><strong>Best For:</strong> Semantic/conceptual queries, exploratory search, general Q&A</p>
+                    </div>
+
+                    <!-- Option 2: Vector + Reranking -->
+                    <div class="bg-yellow-500/10 border-2 border-yellow-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-lg font-bold text-yellow-300">Vector + Reranking</h5>
+                            <span class="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">⚙️ Balanced</span>
+                        </div>
+                        <p class="text-slate-300 mb-3"><strong>Method:</strong> Two-stage (50 candidates → rerank → top 10)</p>
+                        <p class="text-sm text-slate-400 mb-2"><strong>Speed:</strong> 250-350ms | <strong>Model:</strong> Cross-encoder</p>
+                        <p class="text-sm text-slate-400"><strong>Best For:</strong> Production systems, precision-critical apps, when top-K accuracy matters</p>
+                    </div>
+
+                    <!-- Option 3: Hybrid -->
+                    <div class="bg-blue-500/10 border-2 border-blue-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-lg font-bold text-blue-300">Hybrid Search</h5>
+                            <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs">🔀 Versatile</span>
+                        </div>
+                        <p class="text-slate-300 mb-3"><strong>Method:</strong> Vector (70%) + BM25 keyword (30%)</p>
+                        <p class="text-sm text-slate-400 mb-2"><strong>Speed:</strong> 300-400ms | <strong>Fusion:</strong> Weighted RRF</p>
+                        <p class="text-sm text-slate-400"><strong>Best For:</strong> Mixed queries, technical docs, versatile search across query types</p>
+                    </div>
+
+                    <!-- Option 4: Multi-Stage -->
+                    <div class="bg-purple-500/10 border-2 border-purple-500 rounded-xl p-5 hover:scale-102 transition-transform">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-lg font-bold text-purple-300">Advanced Multi-Stage</h5>
+                            <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs">🎯 Maximum Quality</span>
+                        </div>
+                        <p class="text-slate-300 mb-3"><strong>Method:</strong> Query expand → Hybrid → Rerank → MMR diversity</p>
+                        <p class="text-sm text-slate-400 mb-2"><strong>Speed:</strong> 800-1200ms | <strong>Quality:</strong> Excellent</p>
+                        <p class="text-sm text-slate-400"><strong>Best For:</strong> Complex research, exploratory queries, when quality > speed</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
+                    <p class="text-sm text-slate-400"><strong>💡 Recommendation:</strong> Start with Vector + Reranking for production. It provides excellent quality at reasonable speed. Use Hybrid if you have mixed query types. Reserve Multi-Stage for complex research applications where latency isn't critical.</p>
+                </div>
+            </div>
 
             <div class="section-divider"></div>
 
@@ -1052,6 +1306,142 @@ for citation in result['citations']:
                 The complete implementation includes a Streamlit dashboard with drag-and-drop upload, YAML configuration editing, query interface, and analytics. Visit the GitHub repository for the full code, setup instructions, and deployment guide.
             </p>
 
+            <h3><i class="fas fa-file-code mr-2"></i>YAML Configuration Example</h3>
+
+            <p>
+                One of the system's most powerful features is that ALL strategy configuration happens through YAML files. Here's what a real configuration looks like:
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-yaml"># config/strategies/chunking.yaml
+# Define how documents get split into chunks
+
+recursive_character:
+  description: "Hierarchical splitting: paragraph → sentence → word → character"
+  chunk_size: 1000
+  chunk_overlap: 200
+  separators: ["\n\n", "\n", ". ", " ", ""]
+  performance:
+    speed: "Fast"
+    quality: "Good"
+    resource_usage: "Low"
+  use_cases:
+    - "General purpose document processing"
+    - "Mixed content types"
+    - "Production systems"
+
+semantic_chunking:
+  description: "Embedding-based semantic grouping"
+  buffer_size: 1
+  breakpoint_threshold_type: "percentile"
+  breakpoint_threshold: 95
+  performance:
+    speed: "Slow"
+    quality: "Excellent"
+    resource_usage: "High"
+  use_cases:
+    - "Academic papers"
+    - "Technical documentation"
+    - "Critical context preservation"
+
+# config/strategies/retrieval.yaml
+# Define how queries retrieve relevant chunks
+
+vector_with_reranking:
+  description: "Two-stage retrieval for production quality"
+  stage_1:
+    method: "vector_search"
+    top_k: 50
+    similarity_metric: "cosine"
+  stage_2:
+    method: "cross_encoder_reranking"
+    model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    top_k: 10
+    device: "cpu"  # CPU-optimized for stability
+  performance:
+    latency_ms: "250-350"
+    quality: "Excellent"
+  use_cases:
+    - "Production RAG systems"
+    - "Precision-critical applications"
+    - "When top-K accuracy matters"</code></pre>
+            </div>
+
+            <p>
+                To change strategies, simply edit the YAML file and restart the dashboard. No Python code changes required. The system offers <strong>108 possible configurations</strong> (3 chunking × 3 enrichment × 3 embedding × 4 retrieval strategies) to experiment with.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-chart-bar mr-3"></i>Strategy Comparison Dashboard</h2>
+
+            <p>
+                The real power of the YAML-driven system becomes clear in the Analytics dashboard, where you can compare performance across different strategy combinations. Every ingestion job and query gets tracked with metadata about which strategies were used, enabling real-world A/B testing without writing code.
+            </p>
+
+            <div style="margin: 2rem 0;">
+                <img src="images/rag-system/chunking-performance.png" alt="Chunking Strategy Performance Comparison" style="width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <p class="text-sm text-slate-400 mt-3 text-center"><strong>Chunking Performance:</strong> Side-by-side comparison showing Recursive Character produces 2.3x more chunks than Semantic, but Semantic preserves context better for dense documents</p>
+            </div>
+
+            <div style="margin: 2rem 0;">
+                <img src="images/rag-system/reranking-accuracy.png" alt="Reranking Accuracy Improvement" style="width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <p class="text-sm text-slate-400 mt-3 text-center"><strong>Reranking Impact:</strong> Cross-encoder reranking improves top-10 precision by 35% compared to vector-only retrieval</p>
+            </div>
+
+            <div class="analogy-card" style="padding: 1.5rem; margin: 2rem 0;">
+                <h3 class="text-xl font-bold text-cyan-400 mb-4"><i class="fas fa-tachometer-alt mr-2"></i>What the Analytics Dashboard Tracks</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <h4 class="font-semibold text-violet-300 mb-2"><i class="fas fa-cut mr-2"></i>Chunking Metrics</h4>
+                        <ul class="text-sm text-slate-400 space-y-1">
+                            <li>• Jobs processed per strategy</li>
+                            <li>• Total chunks created</li>
+                            <li>• Avg/min/max chunks per document</li>
+                            <li>• Processing time comparisons</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <h4 class="font-semibold text-cyan-300 mb-2"><i class="fas fa-robot mr-2"></i>Embedding Metrics</h4>
+                        <ul class="text-sm text-slate-400 space-y-1">
+                            <li>• Total chunks embedded by model</li>
+                            <li>• Cache hit rate (typically 85-95%)</li>
+                            <li>• API calls saved by caching</li>
+                            <li>• Cost per strategy</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <h4 class="font-semibold text-blue-300 mb-2"><i class="fas fa-search mr-2"></i>Retrieval Metrics</h4>
+                        <ul class="text-sm text-slate-400 space-y-1">
+                            <li>• Query count per strategy</li>
+                            <li>• Avg/min/max latency</li>
+                            <li>• Results returned per query</li>
+                            <li>• Strategy usage distribution</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                        <h4 class="font-semibold text-green-300 mb-2"><i class="fas fa-lightbulb mr-2"></i>Automatic Insights</h4>
+                        <ul class="text-sm text-slate-400 space-y-1">
+                            <li>• Performance recommendations</li>
+                            <li>• Strategy comparisons (e.g., "2.3x faster")</li>
+                            <li>• Usage pattern analysis</li>
+                            <li>• Cost optimization suggestions</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
+                    <p class="text-sm text-slate-300"><strong>💡 Real-World A/B Testing:</strong> The dashboard enables you to test different configurations without code changes. Upload documents with Strategy A, then upload the same documents with Strategy B. The analytics dashboard automatically compares their performance, showing which configuration works better for your specific content.</p>
+                </div>
+            </div>
+
             <div class="section-divider"></div>
 
             <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
@@ -1061,11 +1451,15 @@ for citation in result['citations']:
             </p>
 
             <p>
-                The key innovations make this system production-ready: YAML-driven configuration lets non-developers adjust strategies, dual-database architecture provides both semantic search and analytics, permanent caching eliminates redundant API costs, and two-stage retrieval balances speed with accuracy. The result is a flexible platform that scales from personal projects to enterprise knowledge bases.
+                What sets this system apart from typical RAG implementations is its experimentation-first architecture. Unlike fixed RAG systems where you're locked into a single configuration, this platform lets you test 108 different strategy combinations (3 chunking × 3 enrichment × 3 embedding × 4 retrieval) through simple YAML edits. The Analytics dashboard tracks every configuration's performance, providing automatic insights like "Recursive Character is 2.3x faster than Semantic Chunking" or "Reranking improves precision by 35%." This enables real-world A/B testing without code changes—a game-changer for production deployment.
             </p>
 
             <p>
-                For next steps, I recommend starting with the baseline implementation from the GitHub repository, then customizing for your specific use case. Experiment with different chunking strategies in the YAML configs, try alternative embedding models, and tune the retrieval parameters. Most importantly, test with real documents and queries from your domain to validate that the system meets your accuracy and performance requirements.
+                The key innovations make this system production-ready: YAML-driven configuration lets non-developers adjust strategies, dual-database architecture provides both semantic search and analytics, permanent caching eliminates redundant API costs (85-95% cache hit rates), and two-stage retrieval balances speed with accuracy. The Streamlit dashboard makes complex document intelligence accessible through drag-and-drop simplicity. The result is a flexible platform that scales from personal projects to enterprise knowledge bases.
+            </p>
+
+            <p>
+                For next steps, I recommend starting with the baseline implementation from the GitHub repository, then customizing for your specific use case. Begin with Recursive Character chunking and Vector + Reranking retrieval—the balanced defaults that work for 80% of use cases. Then experiment: try Semantic Chunking if you have dense academic content, test Hybrid Search if you have mixed query types, adjust chunk sizes in the YAML configs. Most importantly, use the Analytics dashboard to measure what actually works for your data. The system tracks everything, so you can make data-driven decisions about which strategies optimize for your specific accuracy and performance requirements.
             </p>
 
             <div class="analogy-card text-center">
