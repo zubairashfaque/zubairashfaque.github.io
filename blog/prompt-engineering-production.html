@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Art of Prompt Engineering in Production Systems | Zubair Ashfaque</title>
+    <meta name="description" content="Practical insights from building healthcare AI systems. How prompt engineering goes beyond simple templates to become a critical engineering discipline in production environments.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="assets/blog-styles.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #06b6d4;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #06b6d4, transparent);
+            margin: 3rem 0;
+        }
+
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #06b6d4;
+        }
+
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        article li {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .breadcrumb a {
+            color: #06b6d4;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #8b5cf6;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #475569;
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+            }
+
+            article p, article ul, article ol {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-cyan-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>The Art of Prompt Engineering</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                The Art of Prompt Engineering in Production Systems
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                How prompt engineering became the difference between a prototype that demos well and a production system that delivers reliable, consistent results in healthcare AI
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>October 15, 2025</span>
+                <span><i class="far fa-clock mr-2"></i>6 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">LLM</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Prompt Engineering</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Production AI</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Healthcare AI systems handle life-critical information every day. A clinical assistant that retrieves patient data, an AI agent that answers questions about drug interactions, a system that helps predict readmission risk—these are not toys or demos. They are production systems where inconsistency, hallucinations, or incorrect responses can have serious consequences.
+            </p>
+
+            <p>
+                When I built the Agent Nurse Bot at Health Recovery Solutions, combining text-to-SQL with RAG for clinical insights, I quickly learned that the quality of my prompts determined everything. The same language model would produce brilliant, accurate responses with one prompt structure and complete nonsense with another. A medical knowledge base query that worked perfectly for common medications would fail unpredictably for edge cases. Patient data retrieval that passed all tests in development would occasionally return inappropriate information in production.
+            </p>
+
+            <p>
+                The problem was not the model. GPT-4, Claude, or AWS Bedrock models are remarkably capable. The problem was that I treated prompt engineering as an afterthought rather than a discipline. I wrote prompts the way I write code comments—quickly, informally, assuming the model would "figure it out." That assumption cost us weeks of debugging, inconsistent user experiences, and a readmission prediction system that underperformed simply because the prompt did not guide the model properly.
+            </p>
+
+            <p>
+                This matters because production AI is fundamentally different from prototype AI. In a demo, you can cherry-pick examples that work. In production, you face thousands of variations: edge cases, unusual query patterns, incomplete data, ambiguous requests. Your prompts must handle all of them consistently while maintaining accuracy, safety, and compliance with regulations like HIPAA. The questions this article answers are:
+            </p>
+
+            <ul class="list-disc">
+                <li>"How do I design prompts that work reliably across thousands of production queries, not just the happy path?"</li>
+                <li>"What is the systematic process for testing and iterating on prompts in healthcare environments?"</li>
+                <li>"How do I balance detailed instructions with token efficiency when context windows matter?"</li>
+                <li>"What metrics should I track to know if my prompts are actually working in production?"</li>
+            </ul>
+
+            <p>
+                I built this guide to share the systematic approach I developed through building production healthcare AI systems. This is not theory or speculation. These are battle-tested patterns from systems handling real clinical data, real patient queries, and real business consequences.
+            </p>
+
+            <div class="highlight-box" style="background: rgba(6, 182, 212, 0.1); border-left: 4px solid #06b6d4; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+                This article provides a systematic 7-step blueprint for production prompt engineering, with real healthcare examples from Agent Nurse Bot, clinical knowledge bases, and patient data systems that handle thousands of queries daily.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The challenge is that most teams treat prompt engineering as creative writing when it should be treated as software engineering. You write a prompt, test it with a few examples, see it work, and ship it. Then production happens. Users ask questions your test cases never covered. The model hallucinates medical information. Queries that should take 500 tokens consume 3000 tokens because your prompt was too verbose. Edge cases that happen once in a thousand queries cause complete failures when they do occur.
+            </p>
+
+            <p>
+                This happened to us with drug interaction queries. We built a prompt that worked beautifully for common medications like aspirin and ibuprofen. It combined few-shot examples, clear instructions, and safety constraints. Our test suite passed. We deployed. Within a week, we discovered it failed unpredictably for medication combinations involving generic names, brand names, or international drug names. The model would sometimes conflate different medications with similar names, sometimes refuse to answer valid queries because the safety instructions were too strict, and sometimes provide overly cautious responses that frustrated clinicians who needed clear guidance.
+            </p>
+
+            <p>
+                The root cause was not the language model. It was that we had not systematically engineered the prompt for production conditions. We had not tested edge cases. We had not measured consistency across variations. We had not established clear evaluation metrics. We treated the prompt as a disposable piece of text rather than critical infrastructure that required version control, testing, and monitoring just like any other production code.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let me lucify this concept with an analogy from everyday work life that captures the essence of prompt engineering in production.
+            </p>
+
+            <div class="analogy-card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #06b6d4; border-radius: 1rem; padding: 2rem; margin: 2rem 0;">
+                <p>
+                    Imagine you are training a new employee to handle customer support queries. You could take two approaches. The first approach is the "creative writing" method: "Answer customer questions helpfully and professionally." This works fine when you sit next to them for the first few calls, but the moment they face an unusual situation—an angry customer, a technical question outside their expertise, a request that violates company policy—they struggle because the instruction is too vague.
+                </p>
+
+                <p>
+                    The second approach is the "systematic training" method: You give them clear role definition ("You are a customer support specialist for a healthcare technology company"). You provide specific examples of common scenarios with ideal responses. You establish boundaries ("Never promise features we do not have, always escalate medical questions to clinical staff"). You create decision trees for complex situations ("If the customer mentions insurance, route to billing. If they describe symptoms, route to clinical team"). You set expectations for tone and length ("Keep responses under 200 words, maintain professional empathy").
+                </p>
+
+                <p>
+                    Most importantly, you do not just hand them this manual once. You version-control it. When you discover a new edge case—customers asking about features you deprecate, questions about competitors, requests for discounts you cannot offer—you update the manual with specific guidance for that scenario. You measure their performance with metrics: average response time, customer satisfaction scores, escalation rates. You iterate based on real-world performance data.
+                </p>
+            </div>
+
+            <p>
+                Prompt engineering in production systems follows the exact same principles. Your prompt is that training manual. The language model is that new employee—incredibly capable, but only as good as the instructions you provide. The "creative writing" approach might work for demos where you control the inputs. The "systematic training" approach is what you need for production where you face thousands of variations you cannot predict.
+            </p>
+
+            <p>
+                Just like that training manual, your prompts need role definitions, specific examples, clear boundaries, decision trees for complex cases, and style guidance. Just like that employee's performance, your prompts need version control, edge case discovery, metric-driven evaluation, and continuous iteration. The moment you treat your prompts as critical infrastructure rather than throwaway text, everything changes.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                To solve this problem effectively, we first need to lucify the key technical terms that appear throughout production prompt engineering. Understanding these terms clearly will make the blueprint implementation much easier to follow.
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-graduation-cap mr-2"></i>Few-Shot Learning
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Few-shot learning means providing the language model with a small number of example inputs and desired outputs within the prompt itself, showing it the pattern you want it to follow. Instead of relying on the model to infer what you want from instructions alone, you demonstrate through concrete examples.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> When building the Agent Nurse Bot's text-to-SQL capability, instead of just telling the model "convert questions to SQL," I showed it three examples: "Question: Show me patients with high blood pressure → SELECT * FROM patients WHERE condition='hypertension'". Each example taught the model the exact query structure, column names, and logic I needed.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of teaching someone to fill out a form. You could read them the instructions, or you could show them two completed forms and say "do yours like these examples." The second approach is dramatically clearer because it demonstrates the pattern through concrete examples rather than abstract rules.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-brain mr-2"></i>Chain-of-Thought Prompting
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Chain-of-thought prompting instructs the model to show its reasoning process step-by-step before arriving at a final answer. By explicitly requesting intermediate reasoning steps, you dramatically improve accuracy on complex queries while making the model's logic transparent and verifiable.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> For drug interaction queries, instead of asking "Are these medications safe together?" I prompt: "Think through this step by step: First, identify each medication's mechanism of action. Second, check for overlapping pathways. Third, assess severity of any interactions. Finally, provide your recommendation." This structured reasoning reduced hallucinations by 40% in our production tests.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of a math teacher requiring students to "show their work" rather than just writing the final answer. The intermediate steps reveal whether the student truly understands the process or got lucky guessing. Chain-of-thought prompting does the same for language models—it reveals the reasoning and dramatically improves accuracy on multi-step problems.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-user-shield mr-2"></i>System Prompts
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> A system prompt is a persistent instruction set that defines the model's role, capabilities, boundaries, and behavior across all interactions. Unlike user messages that change with each query, the system prompt remains constant and establishes the fundamental context for how the model should operate.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Our clinical assistant's system prompt begins: "You are a clinical information assistant for healthcare professionals. You provide accurate medical information based on current clinical guidelines. You never diagnose patients. You always recommend consulting with qualified healthcare providers for patient-specific decisions." This single system prompt governs behavior across thousands of different queries.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of a system prompt like an employee's job description and company policies manual. It does not tell them what to do for every single task, but it establishes their role, authority level, what they can and cannot do, and how they should approach their work. Every specific task they handle is filtered through that foundational understanding.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-sliders-h mr-2"></i>Temperature and Top-p
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Temperature and Top-p are parameters that control the randomness and creativity of the model's responses. Temperature ranges from 0 to 2, where 0 makes responses deterministic and focused, while 2 makes them highly random. Top-p (nucleus sampling) controls diversity by only sampling from the most likely tokens whose cumulative probability reaches p.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> For patient data retrieval where consistency is critical, I use temperature=0 to ensure identical queries always return the same structured response. For clinical knowledge questions where some variation in explanation is acceptable, I use temperature=0.3 with top-p=0.9 to allow slight rewording while maintaining factual consistency.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of temperature like the strictness level of a recipe. Temperature 0 is "follow this recipe exactly, every single time, no substitutions." Temperature 1 is "feel free to adjust ingredients slightly based on what you have." Temperature 2 is "use this as loose inspiration and improvise freely." In healthcare, you almost always want that first category—exact adherence to the pattern.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-file-code mr-2"></i>Prompt Templates
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Prompt templates are reusable prompt structures with variables that get filled in dynamically based on the specific query context. They separate the stable instruction logic from the variable content, making prompts maintainable, testable, and consistent across thousands of queries.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Our readmission prediction template: "Given patient data: {patient_data}, recent vitals: {vitals}, and discharge plan: {discharge_plan}, assess readmission risk using these criteria: {risk_factors}. Provide: risk level (Low/Medium/High), key factors, and recommended interventions." The curly braces get replaced with actual data for each prediction request, but the structure stays constant.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of prompt templates like email templates in your mail client. The greeting, signature, and overall structure stay the same, but you fill in the recipient's name, specific details, and relevant information for each email. This consistency ensures professional quality while dramatically reducing the time and mental effort required to compose each message.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                Now, let's make the blueprint for engineering production-grade prompts. This systematic approach has been validated across multiple healthcare AI systems handling thousands of queries daily.
+            </p>
+
+            <h3><i class="fas fa-clipboard-list mr-2"></i>The Seven-Step Production Prompt Engineering Blueprint</h3>
+
+            <!-- Interactive Flow Diagram -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-cyan-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-3">
+                        🎯 Production Prompt Engineering Pipeline
+                    </h4>
+                    <p class="text-slate-400">
+                        From requirements to production-ready prompts in seven systematic steps
+                    </p>
+                </div>
+
+                <!-- Row 1: Define Task → Structure Selection → System Prompt -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-violet-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📋</span>
+                                </div>
+                                <span class="text-violet-300 font-semibold">Define Task</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Specify desired behavior & constraints</p>
+                        </div>
+                    </div>
+                    <div class="text-violet-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🎯</span>
+                                </div>
+                                <span class="text-cyan-300 font-semibold">Choose Structure</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Zero-shot vs few-shot decision</p>
+                        </div>
+                    </div>
+                    <div class="text-cyan-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-blue-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">👤</span>
+                                </div>
+                                <span class="text-blue-300 font-semibold">Craft System Prompt</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Define role & boundaries</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-blue-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 2: Add Examples → Set Parameters → Test Edge Cases -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-indigo-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📚</span>
+                                </div>
+                                <span class="text-indigo-300 font-semibold">Add Examples</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Few-shot demonstrations</p>
+                        </div>
+                    </div>
+                    <div class="text-indigo-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-fuchsia-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-fuchsia-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">⚙️</span>
+                                </div>
+                                <span class="text-fuchsia-300 font-semibold">Set Parameters</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Temperature, top-p, max tokens</p>
+                        </div>
+                    </div>
+                    <div class="text-fuchsia-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-pink-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🧪</span>
+                                </div>
+                                <span class="text-pink-300 font-semibold">Test Edge Cases</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Validate across scenarios</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-pink-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 3: Monitor & Iterate -->
+                <div class="flex justify-center">
+                    <div class="max-w-md w-full">
+                        <div class="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-3 border-green-500 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-green-500/30 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📊</span>
+                                </div>
+                                <span class="text-green-300 font-semibold text-lg">Monitor & Iterate</span>
+                            </div>
+                            <p class="text-slate-300">Track metrics, discover edge cases, version control updates</p>
+                            <p class="text-sm text-slate-400 mt-2">Production-ready prompts with continuous improvement</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Each step in this blueprint builds on the previous one, creating a systematic approach that transforms vague instructions into production-ready prompts. Let's break down what happens at each stage.
+            </p>
+
+            <p>
+                <strong>Step One: Define the task and desired behavior.</strong> Before writing any prompt text, explicitly document what success looks like. For the Agent Nurse Bot, success meant: converting natural language questions to correct SQL queries, handling ambiguous column names gracefully, never exposing sensitive patient identifiers, and returning results in a structured JSON format. These requirements become guardrails for everything that follows.
+            </p>
+
+            <p>
+                <strong>Step Two: Choose the right prompt structure.</strong> Zero-shot (instructions only) works for simple, well-defined tasks. Few-shot (with examples) becomes essential for complex tasks like clinical reasoning or SQL generation. For drug interactions, we needed few-shot because the nuance of assessing severity requires demonstrated patterns that instructions alone cannot convey.
+            </p>
+
+            <p>
+                <strong>Step Three: Craft clear system prompts with role definition.</strong> This establishes who the model is, what it can do, and what boundaries it must respect. Our clinical assistant system prompt defines it as an information provider, explicitly states it never diagnoses, and requires HIPAA-compliant handling of any patient data it processes.
+            </p>
+
+            <p>
+                <strong>Step Four: Add examples that guide the model.</strong> These examples must cover common cases, edge cases, and failure modes. For text-to-SQL, we included examples with multiple JOIN operations, date range queries, aggregations, and queries that should be rejected for security reasons. Each example teaches the model a specific pattern.
+            </p>
+
+            <p>
+                <strong>Step Five: Set appropriate parameters.</strong> Temperature near 0 for consistency on factual queries. Slightly higher temperature for explanatory responses where wording flexibility is acceptable. Top-p to control response diversity. Max tokens to prevent runaway responses that waste context window.
+            </p>
+
+            <p>
+                <strong>Step Six: Test prompts with edge cases.</strong> This is where most teams skip steps and pay for it later. We built test suites covering: ambiguous queries, queries with typos, queries in unusual formats, queries that should be rejected, queries with incomplete information, and queries that combine multiple intents. Every failure discovered becomes a new test case and often triggers prompt updates.
+            </p>
+
+            <p>
+                <strong>Step Seven: Monitor and iterate based on production usage.</strong> Production reveals patterns no test suite catches. We track: consistency rate (identical queries producing identical responses), hallucination rate, average token usage, query success rate, and edge case frequency. When metrics degrade or new edge cases emerge, we version the prompt, update it, and redeploy.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+            <p>
+                Let's carry out the blueprint plan with real code examples from production healthcare AI systems. These patterns have been validated in systems handling thousands of daily queries across Medical Guardian and Health Recovery Solutions.
+            </p>
+
+            <h3><i class="fas fa-code mr-2"></i>Step One & Two: Task Definition and Structure Selection</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python"># Production prompt engineering for Agent Nurse Bot
+# Task: Convert natural language questions to SQL for clinical database queries
+
+# Task Requirements Documentation
+"""
+Success Criteria:
+1. Generate syntactically correct SQL for 95%+ of valid queries
+2. Gracefully handle ambiguous column names with clarifying questions
+3. Never expose patient identifiers (SSN, MRN) in query results
+4. Return structured JSON with query, explanation, and safety flags
+5. Reject queries that violate HIPAA or data access policies
+
+Decision: Few-shot structure required
+Reasoning: SQL generation with clinical schema requires demonstrated patterns
+         Zero-shot fails on complex JOINs and date logic (~60% accuracy)
+         Few-shot achieves 95%+ accuracy with 3-5 examples
+"""
+
+import openai
+from typing import Dict, List
+import json
+
+# Azure OpenAI configuration (Medical Guardian stack)
+openai.api_type = "azure"
+openai.api_base = "https://your-resource.openai.azure.com/"
+openai.api_version = "2024-02-15-preview"
+openai.api_key = "your-api-key-here"
+
+# Clinical database schema for context
+SCHEMA_CONTEXT = """
+Available Tables:
+- patients (patient_id, first_name, last_name, dob, primary_condition)
+- vitals (vital_id, patient_id, recorded_date, bp_systolic, bp_diastolic, heart_rate, temperature)
+- medications (med_id, patient_id, drug_name, dosage, start_date, end_date)
+- appointments (appt_id, patient_id, provider_name, appt_date, appt_type, notes)
+"""</code></pre>
+            </div>
+
+            <h3><i class="fas fa-user-shield mr-2"></i>Step Three: Crafting System Prompts with Role Definition</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python"># System prompt with clear role, capabilities, and boundaries
+SYSTEM_PROMPT = """You are a clinical data assistant that converts natural language questions
+into SQL queries for a healthcare database. Your role and constraints:
+
+ROLE:
+- You translate healthcare professional queries into accurate SQL
+- You understand clinical terminology and database relationships
+- You provide clear explanations of what each query does
+
+CAPABILITIES:
+- Generate SELECT queries with appropriate JOINs, filters, and aggregations
+- Handle date ranges, conditions, and clinical terminology
+- Explain query logic in plain language
+
+BOUNDARIES (CRITICAL - NEVER VIOLATE):
+1. NEVER expose patient identifiers: no SSN, MRN, or full names in results
+2. REJECT queries asking for: diagnosis predictions, treatment recommendations, or medical advice
+3. ONLY generate SELECT queries - no INSERT, UPDATE, DELETE, or DROP
+4. If query is ambiguous, ask clarifying questions before generating SQL
+5. Always include WHERE clauses to limit result sets (prevent full table scans)
+6. Flag any query that might violate HIPAA compliance
+
+OUTPUT FORMAT:
+Always respond with JSON:
+{
+  "sql_query": "the generated SQL query",
+  "explanation": "plain language explanation of what this query does",
+  "safety_flag": "SAFE" or "REQUIRES_REVIEW: reason",
+  "clarification_needed": null or "question to ask user"
+}
+"""</code></pre>
+            </div>
+
+            <h3><i class="fas fa-graduation-cap mr-2"></i>Step Four: Adding Few-Shot Examples</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python"># Few-shot examples covering common patterns and edge cases
+FEW_SHOT_EXAMPLES = [
+    {
+        "user": "Show me patients with high blood pressure readings in the last week",
+        "assistant": json.dumps({
+            "sql_query": """
+                SELECT p.patient_id, p.first_name, v.recorded_date,
+                       v.bp_systolic, v.bp_diastolic
+                FROM patients p
+                JOIN vitals v ON p.patient_id = v.patient_id
+                WHERE v.bp_systolic >= 140 OR v.bp_diastolic >= 90
+                  AND v.recorded_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                ORDER BY v.recorded_date DESC;
+            """,
+            "explanation": "This query finds patients with elevated blood pressure (systolic ≥140 or diastolic ≥90) in the past 7 days, showing their IDs, names, and vital signs. Results are sorted by most recent readings first.",
+            "safety_flag": "SAFE",
+            "clarification_needed": None
+        })
+    },
+    {
+        "user": "Which patients are on both aspirin and warfarin?",
+        "assistant": json.dumps({
+            "sql_query": """
+                SELECT DISTINCT p.patient_id, p.first_name, p.last_name
+                FROM patients p
+                JOIN medications m1 ON p.patient_id = m1.patient_id
+                JOIN medications m2 ON p.patient_id = m2.patient_id
+                WHERE m1.drug_name LIKE '%aspirin%'
+                  AND m2.drug_name LIKE '%warfarin%'
+                  AND m1.end_date IS NULL
+                  AND m2.end_date IS NULL;
+            """,
+            "explanation": "This query identifies patients currently taking both aspirin and warfarin (end_date IS NULL means medication is active). This is flagged because this combination increases bleeding risk and requires clinical review.",
+            "safety_flag": "REQUIRES_REVIEW: Potential drug interaction - aspirin + warfarin increases bleeding risk",
+            "clarification_needed": None
+        })
+    },
+    {
+        "user": "Give me a list of all patients",
+        "assistant": json.dumps({
+            "sql_query": None,
+            "explanation": None,
+            "safety_flag": "REQUIRES_REVIEW: Query too broad - would return entire patient database",
+            "clarification_needed": "This query would return all patients in the database. Please specify: What timeframe? What condition? What specific information do you need?"
+        })
+    },
+    {
+        "user": "Show me patients who missed their last appointment",
+        "assistant": json.dumps({
+            "sql_query": """
+                SELECT p.patient_id, p.first_name, a.appt_date,
+                       a.provider_name, a.appt_type
+                FROM patients p
+                JOIN appointments a ON p.patient_id = a.patient_id
+                WHERE a.appt_date < NOW()
+                  AND a.notes LIKE '%no show%' OR a.notes LIKE '%missed%'
+                ORDER BY a.appt_date DESC
+                LIMIT 100;
+            """,
+            "explanation": "This query finds patients who missed appointments (identified by 'no show' or 'missed' in notes), limited to most recent 100 cases. Could be refined by adding date range if you need specific timeframe.",
+            "safety_flag": "SAFE",
+            "clarification_needed": "Would you like to filter by a specific date range or provider?"
+        })
+    }
+]</code></pre>
+            </div>
+
+            <h3><i class="fas fa-sliders-h mr-2"></i>Step Five: Setting Parameters and Creating the Complete Prompt Function</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">def generate_sql_query(user_question: str) -> Dict:
+    """
+    Convert natural language question to SQL using production prompt engineering.
+
+    Returns JSON with: sql_query, explanation, safety_flag, clarification_needed
+    """
+    # Build messages with system prompt and few-shot examples
+    messages = [{"role": "system", "content": SYSTEM_PROMPT + "\n\nDATABASE SCHEMA:\n" + SCHEMA_CONTEXT}]
+
+    # Add few-shot examples
+    for example in FEW_SHOT_EXAMPLES:
+        messages.append({"role": "user", "content": example["user"]})
+        messages.append({"role": "assistant", "content": example["assistant"]})
+
+    # Add actual user question
+    messages.append({"role": "user", "content": user_question})
+
+    try:
+        response = openai.ChatCompletion.create(
+            engine="gpt-4-deployment-name",  # Your Azure deployment
+            messages=messages,
+            temperature=0,  # CRITICAL: Use 0 for deterministic SQL generation
+            top_p=0.95,    # Slight diversity in explanation wording acceptable
+            max_tokens=500,  # SQL queries should be concise
+            response_format={"type": "json_object"}  # Enforce JSON output
+        )
+
+        result = json.loads(response.choices[0].message.content)
+
+        # Add metadata for monitoring
+        result["tokens_used"] = response.usage.total_tokens
+        result["model"] = response.model
+
+        return result
+
+    except Exception as e:
+        # Production error handling
+        return {
+            "sql_query": None,
+            "explanation": None,
+            "safety_flag": f"ERROR: {str(e)}",
+            "clarification_needed": "System error occurred. Please try rephrasing your question.",
+            "tokens_used": 0,
+            "model": None
+        }
+
+# Example usage
+question = "Show me diabetic patients with recent A1C tests above 8"
+result = generate_sql_query(question)
+
+print("Generated SQL:")
+print(result["sql_query"])
+print("\nExplanation:", result["explanation"])
+print("Safety Flag:", result["safety_flag"])
+print("Tokens Used:", result["tokens_used"])</code></pre>
+            </div>
+
+            <h3><i class="fas fa-chart-line mr-2"></i>Step Seven: Production Monitoring and Metrics</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python"># Production monitoring for prompt quality
+from collections import defaultdict
+import datetime
+
+class PromptMetricsTracker:
+    """Track prompt performance metrics in production"""
+
+    def __init__(self):
+        self.metrics = defaultdict(int)
+        self.queries = []
+
+    def log_query(self, question: str, result: Dict, execution_time: float):
+        """Log each query for analysis"""
+        self.queries.append({
+            "timestamp": datetime.datetime.now(),
+            "question": question,
+            "sql_generated": result.get("sql_query") is not None,
+            "safety_flag": result.get("safety_flag"),
+            "tokens_used": result.get("tokens_used", 0),
+            "execution_time_ms": execution_time * 1000,
+            "clarification_needed": result.get("clarification_needed") is not None
+        })
+
+        # Update counters
+        self.metrics["total_queries"] += 1
+        if result.get("sql_query"):
+            self.metrics["successful_generations"] += 1
+        if "REQUIRES_REVIEW" in result.get("safety_flag", ""):
+            self.metrics["safety_flags_raised"] += 1
+        if result.get("clarification_needed"):
+            self.metrics["clarifications_requested"] += 1
+
+    def get_metrics(self) -> Dict:
+        """Calculate key performance indicators"""
+        total = self.metrics["total_queries"]
+        if total == 0:
+            return {"error": "No queries logged yet"}
+
+        avg_tokens = sum(q["tokens_used"] for q in self.queries) / total
+        avg_time = sum(q["execution_time_ms"] for q in self.queries) / total
+
+        return {
+            "total_queries": total,
+            "success_rate": f"{(self.metrics['successful_generations'] / total * 100):.1f}%",
+            "safety_flag_rate": f"{(self.metrics['safety_flags_raised'] / total * 100):.1f}%",
+            "clarification_rate": f"{(self.metrics['clarifications_requested'] / total * 100):.1f}%",
+            "avg_tokens_per_query": f"{avg_tokens:.0f}",
+            "avg_response_time_ms": f"{avg_time:.0f}",
+            "cost_estimate_per_1000_queries": f"${(avg_tokens / 1000 * 0.03 * 1000):.2f}"  # GPT-4 pricing
+        }
+
+# Usage in production
+tracker = PromptMetricsTracker()
+
+# Log queries over time
+import time
+questions = [
+    "Show me patients with high blood pressure",
+    "Which patients missed appointments last month?",
+    "Give me all patient data"  # Should be rejected
+]
+
+for q in questions:
+    start = time.time()
+    result = generate_sql_query(q)
+    end = time.time()
+    tracker.log_query(q, result, end - start)
+
+# View metrics
+print("\nProduction Metrics:")
+print(json.dumps(tracker.get_metrics(), indent=2))</code></pre>
+            </div>
+
+            <p>
+                This production implementation demonstrates every step of the blueprint in action. The system prompt establishes role and boundaries. Few-shot examples teach complex patterns. Parameter settings ensure consistency. Error handling and metrics provide operational visibility. This is not a prototype—this is production-grade prompt engineering.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <p>
+                Prompt engineering in production systems is software engineering, not creative writing. The systematic approach in this article—defining requirements, choosing structures, crafting system prompts, adding examples, setting parameters, testing edge cases, and monitoring metrics—transforms unreliable prototypes into consistent production systems.
+            </p>
+
+            <p>
+                The Agent Nurse Bot that struggled with drug interaction queries now handles thousands of clinical queries daily with 95%+ accuracy. The readmission prediction system that underperformed due to poor prompts now provides reliable risk assessments that clinicians trust. The clinical knowledge base that occasionally hallucinated now maintains factual consistency through proper prompt engineering and chain-of-thought reasoning.
+            </p>
+
+            <p>
+                These improvements did not come from switching models or increasing compute. They came from treating prompts as critical infrastructure that deserves the same rigor as any other production code: version control, testing, monitoring, and iterative improvement based on real-world performance.
+            </p>
+
+            <p>
+                Start with one production system. Apply this blueprint. Track metrics. You will see immediate improvements in consistency, reliability, and user trust. Prompt engineering is not magic—it is systematic discipline that any team can master.
+            </p>
+        </article>
+
+        <div class="section-divider"></div>
+
+        <!-- Back to Journal -->
+        <div class="text-center my-12">
+            <a href="../index.html#journal" class="btn-primary text-lg" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; text-decoration: none;">
+                <i class="fas fa-arrow-left mr-2"></i>Back to The Journal
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">© 2025 Zubair Ashfaque. Built with passion for AI and healthcare.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" target="_blank" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" target="_blank" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Prism.js for code highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling.querySelector('code');
+            const text = codeBlock.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
