@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Production-Grade RAG Systems with LlamaIndex & LlamaCloud | Zubair Ashfaque</title>
+    <meta name="description" content="A comprehensive guide to building production-grade RAG systems using LlamaIndex and LlamaCloud. Learn document parsing, structured extraction, vector indexing, workflows, and AI agents with complete code examples.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .product-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .product-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: #8b5cf6;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .product-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #06b6d4;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0.75rem;
+            left: 1rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 20px 0 0 #eab308, 40px 0 0 #22c55e;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .analogy-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .highlight-box {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #334155, transparent);
+            margin: 3rem 0;
+        }
+
+        .flow-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 2rem 0;
+            margin: 2rem 0;
+        }
+
+        .flow-step {
+            min-width: 140px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: scale(1.05);
+        }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: #64748b;
+        }
+
+        .tabs-container {
+            margin: 2rem 0;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid #334155;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: #06b6d4;
+        }
+
+        .tab-btn.active {
+            color: #06b6d4;
+            border-bottom-color: #06b6d4;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .comparison-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .comparison-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-5px);
+        }
+
+        .featured-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin: 2rem 0;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        .comparison-table th {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .callout {
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .callout-info {
+            background: rgba(6, 182, 212, 0.1);
+            border-color: #06b6d4;
+        }
+
+        .callout-success {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+        }
+
+        .callout-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border-color: #eab308;
+        }
+
+        .mode-pills {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .mode-pill {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 2rem;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .mode-pill:hover {
+            transform: scale(1.05);
+            border-color: #8b5cf6;
+        }
+
+        .quick-start-steps {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .step-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            border-color: #06b6d4;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .workflow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 1rem;
+        }
+
+        .workflow-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .workflow-node {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-node:hover {
+            transform: scale(1.05);
+        }
+
+        .workflow-connector {
+            font-size: 1.5rem;
+            color: #64748b;
+        }
+
+        pre {
+            margin: 0;
+            padding-top: 2rem;
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+        }
+
+        h2 {
+            color: #06b6d4;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 3rem 0 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h3 {
+            color: #06b6d4;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+        }
+
+        h4 {
+            color: #8b5cf6;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        p {
+            line-height: 1.8;
+            color: #cbd5e1;
+            margin: 1rem 0;
+        }
+
+        strong {
+            color: #e2e8f0;
+        }
+
+        a {
+            color: #06b6d4;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #3b82f6;
+        }
+
+        ul {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="blog-container">
+        <!-- Hero Section -->
+        <div style="margin: 3rem 0;">
+            <div class="hero-badge">
+                LlamaIndex & LlamaCloud 2026 Guide
+            </div>
+            <h1 class="hero-gradient" style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">
+                Building Production-Grade RAG Systems with LlamaIndex & LlamaCloud
+            </h1>
+            <p class="text-xl text-gray-400" style="margin-top: 1.5rem;">
+                Master the complete ecosystem: document parsing, structured extraction, vector indexing, workflows, and AI agents. From corporate librarian analogy to production code.
+            </p>
+            <div style="margin-top: 2rem; color: #94a3b8;">
+                <i class="far fa-calendar mr-2"></i>January 22, 2026
+                <span class="mx-3">•</span>
+                <i class="far fa-clock mr-2"></i>25 min read
+                <span class="mx-3">•</span>
+                <i class="fas fa-tags mr-2"></i>LlamaIndex, RAG, LLM, Document AI
+            </div>
+        </div>
+
+        <!-- Product Showcase -->
+        <div class="product-showcase">
+            <div class="product-card">
+                <i class="fas fa-file-pdf" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0;">LlamaParse</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Transform complex PDFs, tables, and charts into LLM-ready text</p>
+            </div>
+            <div class="product-card">
+                <i class="fas fa-bullseye" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0;">LlamaExtract</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Pull structured data from documents with schema definitions</p>
+            </div>
+            <div class="product-card">
+                <i class="fas fa-cloud" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0;">LlamaCloud</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Managed RAG pipeline with zero infrastructure setup</p>
+            </div>
+            <div class="product-card">
+                <i class="fas fa-robot" style="color: #d946ef;"></i>
+                <h4 style="color: #d946ef; margin: 0.5rem 0;">Agent Framework</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Autonomous AI that reasons, uses tools, and completes tasks</p>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- The Motivation -->
+        <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+        <p>
+            Large Language Models are transforming how we interact with information. They can write code, summarize documents, answer questions, and reason through complex problems. But here's the uncomfortable truth: every LLM you interact with knows nothing about your company's documents, your customer contracts, your internal policies, or your proprietary research.
+        </p>
+
+        <p>
+            Think about it. You have years of institutional knowledge locked in PDFs, Word documents, spreadsheets, and scanned invoices. Your team spends hours manually searching through this information to answer questions like "What's our refund policy for enterprise customers who signed before 2024?" or "Which vendors have we worked with in the healthcare sector?"
+        </p>
+
+        <p>
+            The current state is frustrating. You can't just "ask your documents" because traditional search returns file names, not answers. You can't build basic RAG from scratch because the complexity is overwhelming: parsing complex PDFs with tables and charts, chunking documents intelligently, generating embeddings, setting up vector databases, implementing retrieval strategies, and orchestrating everything reliably.
+        </p>
+
+        <p>
+            <strong>The core problem:</strong> There's a massive gap between the promise of LLMs and the reality of enterprise data. Your organization is sitting on a knowledge goldmine, but you can't leverage it with AI because the bridge doesn't exist or is too complex to build.
+        </p>
+
+        <p>
+            This matters because the competitive advantage increasingly comes from how quickly and accurately organizations can leverage their internal knowledge. Companies that can ask "show me all contracts with auto-renewal clauses that expire in Q2" and get instant answers will move faster than competitors manually searching through folders.
+        </p>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+            LlamaIndex provides a complete ecosystem that handles the entire journey from raw documents to AI-powered answers, with options for both open-source flexibility and managed simplicity.
+        </div>
+
+        <p>
+            By the end of this guide, you'll understand:
+        </p>
+        <ul>
+            <li>How to connect LLMs to your company's documents and make them searchable</li>
+            <li>The difference between document parsing, structured extraction, and vector indexing</li>
+            <li>When to use open-source LlamaIndex versus managed LlamaCloud services</li>
+            <li>How to build production-grade RAG systems with workflows and autonomous agents</li>
+        </ul>
+
+        <p>
+            <strong>What you'll gain:</strong> A clear understanding of the complete LlamaIndex ecosystem, practical code examples for each component, and a decision framework for choosing the right architecture for your use case. No theoretical handwaving — just production-ready patterns you can implement immediately.
+        </p>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">150+</span>
+                <span class="stat-label">Data Sources</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">40+</span>
+                <span class="stat-label">Vector DBs</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">130+</span>
+                <span class="stat-label">File Formats</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">MIT</span>
+                <span class="stat-label">Open Source</span>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- The Challenge -->
+        <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+        <p>
+            The <strong>challenge</strong> is that LLMs are brilliant generalists but corporate amnesiacs. They know everything about world history, programming languages, and scientific concepts from their training data, but they have zero awareness of your specific business context.
+        </p>
+
+        <p>
+            Building a system to bridge this gap is deceptively complex. You might think "I'll just throw my PDFs at an LLM and ask questions," but that approach fails immediately. LLMs have context windows measured in thousands or millions of tokens, yet a single year of company documents can contain billions of tokens. You can't fit it all in.
+        </p>
+
+        <p>
+            Even if you could, there's the parsing problem. Enterprise documents aren't clean text files. They're PDFs with multi-column layouts, embedded tables spanning multiple pages, charts and diagrams with critical information, scanned images requiring OCR, and inconsistent formatting across different document types. Standard PDF libraries mangle this content, turning carefully formatted tables into unreadable text soup.
+        </p>
+
+        <p>
+            Then comes the architecture decision paralysis. Do you need parsing, extraction, or full RAG? Should you build with open-source tools or use managed services? How do you handle chunking strategies, embedding models, vector database selection, retrieval ranking, and production deployment? Each decision has trade-offs, and the wrong choice means rebuilding from scratch.
+        </p>
+
+        <p>
+            The final challenge is operational complexity. Production RAG systems need to handle document updates, maintain vector indexes, monitor retrieval quality, manage API costs, scale to millions of documents, and integrate with existing workflows. What starts as a prototype quickly becomes a full-time infrastructure project.
+        </p>
+
+        <!-- RAG Pipeline Flow -->
+        <div class="flow-container">
+            <div class="flow-step" style="border-color: #8b5cf6;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📄</div>
+                <div style="font-size: 0.875rem; color: #c4b5fd;">Raw Data</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #06b6d4;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
+                <div style="font-size: 0.875rem; color: #67e8f9;">Parse</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #3b82f6;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">✂️</div>
+                <div style="font-size: 0.875rem; color: #93c5fd;">Chunk</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #6366f1;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🧮</div>
+                <div style="font-size: 0.875rem; color: #a5b4fc;">Embed</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #d946ef;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📚</div>
+                <div style="font-size: 0.875rem; color: #f0abfc;">Index</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #ec4899;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+                <div style="font-size: 0.875rem; color: #f9a8d4;">Retrieve</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #22c55e;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💬</div>
+                <div style="font-size: 0.875rem; color: #86efac;">Generate</div>
+            </div>
+        </div>
+
+        <p>
+            This is where LlamaIndex enters. Rather than forcing you to become an expert in every component, it provides a complete ecosystem with intelligent defaults, flexible abstractions, and managed services for teams that want to move fast.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Problem -->
+        <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+        <p>
+            Let's <strong>lucify</strong> this concept by stepping away from embeddings and vector databases for a moment.
+        </p>
+
+        <div class="analogy-card">
+            <h3 style="color: #06b6d4; margin-top: 0;">The Corporate Librarian System</h3>
+
+            <p>
+                Imagine hiring a brilliant consultant who has read every book in the public library. They know history, science, business theory, and programming languages. They're incredibly helpful for general knowledge questions.
+            </p>
+
+            <p>
+                But now you need them to answer: <em>"What is our refund policy for enterprise customers who signed contracts before January 2024?"</em>
+            </p>
+
+            <p>
+                Your consultant is suddenly useless. They have no access to your company's internal documents. They can't read your 10,000 policy PDFs, customer contracts, product specifications, and legal agreements on the spot. Without a system, they're stuck.
+            </p>
+
+            <p>
+                <strong>Enter the Corporate Librarian System</strong> (this is LlamaIndex):
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <strong style="color: #8b5cf6;">1. The Catalog Manager (LlamaParse)</strong><br>
+                First, you need someone to take messy documents and convert them into organized, readable formats. This person receives financial reports with embedded charts, legal contracts with multi-page tables, and scanned invoices with handwritten notes. They carefully preserve the structure: tables stay as tables, charts are described accurately, multi-column layouts are linearized correctly.
+            </p>
+
+            <p>
+                Think of this as a professional translator who doesn't just translate words, but also redraws diagrams and reformats tables so everything makes perfect sense in the new format. That's what LlamaParse does — it's GenAI-native document parsing that understands context, not just text extraction.
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <strong style="color: #06b6d4;">2. The Data Clerk (LlamaExtract)</strong><br>
+                Sometimes you don't need entire documents — you need specific information extracted into a standard format. Imagine you have 500 invoices from different vendors, each with its own layout. You need: invoice number, vendor name, total amount, and due date.
+            </p>
+
+            <p>
+                You give the Data Clerk a form template (this is your Pydantic schema) and say "fill this out for all 500 invoices." They read each invoice, no matter how different the format, and accurately fill out your standardized form. They even cite which page they found each piece of information on and give you a confidence score.
+            </p>
+
+            <p>
+                This is targeted extraction, not full-text search. You define exactly what you want, and LlamaExtract pulls it out with high accuracy.
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <strong style="color: #3b82f6;">3. The Reference Desk (LlamaCloud Index)</strong><br>
+                Now your documents are clean and organized, but your consultant still can't search through thousands of them in real-time. They need a reference desk — a searchable catalog where they can type a query and instantly get the most relevant passages.
+            </p>
+
+            <p>
+                Behind the scenes, the Reference Desk has already read every document, broken them into sensible chunks (paragraphs or sections), converted them into numerical representations that capture semantic meaning (embeddings), and stored them in a specialized database optimized for similarity search (vector store).
+            </p>
+
+            <p>
+                When your consultant asks about refund policies, the Reference Desk finds the top 5 most relevant passages from across all documents in milliseconds. No manual searching required.
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <strong style="color: #d946ef;">4. The Research Coordinator (Workflows & Agents)</strong><br>
+                For complex questions, you need orchestration. Imagine your consultant needs to answer: "Compare our revenue per employee with the industry average and identify which departments are underperforming."
+            </p>
+
+            <p>
+                This requires multiple steps: query internal financial documents for revenue and headcount, search the web for industry benchmarks, calculate ratios, query HR documents for department breakdowns, perform comparative analysis, and synthesize findings.
+            </p>
+
+            <p>
+                A <strong>Workflow</strong> is like a research process with predefined steps: first do this, then do that, handle the results, loop if necessary. It's event-driven and asynchronous, so steps can run in parallel and respond to intermediate results.
+            </p>
+
+            <p>
+                An <strong>Agent</strong> is more autonomous. You give it the goal and available tools (document search, calculator, web search), and it decides which tools to use, in what order, and when it has enough information to answer. It's like a skilled researcher who figures out their own research plan rather than following a script.
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <strong>Putting It All Together:</strong><br>
+                Your corporate librarian system handles everything from messy PDFs to final answers. Documents flow through the Catalog Manager (parsed), specific data goes through the Data Clerk (extracted), everything lands in the Reference Desk (indexed), and complex questions are handled by the Research Coordinator (workflows/agents).
+            </p>
+
+            <p>
+                Your brilliant consultant can now answer company-specific questions with the same confidence they answer general knowledge questions. The knowledge gap is bridged.
+            </p>
+        </div>
+
+        <p>
+            <strong>Where this analogy breaks down:</strong> Real systems handle millions of documents and billions of tokens. The "librarian" isn't a single person but a distributed system with vector databases, embedding models, and LLM APIs. The "catalog" is mathematically sophisticated, using cosine similarity in high-dimensional spaces rather than keyword matching. But the core concept — transforming raw documents into queryable knowledge — holds perfectly.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Tech Terms -->
+        <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+        <p>
+            To solve this, we first need to <strong>lucify</strong> the key technical terms that power the LlamaIndex ecosystem.
+        </p>
+
+        <!-- Concept Card 1: LlamaParse -->
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-file-pdf mr-2"></i>LlamaParse
+            </h4>
+            <p class="text-base text-gray-300 mb-2">
+                <strong>Definition:</strong> GenAI-native document parsing service that transforms complex PDFs, Word documents, spreadsheets, and scanned images into clean, LLM-ready text or markdown format. Unlike traditional PDF libraries that extract text sequentially, LlamaParse uses vision-language models to understand document structure, preserving tables, charts, multi-column layouts, and visual context with high accuracy.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You have a 50-page financial report with embedded bar charts, multi-page comparison tables, and a two-column executive summary. LlamaParse converts it to clean markdown where tables remain properly formatted, charts are described in detail, and the reading order makes logical sense. Your RAG system can now understand "Q3 revenue increased 23% based on Table 5" rather than getting garbled text.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Like a professional translator who doesn't just convert words between languages, but also redraws diagrams, reformats tables to match cultural conventions, and ensures jokes still make sense in the target culture. LlamaParse doesn't just extract text — it understands and preserves meaning.
+            </p>
+        </div>
+
+        <!-- Concept Card 2: LlamaExtract -->
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-bullseye mr-2"></i>LlamaExtract
+            </h4>
+            <p class="text-base text-gray-300 mb-2">
+                <strong>Definition:</strong> Targeted data extraction service that pulls specific fields from unstructured documents based on your schema definition. You provide a Pydantic model defining exactly what fields you want (invoice number, vendor name, due date, line items), and LlamaExtract returns validated JSON with citations showing where each value was found. Includes confidence scores and automatic schema inference from sample documents.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You receive 500 invoices from different vendors, each with completely different layouts. You define a schema with fields like <code>invoice_number</code>, <code>vendor_name</code>, <code>total_amount</code>, <code>due_date</code>, and <code>line_items</code>. LlamaExtract processes all 500 invoices and returns structured JSON for each one, regardless of their varying formats. It even tells you "invoice number found on page 1, paragraph 2" and "confidence: 0.97".
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Like a data entry specialist with superhuman accuracy who can read any document format and fill out your standardized form. You give them a stack of papers and a template, and they extract exactly the information you need into a database-ready format, never missing a field or making typos.
+            </p>
+        </div>
+
+        <!-- Concept Card 3: LlamaCloud Index -->
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-cloud mr-2"></i>LlamaCloud Index
+            </h4>
+            <p class="text-base text-gray-300 mb-2">
+                <strong>Definition:</strong> Managed RAG (Retrieval-Augmented Generation) platform that handles the entire pipeline from document ingestion to query answering through a web UI or API. Automatically parses uploaded documents, chunks them intelligently, generates embeddings, stores vectors, implements retrieval strategies, and provides semantic search capabilities. Zero infrastructure setup required — you upload files and query them immediately.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You upload your company handbook (200 pages), product documentation (500 pages), and internal FAQs (50 pages) through the web interface. LlamaCloud automatically processes everything: parses PDFs, splits into optimal chunks, generates embeddings, stores in vector database, and makes it searchable. You can now query via API: "What is our remote work policy?" and get the relevant passage with source citations. No servers to manage, no vector database to configure.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Like Google for your private documents. You don't run the servers, tune the search algorithms, or manage the infrastructure. You just upload files and start searching. Google handles billions of web pages invisibly; LlamaCloud handles your enterprise documents the same way.
+            </p>
+        </div>
+
+        <!-- Concept Card 4: Workflows -->
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-project-diagram mr-2"></i>Workflows
+            </h4>
+            <p class="text-base text-gray-300 mb-2">
+                <strong>Definition:</strong> Event-driven, async-first orchestration system for building complex multi-step AI applications. Unlike traditional DAGs (directed acyclic graphs) that follow fixed sequences, Workflows use events as communication between steps. Steps emit events and listen for events, enabling loops, branching, parallel execution, and dynamic behavior. Supports state management for pause/resume, persistence across sessions, and human-in-the-loop patterns.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> A content quality workflow generates a joke, then critiques it, then improves it based on the critique, then re-critiques it, looping until the quality score exceeds 8/10. Each step is asynchronous and emits events like <code>JokeCreated</code>, <code>CritiqueGenerated</code>, <code>JokeImproved</code>. The workflow can pause at any point and resume later, persisting state across runs. This loop-and-refine pattern is impossible with static DAGs.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Like a smart factory assembly line where stations communicate via signals rather than rigid conveyor belts. If quality control rejects a product, it automatically loops back to the manufacturing step with feedback. Stations can work in parallel on different products. The system can pause for the night and resume exactly where it left off. No rigid step-by-step sequence required.
+            </p>
+        </div>
+
+        <!-- Concept Card 5: Agents -->
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-robot mr-2"></i>Agents
+            </h4>
+            <p class="text-base text-gray-300 mb-2">
+                <strong>Definition:</strong> Autonomous software systems that combine LLMs with tools, memory, and reasoning to complete tasks. Given a goal and available tools (document search, calculator, web search, database queries), agents decide which tools to use, in what order, and when they have sufficient information to answer. They maintain conversation history (memory), adapt to tool results, and self-correct when initial approaches fail. The key difference from workflows: agents make autonomous decisions rather than following predefined steps.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You ask an agent: "What's our revenue per employee compared to the industry average?" The agent has access to document search, calculator, and web search tools. It autonomously decides: (1) query internal documents for company revenue and headcount, (2) search the web for industry benchmark data, (3) use calculator to compute both ratios, (4) compare the results. You didn't tell it these steps — it figured out the plan and executed it.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Like a skilled executive assistant versus someone following a checklist. You tell them "prepare the Q3 board report" (the goal). They figure out they need to pull financial data, compare against targets, create visualizations, draft commentary, and format the deck. A checklist follower stops if anything is missing. An agent adapts, finds alternative data sources, and completes the task autonomously.
+            </p>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Making the Blueprint -->
+        <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+        <p>
+            Now, let's <strong>make the blueprint</strong> for implementing a production-grade RAG system with LlamaIndex and LlamaCloud.
+        </p>
+
+        <div class="blueprint-box">
+            <p class="text-lg font-semibold text-violet-300 mb-4">Overview: 8-Step Production RAG Implementation</p>
+            <div class="space-y-4">
+                <div>
+                    <p class="font-semibold text-cyan-400">Step One: Choose Your Architecture Pattern</p>
+                    <p class="text-gray-300">
+                        Decide what you're building: full RAG pipeline for Q&A, structured data extraction for automation, or document search for knowledge base. This determines whether you need LlamaParse (parsing), LlamaExtract (extraction), LlamaCloud Index (managed RAG), or a combination. Consider whether you want open-source flexibility or managed simplicity.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Two: Set Up Environment and Dependencies</p>
+                    <p class="text-gray-300">
+                        Create Python virtual environment, install llama-index core library and specific integrations (LLM providers, vector stores, data loaders). Configure API keys for OpenAI/Anthropic and LlamaCloud services. Verify setup by importing core modules and checking versions.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Three: Implement Document Parsing</p>
+                    <p class="text-gray-300">
+                        Use LlamaParse for complex documents containing tables, charts, multi-column layouts, or scanned content. Choose Fast mode (optimized for text and basic tables) or Premium mode (handles any document type with vision models). Configure output format: markdown for RAG, text for simple indexing, or JSON for structured data.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Four: Define Extraction Schemas (Optional)</p>
+                    <p class="text-gray-300">
+                        If you need structured data extraction, create Pydantic models defining exact fields with types and descriptions. LlamaExtract can auto-infer schemas from sample documents or use your predefined models. Specify which fields are required versus optional, and add validation rules.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Five: Build or Connect to Vector Index</p>
+                    <p class="text-gray-300">
+                        For RAG systems: create VectorStoreIndex from parsed documents, or connect to managed LlamaCloud Index. Configure chunking strategy (sentence-based, semantic, or fixed-size), select embedding model (OpenAI ada-002 or open-source alternatives), and set retrieval parameters (similarity_top_k for number of chunks, reranking models for improved relevance).
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Six: Create Query Engine or Agent</p>
+                    <p class="text-gray-300">
+                        Build FunctionAgent with document search as a tool for autonomous operation. Add memory and context tracking for conversational interfaces. Alternatively, create QueryEngine for single-shot Q&A without conversation state. Configure response synthesis mode (compact, refine, tree_summarize) based on answer length requirements.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Seven: Implement Workflow Orchestration (Advanced)</p>
+                    <p class="text-gray-300">
+                        For complex multi-step processes requiring loops, branching, or human-in-the-loop: design event-driven Workflow with custom event types. Define async step functions that emit and listen to events. Implement state management for pause/resume capability. Use for tasks like document processing pipelines, iterative refinement, or multi-agent coordination.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-semibold text-cyan-400">Step Eight: Test, Monitor, and Optimize</p>
+                    <p class="text-gray-300">
+                        Query your system with test questions covering different document types and complexity levels. Evaluate retrieval quality by checking if correct passages are returned. Tune chunking parameters (size, overlap) to optimize for your documents. Adjust similarity thresholds and reranking settings. Monitor LlamaCloud usage and API costs. Set up logging and metrics for production deployment.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- High-Level Concepts Grid -->
+        <h3 style="color: #8b5cf6; margin-top: 3rem;">High-Level Concepts in LlamaIndex</h3>
+        <div class="product-showcase">
+            <div class="product-card" style="border-color: #8b5cf6;">
+                <i class="fas fa-brain" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0;">LLM Augmentation</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Enhance LLM capabilities with external data, tools, and reasoning frameworks</p>
+            </div>
+            <div class="product-card" style="border-color: #06b6d4;">
+                <i class="fas fa-link" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0;">Prompt Chaining</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Break complex tasks into sequential LLM calls, passing outputs as inputs</p>
+            </div>
+            <div class="product-card" style="border-color: #3b82f6;">
+                <i class="fas fa-route" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0;">Routing</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Direct queries to different data sources or LLMs based on query type</p>
+            </div>
+            <div class="product-card" style="border-color: #6366f1;">
+                <i class="fas fa-layer-group" style="color: #6366f1;"></i>
+                <h4 style="color: #6366f1; margin: 0.5rem 0;">Parallelism</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Execute multiple LLM calls or tool operations simultaneously for speed</p>
+            </div>
+            <div class="product-card" style="border-color: #d946ef;">
+                <i class="fas fa-sitemap" style="color: #d946ef;"></i>
+                <h4 style="color: #d946ef; margin: 0.5rem 0;">Orchestration</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Coordinate complex workflows with steps, events, and state management</p>
+            </div>
+            <div class="product-card" style="border-color: #ec4899;">
+                <i class="fas fa-sync" style="color: #ec4899;"></i>
+                <h4 style="color: #ec4899; margin: 0.5rem 0;">Reflection</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Let LLMs critique and improve their own outputs iteratively</p>
+            </div>
+        </div>
+
+        <!-- Use Cases Grid -->
+        <h3 style="color: #8b5cf6; margin-top: 3rem;">Common Use Cases</h3>
+        <div class="product-showcase">
+            <div class="product-card" style="border-color: #06b6d4;">
+                <i class="fas fa-robot" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0;">Agents</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Autonomous systems that use tools and reasoning to complete tasks</p>
+            </div>
+            <div class="product-card" style="border-color: #8b5cf6;">
+                <i class="fas fa-project-diagram" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0;">Workflows</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Event-driven orchestration with loops, branching, and state</p>
+            </div>
+            <div class="product-card" style="border-color: #3b82f6;">
+                <i class="fas fa-file-export" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0;">Data Extraction</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Pull structured fields from unstructured documents at scale</p>
+            </div>
+            <div class="product-card" style="border-color: #6366f1;">
+                <i class="fas fa-search" style="color: #6366f1;"></i>
+                <h4 style="color: #6366f1; margin: 0.5rem 0;">Query Engines</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Single-shot question answering over indexed documents</p>
+            </div>
+            <div class="product-card" style="border-color: #d946ef;">
+                <i class="fas fa-comments" style="color: #d946ef;"></i>
+                <h4 style="color: #d946ef; margin: 0.5rem 0;">Chat Engines</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Conversational interfaces with memory and context tracking</p>
+            </div>
+            <div class="product-card" style="border-color: #ec4899;">
+                <i class="fas fa-database" style="color: #ec4899;"></i>
+                <h4 style="color: #ec4899; margin: 0.5rem 0;">RAG Systems</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Full retrieval-augmented generation pipelines</p>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <h3 style="color: #8b5cf6; margin-top: 3rem;">LlamaIndex Ecosystem Architecture</h3>
+        <div class="workflow-diagram">
+            <div class="workflow-row">
+                <div class="workflow-node" style="border-color: #8b5cf6; flex: 2;">
+                    <div style="font-size: 1.25rem; margin-bottom: 0.5rem; color: #c4b5fd;">📄 Document Sources</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">PDF • Word • Excel • Images • 130+ Formats</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #64748b; font-size: 1.5rem;">↓</div>
+            <div class="workflow-row">
+                <div class="workflow-node" style="border-color: #06b6d4; flex: 1;">
+                    <div style="font-size: 1.25rem; margin-bottom: 0.5rem; color: #67e8f9;">🔍 LlamaParse</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Clean text extraction</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #64748b; font-size: 1.5rem;">↓</div>
+            <div class="workflow-row" style="justify-content: center;">
+                <div class="workflow-node" style="border-color: #3b82f6; flex: 1;">
+                    <div style="font-size: 1.25rem; margin-bottom: 0.5rem; color: #93c5fd;">🎯 LlamaExtract</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Structured fields</div>
+                </div>
+                <div style="color: #64748b; font-size: 1.5rem; padding: 0 1rem;">+</div>
+                <div class="workflow-node" style="border-color: #6366f1; flex: 1;">
+                    <div style="font-size: 1.25rem; margin-bottom: 0.5rem; color: #a5b4fc;">☁️ LlamaCloud Index</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Vector storage</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #64748b; font-size: 1.5rem;">↓</div>
+            <div class="workflow-row" style="justify-content: center;">
+                <div class="workflow-node" style="border-color: #d946ef; flex: 1;">
+                    <div style="font-size: 1.25rem; margin-bottom: 0.5rem; color: #f0abfc;">💬 RAG Systems</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Q&A over docs</div>
+                </div>
+                <div style="color: #64748b; font-size: 1.5rem; padding: 0 1rem;">+</div>
+                <div class="workflow-node" style="border-color: #ec4899; flex: 1;">
+                    <div style="font-size: 1.25rem; margin-bottom: 0.5rem; color: #f9a8d4;">🤖 Agents</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Autonomous tasks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Cards -->
+        <h3 style="color: #8b5cf6; margin-top: 3rem;">LlamaParse vs LlamaExtract vs LlamaCloud</h3>
+        <div class="comparison-cards">
+            <div class="comparison-card">
+                <h4 style="color: #06b6d4; margin-top: 0;">LlamaParse</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>Purpose:</strong> Parse complex documents into clean text
+                </p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>When to Use:</strong> PDFs with tables, charts, or multi-column layouts
+                </p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>Output:</strong> Markdown, text, or JSON
+                </p>
+            </div>
+            <div class="comparison-card">
+                <div class="featured-badge">Most Popular</div>
+                <h4 style="color: #8b5cf6; margin-top: 0;">LlamaExtract</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>Purpose:</strong> Extract specific fields into structured data
+                </p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>When to Use:</strong> Need structured JSON from invoices, contracts, forms
+                </p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>Output:</strong> Validated JSON with citations
+                </p>
+            </div>
+            <div class="comparison-card">
+                <h4 style="color: #3b82f6; margin-top: 0;">LlamaCloud Index</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>Purpose:</strong> Managed RAG pipeline from upload to query
+                </p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>When to Use:</strong> Want semantic search without infrastructure
+                </p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 1rem 0;">
+                    <strong>Output:</strong> Query results with source citations
+                </p>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>LlamaParse</th>
+                    <th>LlamaExtract</th>
+                    <th>LlamaCloud Index</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Primary Use Case</td>
+                    <td>Document parsing</td>
+                    <td>Structured extraction</td>
+                    <td>Semantic search</td>
+                </tr>
+                <tr>
+                    <td>Output Format</td>
+                    <td>Text/Markdown/JSON</td>
+                    <td>Structured JSON</td>
+                    <td>Query answers</td>
+                </tr>
+                <tr>
+                    <td>Schema Required</td>
+                    <td>No</td>
+                    <td>Yes (Pydantic)</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>Handles Tables</td>
+                    <td>✅ Preserves structure</td>
+                    <td>✅ Extracts cells</td>
+                    <td>✅ Searches content</td>
+                </tr>
+                <tr>
+                    <td>Handles Charts</td>
+                    <td>✅ Describes visually</td>
+                    <td>❌ Not designed for</td>
+                    <td>✅ If parsed first</td>
+                </tr>
+                <tr>
+                    <td>Vector Storage</td>
+                    <td>❌ Parse only</td>
+                    <td>❌ Extract only</td>
+                    <td>✅ Built-in</td>
+                </tr>
+                <tr>
+                    <td>Infrastructure Needed</td>
+                    <td>None (API)</td>
+                    <td>None (API)</td>
+                    <td>None (managed)</td>
+                </tr>
+                <tr>
+                    <td>Best For</td>
+                    <td>RAG pipelines</td>
+                    <td>Data automation</td>
+                    <td>Quick semantic search</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <!-- Executing the Blueprint -->
+        <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+        <p>
+            <strong>Let's carry out the blueprint plan.</strong>
+        </p>
+
+        <p>
+            All complete code examples, Jupyter notebooks, and sample data are available in the GitHub repository: <a href="https://github.com/zubairashfaque/llamaindex-examples" target="_blank">github.com/zubairashfaque/llamaindex-examples</a>
+        </p>
+
+        <!-- 6.1: Environment Setup -->
+        <h3 style="color: #06b6d4;">6.1 Environment Setup (Steps 1-2)</h3>
+
+        <p>
+            Start by creating a clean Python environment and installing the necessary dependencies. LlamaIndex has a modular architecture — you install the core library plus specific integrations for your LLM provider and vector database.
+        </p>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-bash"># Create and activate virtual environment
+python -m venv llamaindex-env
+source llamaindex-env/bin/activate  # On Windows: llamaindex-env\Scripts\activate
+
+# Install core LlamaIndex
+pip install llama-index
+
+# Install specific integrations
+pip install llama-index-llms-openai       # OpenAI LLMs
+pip install llama-index-embeddings-openai # OpenAI embeddings
+pip install llama-index-vector-stores-chroma  # Chroma vector DB (local)
+pip install llama-cloud                   # LlamaCloud services
+
+# Verify installation
+python -c "import llama_index; print(f'LlamaIndex version: {llama_index.__version__}')"</code></pre>
+        </div>
+
+        <p>
+            Configure your API keys by creating a <code>.env</code> file in your project root. Never commit this file to version control.
+        </p>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-bash"># .env file
+OPENAI_API_KEY=sk-proj-...
+LLAMA_CLOUD_API_KEY=llx-...</code></pre>
+        </div>
+
+        <p>
+            <strong>Why these choices:</strong> The core <code>llama-index</code> package provides the framework, but you need specific integrations for LLMs (OpenAI GPT-4, Anthropic Claude, or open-source models) and vector stores (Chroma for local development, Pinecone/Weaviate for production). This modularity keeps installations lightweight and lets you swap components easily.
+        </p>
+
+        <div class="callout callout-info">
+            <strong><i class="fas fa-info-circle mr-2"></i>Free Credits:</strong>
+            LlamaCloud provides free credits for new users. Visit <a href="https://cloud.llamaindex.ai" target="_blank">cloud.llamaindex.ai</a> to sign up and get your API key.
+        </div>
+
+        <!-- 6.2: Document Parsing with LlamaParse -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.2 Document Parsing with LlamaParse (Step 3)</h3>
+
+        <p>
+            LlamaParse transforms complex documents into clean, LLM-ready text. It handles PDFs with tables, charts, multi-column layouts, and scanned images far better than traditional libraries like PyPDF2 or pdfplumber.
+        </p>
+
+        <!-- Mode Pills -->
+        <div class="mode-pills">
+            <div class="mode-pill">
+                <i class="fas fa-bolt" style="color: #06b6d4;"></i>
+                <div>
+                    <div style="font-weight: 600; color: #06b6d4;">Fast Mode</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Optimized for text & basic tables</div>
+                </div>
+            </div>
+            <div class="mode-pill">
+                <i class="fas fa-star" style="color: #eab308;"></i>
+                <div>
+                    <div style="font-weight: 600; color: #eab308;">Premium Mode</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Vision models for any document</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from llama_parse import LlamaParse
+from llama_index.core import SimpleDirectoryReader
+import os
+
+# Initialize LlamaParse
+parser = LlamaParse(
+    api_key=os.getenv("LLAMA_CLOUD_API_KEY"),
+    result_type="markdown",  # Options: "markdown", "text", "json"
+    parsing_instruction="Focus on preserving table structure and chart descriptions",
+    # Use premium mode for complex documents with charts/diagrams
+    # premium_mode=True
+)
+
+# Parse a single document
+documents = SimpleDirectoryReader(
+    input_files=["financial_report_q3.pdf"],
+    file_extractor={".pdf": parser}
+).load_data()
+
+# Access parsed content
+for doc in documents:
+    print(f"Parsed {len(doc.text)} characters")
+    print(doc.text[:500])  # Preview first 500 chars
+
+# Parse multiple documents from directory
+all_docs = SimpleDirectoryReader(
+    input_dir="./company_docs",
+    file_extractor={".pdf": parser},
+    recursive=True  # Include subdirectories
+).load_data()
+
+print(f"Parsed {len(all_docs)} documents")</code></pre>
+        </div>
+
+        <p>
+            <strong>Key decisions explained:</strong> We use <code>result_type="markdown"</code> because markdown preserves structure (headers, lists, tables) better than plain text, making it ideal for RAG systems. The <code>parsing_instruction</code> parameter guides the parser's focus — for financial documents, we emphasize tables; for research papers, we might emphasize citations and equations. Premium mode uses vision-language models and costs more but handles challenging documents like hand-drawn diagrams or complex charts.
+        </p>
+
+        <!-- Feature Grid -->
+        <h4 style="color: #8b5cf6; margin-top: 2rem;">LlamaParse Capabilities</h4>
+        <div class="product-showcase">
+            <div class="product-card" style="border-color: #06b6d4;">
+                <i class="fas fa-table" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0;">Complex Tables</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Multi-page tables, merged cells, nested headers</p>
+            </div>
+            <div class="product-card" style="border-color: #8b5cf6;">
+                <i class="fas fa-chart-bar" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0;">Charts & Diagrams</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Visual content described in detail</p>
+            </div>
+            <div class="product-card" style="border-color: #3b82f6;">
+                <i class="fas fa-image" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0;">Images & OCR</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Scanned documents and embedded images</p>
+            </div>
+            <div class="product-card" style="border-color: #6366f1;">
+                <i class="fas fa-file-alt" style="color: #6366f1;"></i>
+                <h4 style="color: #6366f1; margin: 0.5rem 0;">130+ Formats</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">PDF, Word, Excel, PowerPoint, and more</p>
+            </div>
+        </div>
+
+        <!-- 6.3: Structured Extraction with LlamaExtract -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.3 Structured Extraction with LlamaExtract (Step 4)</h3>
+
+        <p>
+            When you need specific fields rather than full-text content, LlamaExtract pulls structured data using schema definitions. This is ideal for invoices, contracts, forms, and any document where you know exactly what fields you need.
+        </p>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from pydantic import BaseModel, Field
+from typing import List, Optional
+from llama_extract import LlamaExtract
+import os
+
+# Define your extraction schema using Pydantic
+class InvoiceLineItem(BaseModel):
+    """Single line item from an invoice"""
+    description: str = Field(description="Product or service description")
+    quantity: int = Field(description="Number of units")
+    unit_price: float = Field(description="Price per unit")
+    total: float = Field(description="Line item total amount")
+
+class Invoice(BaseModel):
+    """Complete invoice structure"""
+    invoice_number: str = Field(description="Unique invoice identifier")
+    vendor_name: str = Field(description="Name of the vendor/supplier")
+    invoice_date: str = Field(description="Date invoice was issued")
+    due_date: str = Field(description="Payment due date")
+    total_amount: float = Field(description="Total amount due")
+    line_items: List[InvoiceLineItem] = Field(description="Individual line items")
+    payment_terms: Optional[str] = Field(description="Payment terms if specified")
+
+# Initialize LlamaExtract
+extractor = LlamaExtract(
+    api_key=os.getenv("LLAMA_CLOUD_API_KEY"),
+    schema=Invoice
+)
+
+# Extract from a single invoice
+result = extractor.extract("invoice_acme_corp.pdf")
+
+# Access structured data
+invoice = result.data
+print(f"Invoice #{invoice.invoice_number}")
+print(f"Vendor: {invoice.vendor_name}")
+print(f"Total: ${invoice.total_amount}")
+print(f"Line items: {len(invoice.line_items)}")
+
+# Access citations (where data was found)
+for field, citation in result.citations.items():
+    print(f"{field} found on page {citation.page}, paragraph {citation.paragraph}")
+
+# Process multiple invoices
+invoices = []
+for filename in ["invoice1.pdf", "invoice2.pdf", "invoice3.pdf"]:
+    result = extractor.extract(filename)
+    invoices.append(result.data)
+
+# Export to JSON for database insertion
+import json
+with open("extracted_invoices.json", "w") as f:
+    json.dump([inv.dict() for inv in invoices], f, indent=2)</code></pre>
+        </div>
+
+        <p>
+            <strong>Why this approach works:</strong> Pydantic schemas provide type safety and validation. LlamaExtract uses these schemas to guide the LLM's extraction, ensuring you get structured, validated data rather than freeform text. The <code>Field(description=...)</code> annotations help the extraction model understand what to look for. Citations let you verify accuracy by checking source pages.
+        </p>
+
+        <div class="callout callout-info">
+            <strong><i class="fas fa-magic mr-2"></i>Schema Inference:</strong>
+            Don't have time to write Pydantic models? LlamaExtract can auto-infer schemas from a few sample documents. Pass 3-5 representative documents, and it generates a schema covering common fields.
+        </div>
+
+        <!-- Use Cases Grid -->
+        <h4 style="color: #8b5cf6; margin-top: 2rem;">Industry Use Cases</h4>
+        <div class="product-showcase">
+            <div class="product-card" style="border-color: #06b6d4;">
+                <i class="fas fa-chart-line" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0;">Finance</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Extract transaction details, balances, and account numbers from statements</p>
+            </div>
+            <div class="product-card" style="border-color: #8b5cf6;">
+                <i class="fas fa-gavel" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0;">Legal</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Pull parties, dates, clauses, and obligations from contracts</p>
+            </div>
+            <div class="product-card" style="border-color: #3b82f6;">
+                <i class="fas fa-heartbeat" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0;">Healthcare</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Extract diagnoses, medications, and patient info from medical records</p>
+            </div>
+            <div class="product-card" style="border-color: #6366f1;">
+                <i class="fas fa-shield-alt" style="color: #6366f1;"></i>
+                <h4 style="color: #6366f1; margin: 0.5rem 0;">Insurance</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Parse policy numbers, coverage details, and claim amounts</p>
+            </div>
+        </div>
+
+        <!-- 6.4: Building Vector Indexes -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.4 Building Vector Indexes (Step 5)</h3>
+
+        <p>
+            Vector indexes enable semantic search: finding documents based on meaning rather than exact keyword matches. You have two options: build your own with open-source LlamaIndex, or use managed LlamaCloud Index.
+        </p>
+
+        <h4 style="color: #8b5cf6;">Option A: Local Vector Index (Open Source)</h4>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.llms.openai import OpenAI
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.vector_stores.chroma import ChromaVectorStore
+import chromadb
+import os
+
+# Configure global settings
+Settings.llm = OpenAI(model="gpt-4", api_key=os.getenv("OPENAI_API_KEY"))
+Settings.embed_model = OpenAIEmbedding(
+    model="text-embedding-3-small",
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+Settings.chunk_size = 512  # Tokens per chunk
+Settings.chunk_overlap = 50  # Overlap between chunks
+
+# Initialize Chroma vector database (persists to disk)
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+chroma_collection = chroma_client.create_collection("company_docs")
+vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
+# Load and parse documents
+documents = SimpleDirectoryReader(
+    input_dir="./company_docs",
+    recursive=True
+).load_data()
+
+print(f"Loaded {len(documents)} documents")
+
+# Create vector index (automatically chunks, embeds, and stores)
+index = VectorStoreIndex.from_documents(
+    documents,
+    vector_store=vector_store,
+    show_progress=True
+)
+
+print("Index created successfully!")
+
+# Save index for later use
+index.storage_context.persist(persist_dir="./storage")
+
+# Load existing index
+from llama_index.core import StorageContext, load_index_from_storage
+storage_context = StorageContext.from_defaults(persist_dir="./storage")
+loaded_index = load_index_from_storage(storage_context)</code></pre>
+        </div>
+
+        <h4 style="color: #8b5cf6; margin-top: 2rem;">Option B: Managed LlamaCloud Index</h4>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from llama_cloud import LlamaCloud
+import os
+
+# Initialize LlamaCloud client
+client = LlamaCloud(api_key=os.getenv("LLAMA_CLOUD_API_KEY"))
+
+# Create a new index (via web UI or API)
+index = client.create_index(
+    name="company_knowledge_base",
+    description="All company documents for RAG"
+)
+
+# Upload documents (automatically parsed, chunked, embedded, indexed)
+upload_results = index.upload_files([
+    "./docs/company_handbook.pdf",
+    "./docs/product_specs.pdf",
+    "./docs/customer_contracts/"  # Upload entire directory
+])
+
+print(f"Uploaded {len(upload_results)} files")
+
+# Query the index
+query_results = index.query(
+    query="What is our remote work policy?",
+    similarity_top_k=5,  # Return top 5 chunks
+    include_metadata=True  # Include source file and page number
+)
+
+for result in query_results:
+    print(f"Score: {result.score:.3f}")
+    print(f"Source: {result.metadata['file_name']}, Page {result.metadata['page']}")
+    print(f"Text: {result.text[:200]}...")
+    print("---")</code></pre>
+        </div>
+
+        <p>
+            <strong>When to use each:</strong> Local indexes (Option A) give you complete control over chunking, embeddings, and vector databases. You can use open-source models, keep data on-premise, and customize every parameter. LlamaCloud Index (Option B) is faster to set up, handles scaling automatically, and provides a web UI for non-technical users. For MVPs and prototypes, start with LlamaCloud; for production systems with specific requirements, build your own.
+        </p>
+
+        <div class="callout callout-warning">
+            <strong><i class="fas fa-exclamation-triangle mr-2"></i>Chunking Trade-offs:</strong>
+            Smaller chunks (256-512 tokens) give more precise retrieval but may lack context. Larger chunks (1024-2048 tokens) preserve context but may include irrelevant information. Test with your document types to find the sweet spot. A good starting point: 512 tokens with 50-token overlap.
+        </div>
+
+        <!-- 6.5: Creating Agents -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.5 Creating Agents (Step 6)</h3>
+
+        <p>
+            Agents combine LLMs with tools, letting them autonomously decide how to complete tasks. They're ideal for complex queries that require multiple steps, tool usage, and reasoning.
+        </p>
+
+        <h4 style="color: #8b5cf6;">Basic Agent with Document Search</h4>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from llama_index.core.agent import FunctionAgent
+from llama_index.core.tools import QueryEngineTool, ToolMetadata
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.llms.openai import OpenAI
+import os
+
+# Configure LLM
+Settings.llm = OpenAI(model="gpt-4", temperature=0)
+
+# Load documents and create index
+documents = SimpleDirectoryReader("./company_docs").load_data()
+index = VectorStoreIndex.from_documents(documents)
+
+# Create query engine
+query_engine = index.as_query_engine(similarity_top_k=3)
+
+# Wrap query engine as a tool
+document_tool = QueryEngineTool(
+    query_engine=query_engine,
+    metadata=ToolMetadata(
+        name="company_docs_search",
+        description="Search company documents including policies, procedures, and contracts. "
+                    "Use this when questions relate to internal company information."
+    )
+)
+
+# Create agent with the tool
+agent = FunctionAgent.from_tools(
+    tools=[document_tool],
+    llm=Settings.llm,
+    verbose=True  # Shows reasoning steps
+)
+
+# Use the agent
+response = agent.chat("What is our return policy for enterprise customers?")
+print(response)
+
+# The agent will:
+# 1. Recognize this needs company information
+# 2. Use the document_tool to search
+# 3. Synthesize an answer from retrieved passages</code></pre>
+        </div>
+
+        <h4 style="color: #8b5cf6; margin-top: 2rem;">Agent with Memory and Multiple Tools</h4>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from llama_index.core.agent import FunctionAgent
+from llama_index.core.tools import FunctionTool, QueryEngineTool, ToolMetadata
+from llama_index.core.memory import ChatMemoryBuffer
+import requests
+
+# Define custom tools
+def search_web(query: str) -> str:
+    """Search the web for current information"""
+    # Simplified example - use real API in production
+    return f"Web results for: {query}"
+
+def calculate(expression: str) -> float:
+    """Evaluate mathematical expressions"""
+    try:
+        # Warning: Use safe evaluation in production
+        return eval(expression)
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# Create tools
+web_tool = FunctionTool.from_defaults(fn=search_web)
+calc_tool = FunctionTool.from_defaults(fn=calculate)
+
+# Assume document_tool from previous example
+tools = [document_tool, web_tool, calc_tool]
+
+# Create agent with memory
+memory = ChatMemoryBuffer.from_defaults(token_limit=2000)
+
+agent = FunctionAgent.from_tools(
+    tools=tools,
+    llm=Settings.llm,
+    memory=memory,
+    verbose=True
+)
+
+# Multi-turn conversation with context
+response1 = agent.chat("What was our Q3 revenue according to internal docs?")
+print(response1)
+
+# Agent remembers previous context
+response2 = agent.chat("How does that compare to industry average?")
+print(response2)
+# Agent will:
+# 1. Remember Q3 revenue from previous query
+# 2. Use web_tool to find industry benchmarks
+# 3. Use calc_tool to compute the comparison
+# 4. Synthesize a complete answer
+
+response3 = agent.chat("Calculate what our revenue per employee is if we have 250 employees")
+print(response3)
+# Agent uses calc_tool with remembered revenue value</code></pre>
+        </div>
+
+        <p>
+            <strong>How agents make decisions:</strong> The LLM receives a description of available tools and decides which to call based on the query. It examines tool results and decides if it needs more information or can answer. Memory lets agents reference earlier conversation turns, making them feel more natural and reducing repeated queries.
+        </p>
+
+        <div class="callout callout-success">
+            <strong><i class="fas fa-check-circle mr-2"></i>When to Use Agents:</strong>
+            Use agents when queries require multi-step reasoning, multiple data sources, or dynamic decision-making. For simple "search and answer" tasks, a standard QueryEngine is faster and cheaper. For complex tasks like "analyze our contracts, compare with industry standards, and recommend changes," agents excel.
+        </div>
+
+        <!-- 6.6: Workflow Orchestration -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.6 Workflow Orchestration (Step 7)</h3>
+
+        <p>
+            Workflows handle complex multi-step processes with loops, branching, and event-driven communication. They're more structured than agents but more flexible than traditional DAGs.
+        </p>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python">from llama_index.core.workflow import Workflow, Event, StartEvent, StopEvent, step
+from llama_index.llms.openai import OpenAI
+import asyncio
+
+# Define custom events
+class JokeEvent(Event):
+    joke: str
+
+class CritiqueEvent(Event):
+    critique: str
+    score: float
+
+class ImprovedJokeEvent(Event):
+    joke: str
+
+# Create workflow class
+class JokeImprovementWorkflow(Workflow):
+    """Iteratively generates and improves jokes until quality threshold met"""
+
+    def __init__(self, llm: OpenAI, quality_threshold: float = 8.0):
+        super().__init__()
+        self.llm = llm
+        self.quality_threshold = quality_threshold
+
+    @step
+    async def generate_joke(self, ev: StartEvent) -> JokeEvent:
+        """Generate initial joke"""
+        prompt = f"Generate a clever joke about: {ev.topic}"
+        response = await self.llm.acomplete(prompt)
+        return JokeEvent(joke=str(response))
+
+    @step
+    async def critique_joke(self, ev: JokeEvent | ImprovedJokeEvent) -> CritiqueEvent:
+        """Critique the joke and assign quality score"""
+        prompt = f"""Rate this joke on a scale of 1-10 and provide specific critique:
+
+Joke: {ev.joke}
+
+Provide your response as:
+Score: X
+Critique: [specific feedback]"""
+
+        response = await self.llm.acomplete(prompt)
+        response_text = str(response)
+
+        # Parse score (simplified - add error handling in production)
+        score_line = [line for line in response_text.split('\n') if 'Score:' in line][0]
+        score = float(score_line.split(':')[1].strip())
+        critique = response_text.split('Critique:')[1].strip()
+
+        return CritiqueEvent(critique=critique, score=score)
+
+    @step
+    async def check_quality(self, ev: CritiqueEvent) -> StopEvent | ImprovedJokeEvent:
+        """Check if quality threshold met, or loop for improvement"""
+        if ev.score >= self.quality_threshold:
+            # Quality achieved - stop workflow
+            return StopEvent(result={
+                "final_score": ev.score,
+                "critique": ev.critique,
+                "status": "Quality threshold met"
+            })
+        else:
+            # Needs improvement - continue loop
+            prompt = f"""Improve this joke based on the critique:
+
+Original joke: {self.context.get('current_joke')}
+Critique: {ev.critique}
+Score: {ev.score}
+
+Generate an improved version."""
+
+            response = await self.llm.acomplete(prompt)
+            improved_joke = str(response)
+            self.context['current_joke'] = improved_joke
+
+            # This triggers another critique cycle
+            return ImprovedJokeEvent(joke=improved_joke)
+
+    @step
+    async def update_context(self, ev: JokeEvent) -> JokeEvent:
+        """Store joke in context for later reference"""
+        self.context['current_joke'] = ev.joke
+        return ev
+
+# Use the workflow
+async def main():
+    llm = OpenAI(model="gpt-4", temperature=0.7)
+    workflow = JokeImprovementWorkflow(llm=llm, quality_threshold=8.5)
+
+    result = await workflow.run(topic="AI and machine learning")
+    print(f"Final result: {result}")
+
+# Run workflow
+asyncio.run(main())</code></pre>
+        </div>
+
+        <p>
+            <strong>Why workflows over agents:</strong> Workflows give you explicit control over the process flow. Each step is defined, events are typed, and you can debug the exact flow of data. Agents are autonomous but opaque — you don't always know what they'll do. Use workflows when you need predictable, auditable processes (like document approval pipelines or compliance checks). Use agents when you want autonomous problem-solving.
+        </p>
+
+        <!-- Workflow Features -->
+        <h4 style="color: #8b5cf6; margin-top: 2rem;">Workflow Features</h4>
+        <div class="product-showcase">
+            <div class="product-card" style="border-color: #06b6d4;">
+                <i class="fas fa-bolt" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0;">Async-First</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">All steps run asynchronously for maximum performance</p>
+            </div>
+            <div class="product-card" style="border-color: #8b5cf6;">
+                <i class="fas fa-broadcast-tower" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0;">Event-Driven</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Steps communicate via typed events, not rigid DAGs</p>
+            </div>
+            <div class="product-card" style="border-color: #3b82f6;">
+                <i class="fas fa-redo" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0;">Loops & Branches</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Support iterative refinement and conditional logic</p>
+            </div>
+            <div class="product-card" style="border-color: #6366f1;">
+                <i class="fas fa-save" style="color: #6366f1;"></i>
+                <h4 style="color: #6366f1; margin: 0.5rem 0;">State Management</h4>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0;">Persist state for pause/resume and human-in-the-loop</p>
+            </div>
+        </div>
+
+        <!-- Workflow Diagram -->
+        <h4 style="color: #8b5cf6; margin-top: 2rem;">Workflow Flow Visualization</h4>
+        <div class="workflow-diagram">
+            <div class="workflow-row">
+                <div class="workflow-node" style="border-color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+                    <div style="font-size: 1rem; font-weight: 600; color: #c4b5fd;">StartEvent</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">topic: "AI jokes"</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #64748b; font-size: 1.5rem;">↓</div>
+            <div class="workflow-row">
+                <div class="workflow-node" style="border-color: #06b6d4; background: rgba(6, 182, 212, 0.1);">
+                    <div style="font-size: 1rem; font-weight: 600; color: #67e8f9;">generate_joke</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">→ JokeEvent</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #64748b; font-size: 1.5rem;">↓</div>
+            <div class="workflow-row">
+                <div class="workflow-node" style="border-color: #3b82f6; background: rgba(59, 130, 246, 0.1);">
+                    <div style="font-size: 1rem; font-weight: 600; color: #93c5fd;">critique_joke</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">→ CritiqueEvent</div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #64748b; font-size: 1.5rem;">↓</div>
+            <div class="workflow-row">
+                <div class="workflow-node" style="border-color: #6366f1; background: rgba(99, 102, 241, 0.1);">
+                    <div style="font-size: 1rem; font-weight: 600; color: #a5b4fc;">check_quality</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Score >= 8.5?</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem; justify-content: center;">
+                <div style="flex: 1; text-align: right; color: #22c55e;">✓ Yes →</div>
+                <div style="flex: 1; text-align: left; color: #ef4444;">← No (loop)</div>
+            </div>
+            <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 1rem;">
+                <div class="workflow-node" style="border-color: #22c55e; background: rgba(34, 197, 94, 0.1); flex: 0 0 40%;">
+                    <div style="font-size: 1rem; font-weight: 600; color: #86efac;">StopEvent</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Return result</div>
+                </div>
+                <div class="workflow-node" style="border-color: #ef4444; background: rgba(239, 68, 68, 0.1); flex: 0 0 40%;">
+                    <div style="font-size: 1rem; font-weight: 600; color: #fca5a5;">ImprovedJokeEvent</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">→ back to critique</div>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.875rem;">
+                <i class="fas fa-info-circle mr-2"></i>Loop continues until quality score >= 8.5
+            </div>
+        </div>
+
+        <!-- 6.7: Integration Ecosystem -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.7 Integration Ecosystem (LlamaHub)</h3>
+
+        <p>
+            LlamaHub provides 150+ community integrations for data sources, LLMs, vector stores, and tools. This lets you connect LlamaIndex to your existing infrastructure without writing custom connectors.
+        </p>
+
+        <h4 style="color: #8b5cf6;">Popular Integrations</h4>
+        <div class="product-showcase" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+            <div class="product-card" style="border-color: #06b6d4;">
+                <i class="fas fa-smile" style="color: #06b6d4;"></i>
+                <h4 style="color: #06b6d4; margin: 0.5rem 0; font-size: 1rem;">Hugging Face</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Open-source LLMs and embeddings</p>
+            </div>
+            <div class="product-card" style="border-color: #8b5cf6;">
+                <i class="fas fa-database" style="color: #8b5cf6;"></i>
+                <h4 style="color: #8b5cf6; margin: 0.5rem 0; font-size: 1rem;">Pinecone</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Managed vector database</p>
+            </div>
+            <div class="product-card" style="border-color: #3b82f6;">
+                <i class="fab fa-microsoft" style="color: #3b82f6;"></i>
+                <h4 style="color: #3b82f6; margin: 0.5rem 0; font-size: 1rem;">Azure OpenAI</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Enterprise LLM deployment</p>
+            </div>
+            <div class="product-card" style="border-color: #6366f1;">
+                <i class="fas fa-leaf" style="color: #6366f1;"></i>
+                <h4 style="color: #6366f1; margin: 0.5rem 0; font-size: 1rem;">MongoDB</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Document database with vectors</p>
+            </div>
+            <div class="product-card" style="border-color: #d946ef;">
+                <i class="fas fa-elephant" style="color: #d946ef;"></i>
+                <h4 style="color: #d946ef; margin: 0.5rem 0; font-size: 1rem;">PostgreSQL</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">pgvector extension</p>
+            </div>
+            <div class="product-card" style="border-color: #ec4899;">
+                <i class="fab fa-aws" style="color: #ec4899;"></i>
+                <h4 style="color: #ec4899; margin: 0.5rem 0; font-size: 1rem;">AWS Bedrock</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Claude & other foundation models</p>
+            </div>
+            <div class="product-card" style="border-color: #f97316;">
+                <i class="fab fa-google-drive" style="color: #f97316;"></i>
+                <h4 style="color: #f97316; margin: 0.5rem 0; font-size: 1rem;">Google Drive</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Load docs from Drive</p>
+            </div>
+            <div class="product-card" style="border-color: #22c55e;">
+                <i class="fab fa-slack" style="color: #22c55e;"></i>
+                <h4 style="color: #22c55e; margin: 0.5rem 0; font-size: 1rem;">Slack</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Search conversation history</p>
+            </div>
+        </div>
+
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">
+                <i class="far fa-copy mr-1"></i>Copy
+            </button>
+            <pre><code class="language-python"># Example: Using Hugging Face multimodal model
+from llama_index.multi_modal_llms.huggingface import HuggingFaceMultiModal
+from llama_index.core import SimpleDirectoryReader
+
+# Initialize HF model
+hf_llm = HuggingFaceMultiModal(
+    model_name="llava-hf/llava-1.5-7b-hf"
+)
+
+# Load documents with images
+documents = SimpleDirectoryReader(
+    "./docs_with_images",
+    required_exts=[".pdf", ".png", ".jpg"]
+).load_data()
+
+# Process multimodal content
+for doc in documents:
+    if doc.image:
+        response = hf_llm.complete(
+            prompt="Describe this image in detail",
+            image_documents=[doc]
+        )
+        print(response)</code></pre>
+        </div>
+
+        <!-- 6.8: Quick Start -->
+        <h3 style="color: #06b6d4; margin-top: 3rem;">6.8 Quick Start Guide</h3>
+
+        <p>
+            Here's the fastest path from zero to a working RAG system in four steps.
+        </p>
+
+        <div class="quick-start-steps">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div>
+                    <h4 style="color: #06b6d4; margin: 0 0 0.5rem 0;">Install LlamaIndex</h4>
+                    <p style="margin: 0.5rem 0; font-size: 0.875rem;">Install core package and set API keys</p>
+                    <div class="code-block" style="margin: 1rem 0;">
+                        <pre style="padding-top: 0; margin: 0;"><code class="language-bash" style="font-size: 0.75rem;">pip install llama-index llama-cloud
+export OPENAI_API_KEY="sk-..."
+export LLAMA_CLOUD_API_KEY="llx-..."</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div>
+                    <h4 style="color: #06b6d4; margin: 0 0 0.5rem 0;">Load and Index Documents</h4>
+                    <p style="margin: 0.5rem 0; font-size: 0.875rem;">Create vector index from your documents</p>
+                    <div class="code-block" style="margin: 1rem 0;">
+                        <pre style="padding-top: 0; margin: 0;"><code class="language-python" style="font-size: 0.75rem;">from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+
+documents = SimpleDirectoryReader("./data").load_data()
+index = VectorStoreIndex.from_documents(documents)</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div>
+                    <h4 style="color: #06b6d4; margin: 0 0 0.5rem 0;">Create Query Engine</h4>
+                    <p style="margin: 0.5rem 0; font-size: 0.875rem;">Set up question-answering interface</p>
+                    <div class="code-block" style="margin: 1rem 0;">
+                        <pre style="padding-top: 0; margin: 0;"><code class="language-python" style="font-size: 0.75rem;">query_engine = index.as_query_engine(similarity_top_k=3)</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div>
+                    <h4 style="color: #06b6d4; margin: 0 0 0.5rem 0;">Query Your Documents</h4>
+                    <p style="margin: 0.5rem 0; font-size: 0.875rem;">Ask questions and get AI-powered answers</p>
+                    <div class="code-block" style="margin: 1rem 0;">
+                        <pre style="padding-top: 0; margin: 0;"><code class="language-python" style="font-size: 0.75rem;">response = query_engine.query("What is our refund policy?")
+print(response)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Table -->
+        <h3 style="color: #8b5cf6; margin-top: 3rem;">Component Summary</h3>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Type</th>
+                    <th>What It Does</th>
+                    <th>When To Use</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>LlamaParse</strong></td>
+                    <td>Document Parsing</td>
+                    <td>Converts complex PDFs into clean text/markdown</td>
+                    <td>Building RAG with documents containing tables or charts</td>
+                </tr>
+                <tr>
+                    <td><strong>LlamaExtract</strong></td>
+                    <td>Data Extraction</td>
+                    <td>Pulls specific fields into structured JSON</td>
+                    <td>Automating data entry from invoices, contracts, forms</td>
+                </tr>
+                <tr>
+                    <td><strong>LlamaCloud Index</strong></td>
+                    <td>Managed RAG</td>
+                    <td>Complete RAG pipeline as a service</td>
+                    <td>Quick MVP, no infrastructure management needed</td>
+                </tr>
+                <tr>
+                    <td><strong>VectorStoreIndex</strong></td>
+                    <td>Open-Source RAG</td>
+                    <td>DIY vector index with full control</td>
+                    <td>Custom requirements, on-premise deployment</td>
+                </tr>
+                <tr>
+                    <td><strong>Agents</strong></td>
+                    <td>Autonomous AI</td>
+                    <td>LLM + tools + reasoning for task completion</td>
+                    <td>Complex queries needing multi-step reasoning</td>
+                </tr>
+                <tr>
+                    <td><strong>Workflows</strong></td>
+                    <td>Orchestration</td>
+                    <td>Event-driven pipelines with loops and branches</td>
+                    <td>Predictable multi-step processes, human-in-loop</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <!-- Conclusion -->
+        <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+        <p>
+            The LlamaIndex ecosystem solves the fundamental challenge of connecting LLMs to enterprise data. What seemed overwhelming — parsing complex documents, extracting structured data, building vector indexes, orchestrating multi-step processes — becomes manageable through a coherent set of tools and managed services.
+        </p>
+
+        <p>
+            <strong>Key takeaways:</strong>
+        </p>
+        <ul>
+            <li><strong>LlamaParse</strong> for documents with tables, charts, and complex layouts that standard PDF libraries mangle</li>
+            <li><strong>LlamaExtract</strong> when you need specific fields extracted into structured JSON, not full-text search</li>
+            <li><strong>LlamaCloud Index</strong> for managed RAG when you want to move fast without infrastructure</li>
+            <li><strong>Open-source LlamaIndex</strong> when you need custom chunking, on-premise deployment, or specific vector databases</li>
+            <li><strong>Agents</strong> for autonomous problem-solving with tools and reasoning</li>
+            <li><strong>Workflows</strong> for predictable, auditable processes with loops and branches</li>
+        </ul>
+
+        <p>
+            Start simple. Build a basic RAG system with VectorStoreIndex and a few documents. Query it. Evaluate retrieval quality. Then expand: add LlamaParse for complex documents, create agents with multiple tools, design workflows for multi-step processes. Production systems grow from working prototypes, not grand designs.
+        </p>
+
+        <p>
+            <strong>Next steps:</strong>
+        </p>
+        <ul>
+            <li>Explore the complete code examples in <a href="https://github.com/zubairashfaque/llamaindex-examples" target="_blank">github.com/zubairashfaque/llamaindex-examples</a></li>
+            <li>Try LlamaCloud free tier at <a href="https://cloud.llamaindex.ai" target="_blank">cloud.llamaindex.ai</a></li>
+            <li>Read the official documentation at <a href="https://docs.llamaindex.ai" target="_blank">docs.llamaindex.ai</a></li>
+            <li>Browse LlamaHub integrations at <a href="https://llamahub.ai" target="_blank">llamahub.ai</a></li>
+        </ul>
+
+        <p>
+            The gap between LLM potential and enterprise data is closeable. LlamaIndex provides the bridge. Now go build something remarkable.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin: 3rem 0; padding: 2rem; background: rgba(30, 41, 59, 0.5); border-radius: 1rem;">
+            <p style="color: #94a3b8; margin-bottom: 1rem;">
+                <a href="../index.html" style="color: #06b6d4;"><i class="fas fa-arrow-left mr-2"></i>Back to Portfolio</a>
+            </p>
+            <p style="color: #64748b; font-size: 0.875rem;">
+                © 2026 Zubair Ashfaque | <a href="https://github.com/zubairashfaque" target="_blank" style="color: #64748b;">GitHub</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Prism.js for code highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+    <script>
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabGroup = button.closest('.tabs-container');
+                const tabName = button.dataset.tab;
+
+                // Update buttons
+                tabGroup.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                // Update content
+                tabGroup.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                    if (content.dataset.tab === tabName) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
