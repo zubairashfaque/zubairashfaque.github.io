@@ -5,14 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Production-Grade RAG Systems with LlamaIndex & LlamaCloud | Zubair Ashfaque</title>
     <meta name="description" content="A comprehensive guide to building production-grade RAG systems using LlamaIndex and LlamaCloud. Learn document parsing, structured extraction, vector indexing, workflows, and AI agents with complete code examples.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Fraunces:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(to bottom, #0f172a, #1e293b);
             color: #e2e8f0;
+        }
+
+        /* Animated Grid Background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(6, 214, 160, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
+            animation: bgFloat 30s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-3%, -3%); }
         }
 
         .blog-container {
@@ -29,20 +63,67 @@
         }
 
         .hero-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+            padding: 0.6rem 1.25rem;
+            border-radius: 50px;
             font-size: 0.875rem;
             font-weight: 600;
             margin-bottom: 1rem;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            background: #06d6a0;
+            border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero-pivot {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .pivot-old {
+            color: #71717a;
+            text-decoration: line-through;
+            font-size: 0.9rem;
+        }
+
+        .pivot-arrow {
+            color: #06d6a0;
+            font-size: 1.25rem;
+        }
+
+        .pivot-new {
+            color: #06d6a0;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .product-showcase {
@@ -53,18 +134,51 @@
         }
 
         .product-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 20px;
             padding: 1.5rem;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:nth-child(1)::before {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        }
+
+        .product-card:nth-child(2)::before {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+        }
+
+        .product-card:nth-child(3)::before {
+            background: linear-gradient(135deg, #06d6a0 0%, #3b82f6 100%);
+        }
+
+        .product-card:nth-child(4)::before {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
         }
 
         .product-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
             border-color: #8b5cf6;
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
         }
 
         .product-card i {
@@ -91,7 +205,10 @@
         .stat-number {
             font-size: 2rem;
             font-weight: bold;
-            color: #06b6d4;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             display: block;
         }
 
@@ -102,39 +219,63 @@
         }
 
         .code-block {
-            background: #1e293b;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
+            background: #0d0d12;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            overflow: hidden;
             margin: 1.5rem 0;
-            overflow-x: auto;
-            border: 1px solid #334155;
-            position: relative;
         }
 
-        .code-block::before {
-            content: '';
-            position: absolute;
-            top: 0.75rem;
-            left: 1rem;
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-bottom: 1px solid #27272a;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .code-dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #ef4444;
-            box-shadow: 20px 0 0 #eab308, 40px 0 0 #22c55e;
+        }
+
+        .code-dot:nth-child(1) { background: #ef4444; }
+        .code-dot:nth-child(2) { background: #eab308; }
+        .code-dot:nth-child(3) { background: #22c55e; }
+
+        .code-title {
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .code-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+            position: relative;
         }
 
         .copy-btn {
-            position: absolute;
-            top: 0.75rem;
-            right: 1rem;
             background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.9rem;
             border-radius: 0.375rem;
             cursor: pointer;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             transition: all 0.3s ease;
+            z-index: 10;
         }
 
         .copy-btn:hover {
@@ -142,18 +283,41 @@
         }
 
         .concept-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 1.75rem;
             margin: 1rem 0;
             transition: all 0.3s ease;
+            position: relative;
         }
 
+        .concept-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .concept-card:nth-child(1)::before { background: #8b5cf6; }
+        .concept-card:nth-child(2)::before { background: #06d6a0; }
+        .concept-card:nth-child(3)::before { background: #ff6b35; }
+        .concept-card:nth-child(4)::before { background: #ec4899; }
+        .concept-card:nth-child(5)::before { background: #3b82f6; }
+        .concept-card:nth-child(6)::before { background: #06b6d4; }
+
         .concept-card:hover {
+            transform: translateX(5px);
             border-color: #8b5cf6;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .concept-card:hover::before {
+            opacity: 1;
         }
 
         .analogy-card {
@@ -187,12 +351,58 @@
         }
 
         .flow-container {
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 24px;
+            padding: 3rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .flow-row {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 2rem 0;
-            margin: 2rem 0;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .flow-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            transition: transform 0.3s;
+        }
+
+        .flow-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .flow-node:nth-child(odd) .flow-icon {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        }
+
+        .flow-node:nth-child(even) .flow-icon {
+            background: linear-gradient(135deg, #06d6a0 0%, #3b82f6 100%);
+        }
+
+        .flow-node span {
+            font-size: 0.8rem;
+            color: #a1a1aa;
         }
 
         .flow-step {
@@ -210,8 +420,9 @@
         }
 
         .flow-arrow {
-            font-size: 1.5rem;
-            color: #64748b;
+            font-size: 1.25rem;
+            color: #8b5cf6;
+            opacity: 0.6;
         }
 
         .tabs-container {
@@ -220,37 +431,47 @@
 
         .tabs-header {
             display: flex;
-            gap: 0.5rem;
-            border-bottom: 2px solid #334155;
+            gap: 0.75rem;
             margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 50px;
         }
 
         .tab-btn {
             background: transparent;
             border: none;
-            color: #94a3b8;
-            padding: 0.75rem 1.5rem;
+            color: #a1a1aa;
+            padding: 0.75rem 1.75rem;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
+            border-radius: 50px;
             transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .tab-btn:hover {
             color: #06b6d4;
+            background: rgba(6, 182, 212, 0.1);
         }
 
         .tab-btn.active {
-            color: #06b6d4;
-            border-bottom-color: #06b6d4;
+            color: white;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
         }
 
         .tab-content {
             display: none;
+            animation: fadeIn 0.5s ease;
         }
 
         .tab-content.active {
             display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .comparison-cards {
@@ -406,11 +627,23 @@
         .workflow-node {
             flex: 1;
             background: rgba(30, 41, 59, 0.5);
-            border: 2px solid;
+            border: 2px solid #334155;
             border-radius: 0.75rem;
             padding: 1rem;
             text-align: center;
             transition: all 0.3s ease;
+        }
+
+        .workflow-node.start,
+        .workflow-node.end {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            border-color: transparent;
+        }
+
+        .workflow-node.event {
+            border-radius: 50px;
+            background: rgba(6, 214, 160, 0.15);
+            border-color: #06d6a0;
         }
 
         .workflow-node:hover {
@@ -424,18 +657,50 @@
 
         pre {
             margin: 0;
-            padding-top: 2rem;
+            padding: 0;
+        }
+
+        /* Enhanced Syntax Highlighting */
+        .code-content pre code {
+            color: #cbd5e1;
+        }
+
+        .code-content pre code .keyword {
+            color: #c792ea;
+        }
+
+        .code-content pre code .string {
+            color: #c3e88d;
+        }
+
+        .code-content pre code .comment {
+            color: #697098;
+            font-style: italic;
+        }
+
+        .code-content pre code .function {
+            color: #82aaff;
+        }
+
+        .code-content pre code .number {
+            color: #f78c6c;
         }
 
         code {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
             font-size: 0.875rem;
+            font-weight: 400;
+        }
+
+        h1 {
+            font-family: 'Fraunces', serif;
         }
 
         h2 {
+            font-family: 'Fraunces', serif;
             color: #06b6d4;
-            font-size: 2rem;
-            font-weight: bold;
+            font-size: clamp(1.75rem, 4vw, 2.25rem);
+            font-weight: 700;
             margin: 3rem 0 1.5rem;
             display: flex;
             align-items: center;
@@ -443,15 +708,16 @@
         }
 
         h3 {
+            font-family: 'Fraunces', serif;
             color: #06b6d4;
-            font-size: 1.5rem;
+            font-size: clamp(1.35rem, 3vw, 1.65rem);
             font-weight: 600;
             margin: 2rem 0 1rem;
         }
 
         h4 {
             color: #8b5cf6;
-            font-size: 1.25rem;
+            font-size: clamp(1.1rem, 2.5vw, 1.35rem);
             font-weight: 600;
             margin: 1.5rem 0 0.75rem;
         }
@@ -486,13 +752,89 @@
             line-height: 1.8;
             color: #cbd5e1;
         }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            .product-showcase,
+            .stats-grid,
+            .comparison-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-container {
+                padding: 1.5rem;
+            }
+
+            .flow-row {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+
+            .hero-pivot {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .tabs-header {
+                flex-direction: column;
+                border-radius: 16px;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .mode-pills {
+                flex-direction: column;
+            }
+
+            .code-header {
+                flex-wrap: wrap;
+            }
+
+            .code-title {
+                position: static;
+                transform: none;
+                width: 100%;
+                text-align: center;
+                margin-top: 0.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
+            }
+
+            .workflow-row {
+                flex-direction: column;
+            }
+
+            .workflow-connector {
+                transform: rotate(90deg);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Animated Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
     <div class="blog-container">
         <!-- Hero Section -->
         <div style="margin: 3rem 0;">
             <div class="hero-badge">
+                <span class="pulse"></span>
                 LlamaIndex & LlamaCloud 2026 Guide
             </div>
             <h1 class="hero-gradient" style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">
@@ -501,6 +843,11 @@
             <p class="text-xl text-gray-400" style="margin-top: 1.5rem;">
                 Master the complete ecosystem: document parsing, structured extraction, vector indexing, workflows, and AI agents. From corporate librarian analogy to production code.
             </p>
+            <div class="hero-pivot">
+                <span class="pivot-old">Manual PDF parsing + chunking + embedding</span>
+                <span class="pivot-arrow">→</span>
+                <span class="pivot-new">LlamaIndex Managed Pipeline</span>
+            </div>
             <div style="margin-top: 2rem; color: #94a3b8;">
                 <i class="far fa-calendar mr-2"></i>January 22, 2026
                 <span class="mx-3">•</span>
@@ -1148,10 +1495,19 @@
         </p>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-bash"># Create and activate virtual environment
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">setup.sh</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-bash"># Create and activate virtual environment
 python -m venv llamaindex-env
 source llamaindex-env/bin/activate  # On Windows: llamaindex-env\Scripts\activate
 
@@ -1166,6 +1522,7 @@ pip install llama-cloud                   # LlamaCloud services
 
 # Verify installation
 python -c "import llama_index; print(f'LlamaIndex version: {llama_index.__version__}')"</code></pre>
+            </div>
         </div>
 
         <p>
@@ -1173,12 +1530,22 @@ python -c "import llama_index; print(f'LlamaIndex version: {llama_index.__versio
         </p>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-bash"># .env file
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">.env</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-bash"># .env file
 OPENAI_API_KEY=sk-proj-...
 LLAMA_CLOUD_API_KEY=llx-...</code></pre>
+            </div>
         </div>
 
         <p>
@@ -1216,10 +1583,19 @@ LLAMA_CLOUD_API_KEY=llx-...</code></pre>
         </div>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-python">from llama_parse import LlamaParse
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">llamaparse_example.py</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from llama_parse import LlamaParse
 from llama_index.core import SimpleDirectoryReader
 import os
 
@@ -1251,6 +1627,7 @@ all_docs = SimpleDirectoryReader(
 ).load_data()
 
 print(f"Parsed {len(all_docs)} documents")</code></pre>
+            </div>
         </div>
 
         <p>
@@ -1290,10 +1667,19 @@ print(f"Parsed {len(all_docs)} documents")</code></pre>
         </p>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-python">from pydantic import BaseModel, Field
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">llamaextract_example.py</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from pydantic import BaseModel, Field
 from typing import List, Optional
 from llama_extract import LlamaExtract
 import os
@@ -1346,6 +1732,7 @@ for filename in ["invoice1.pdf", "invoice2.pdf", "invoice3.pdf"]:
 import json
 with open("extracted_invoices.json", "w") as f:
     json.dump([inv.dict() for inv in invoices], f, indent=2)</code></pre>
+            </div>
         </div>
 
         <p>
@@ -1392,10 +1779,19 @@ with open("extracted_invoices.json", "w") as f:
         <h4 style="color: #8b5cf6;">Option A: Local Vector Index (Open Source)</h4>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-python">from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">vector_index.py</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -1440,6 +1836,7 @@ index.storage_context.persist(persist_dir="./storage")
 from llama_index.core import StorageContext, load_index_from_storage
 storage_context = StorageContext.from_defaults(persist_dir="./storage")
 loaded_index = load_index_from_storage(storage_context)</code></pre>
+            </div>
         </div>
 
         <h4 style="color: #8b5cf6; margin-top: 2rem;">Option B: Managed LlamaCloud Index</h4>
@@ -1502,10 +1899,19 @@ for result in query_results:
         <h4 style="color: #8b5cf6;">Basic Agent with Document Search</h4>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-python">from llama_index.core.agent import FunctionAgent
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">basic_agent.py</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from llama_index.core.agent import FunctionAgent
 from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.openai import OpenAI
@@ -1546,6 +1952,7 @@ print(response)
 # 1. Recognize this needs company information
 # 2. Use the document_tool to search
 # 3. Synthesize an answer from retrieved passages</code></pre>
+            </div>
         </div>
 
         <h4 style="color: #8b5cf6; margin-top: 2rem;">Agent with Memory and Multiple Tools</h4>
@@ -1625,10 +2032,19 @@ print(response3)
         </p>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-python">from llama_index.core.workflow import Workflow, Event, StartEvent, StopEvent, step
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">workflow_example.py</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from llama_index.core.workflow import Workflow, Event, StartEvent, StopEvent, step
 from llama_index.llms.openai import OpenAI
 import asyncio
 
@@ -1723,6 +2139,7 @@ async def main():
 
 # Run workflow
 asyncio.run(main())</code></pre>
+            </div>
         </div>
 
         <p>
@@ -1855,10 +2272,19 @@ asyncio.run(main())</code></pre>
         </div>
 
         <div class="code-block">
-            <button class="copy-btn" onclick="copyCode(this)">
-                <i class="far fa-copy mr-1"></i>Copy
-            </button>
-            <pre><code class="language-python"># Example: Using Hugging Face multimodal model
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                </div>
+                <span class="code-title">using_llamahub.py</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python"># Example: Using Hugging Face multimodal model
 from llama_index.multi_modal_llms.huggingface import HuggingFaceMultiModal
 from llama_index.core import SimpleDirectoryReader
 
@@ -1881,6 +2307,7 @@ for doc in documents:
             image_documents=[doc]
         )
         print(response)</code></pre>
+            </div>
         </div>
 
         <!-- 6.8: Quick Start -->
@@ -2093,6 +2520,41 @@ print(response)</code></pre>
                 }
             });
         });
+
+        // Scroll animations with IntersectionObserver
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const fadeInObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe cards and other animated elements
+        document.querySelectorAll('.product-card, .concept-card, .comparison-card, .stat-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            fadeInObserver.observe(el);
+        });
+
+        // Update copy button for new code block structure
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block').querySelector('code');
+            const code = codeBlock ? codeBlock.textContent : button.nextElementSibling.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
     </script>
 </body>
 </html>
