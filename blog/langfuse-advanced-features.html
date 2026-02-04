@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langfuse Advanced Features - Prompt Management, Evaluation & Experiments | Zubair Ashfaque</title>
+    <meta name="description" content="Master advanced LLM operations: centralized prompt management, automated evaluation, and A/B testing with statistical rigor. Transform guesswork into systematic optimization.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Fraunces:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        /* Animated Grid Background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 214, 160, 0.1) 0%, transparent 50%);
+            animation: bgFloat 30s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-3%, -3%); }
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #14B8A6 0%, #A855F7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            color: #c4b5fd;
+            padding: 0.6rem 1.25rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            background: #A855F7;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .product-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .product-card {
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:nth-child(1)::before {
+            background: linear-gradient(135deg, #14B8A6 0%, #06D6A0 100%);
+        }
+
+        .product-card:nth-child(2)::before {
+            background: linear-gradient(135deg, #A855F7 0%, #C084FC 100%);
+        }
+
+        .product-card:nth-child(3)::before {
+            background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            border-color: #A855F7;
+            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        .product-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #A855F7;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #14B8A6 0%, #A855F7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d12;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-bottom: 1px solid #27272a;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ef4444; }
+        .code-dot:nth-child(2) { background: #eab308; }
+        .code-dot:nth-child(3) { background: #22c55e; }
+
+        .code-title {
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .code-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #14B8A6 0%, #A855F7 100%);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.9rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .concept-card {
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .concept-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .concept-card:nth-child(1)::before { background: #14B8A6; }
+        .concept-card:nth-child(2)::before { background: #3B82F6; }
+        .concept-card:nth-child(3)::before { background: #8B5CF6; }
+        .concept-card:nth-child(4)::before { background: #06D6A0; }
+        .concept-card:nth-child(5)::before { background: #EC4899; }
+        .concept-card:nth-child(6)::before { background: #F59E0B; }
+        .concept-card:nth-child(7)::before { background: #06B6D4; }
+        .concept-card:nth-child(8)::before { background: #10B981; }
+
+        .concept-card:hover {
+            transform: translateX(5px);
+            border-color: #A855F7;
+        }
+
+        .concept-card:hover::before {
+            opacity: 1;
+        }
+
+        .highlight-box {
+            background: rgba(168, 85, 247, 0.1);
+            border-left: 4px solid #A855F7;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #334155, transparent);
+            margin: 3rem 0;
+        }
+
+        .flow-step {
+            min-width: 140px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: scale(1.05);
+        }
+
+        .flow-arrow {
+            font-size: 1.25rem;
+            color: #A855F7;
+            opacity: 0.6;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2 i {
+            color: #A855F7;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #94a3b8;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            line-height: 1.7;
+            color: #cbd5e1;
+        }
+
+        ul {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+            color: #cbd5e1;
+        }
+
+        strong {
+            color: #14B8A6;
+            font-weight: 600;
+        }
+
+        code {
+            background: rgba(168, 85, 247, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: #c4b5fd;
+        }
+
+        .nav-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #334155;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #A855F7;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .feature-matrix {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        .feature-matrix table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #12121a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .feature-matrix th,
+        .feature-matrix td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .feature-matrix th {
+            background: rgba(168, 85, 247, 0.1);
+            color: #c4b5fd;
+            font-weight: 600;
+        }
+
+        .feature-matrix td {
+            color: #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .product-showcase {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <!-- Main Content Container -->
+    <div class="blog-container">
+
+        <!-- Hero Section -->
+        <div class="hero-badge">
+            <div class="pulse"></div>
+            <span>Part 2 of 3 • Advanced • 35 min read</span>
+        </div>
+
+        <h1 class="hero-gradient" style="font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem;">
+            Langfuse Advanced Features Deep Dive
+        </h1>
+
+        <p style="font-size: 1.25rem; color: #94a3b8; margin-bottom: 2rem;">
+            Prompt Management, Evaluation & Experiments: Transform guesswork into systematic optimization with centralized prompt control, automated evaluation, and statistically rigorous A/B testing.
+        </p>
+
+        <!-- Feature Showcase -->
+        <div class="product-showcase">
+            <div class="product-card">
+                <i class="fas fa-code-branch" style="color: #14B8A6;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Prompt Registry</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">Git for prompts: version control without code deployments</p>
+            </div>
+
+            <div class="product-card">
+                <i class="fas fa-vial" style="color: #A855F7;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Evaluation</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">Automated quality testing with LLM-as-judge patterns</p>
+            </div>
+
+            <div class="product-card">
+                <i class="fas fa-flask" style="color: #3B82F6;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Experiments</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">A/B testing with statistical rigor for confident deployments</p>
+            </div>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- The Evolution Challenge -->
+        <h2><i class="fas fa-rocket"></i>The Evolution Challenge</h2>
+
+        <p>
+            You have done it. You have instrumented your LLM application with basic tracing. You can see every API call. You can track token usage. You can monitor latency. When something breaks in production, you can trace the exact sequence of events that led to the failure. You are no longer flying blind.
+        </p>
+
+        <p>
+            But now you face a new set of challenges. Challenges that basic tracing alone cannot solve.
+        </p>
+
+        <p>
+            Your prompts are hardcoded throughout your application. You have a prompt for the chatbot. Another prompt for document summarization. Another for extracting structured data. They live scattered across your codebase in Python files, configuration files, and environment variables. When you want to improve a prompt, you need to modify code, create a pull request, wait for code review, deploy to staging, test manually, and finally push to production. The entire cycle takes days. Meanwhile, your competitors are iterating on their prompts multiple times per day.
+        </p>
+
+        <p>
+            Here is what happened at a mid-sized SaaS company last quarter. They had a customer support chatbot powered by GPT-4. The product team wanted to test a new prompt that would make responses more concise. The engineering team hardcoded the new prompt, deployed it to production, and within two hours they started getting complaints. The new prompt was more concise, yes, but it was also less helpful. Customers were frustrated. The team rolled back immediately, but they had already lost two hours of customer goodwill. The bigger problem? They had no systematic way to test prompts before deploying them. No datasets. No automated evaluation. No A/B testing framework.
+        </p>
+
+        <p>
+            This is the prompt versioning nightmare. Every change requires a deployment. Every deployment carries risk. Every risk needs mitigation. You need a better way.
+        </p>
+
+        <p>
+            Testing LLM applications is fundamentally harder than testing traditional software. With traditional software, you write unit tests with clear expected outputs. If the function should return 42, you assert it returns 42. With LLM applications, there is no single correct output. You ask the LLM to summarize a document, and there are dozens of valid summaries. How do you test that? How do you know if the new version of your prompt produces better results than the old version?
+        </p>
+
+        <p>
+            You could collect human feedback, but that is slow and expensive. You could use automated metrics like BLEU score or ROUGE score, but those correlate poorly with actual quality. You could use LLM-as-judge approaches, but you need infrastructure to run evaluations systematically. You need datasets. You need evaluation pipelines. You need statistical rigor.
+        </p>
+
+        <p>
+            The real challenge emerges when you want to run experiments. You want to A/B test two different prompts to see which one produces better results. But you are serving millions of requests per day. You need to route 50% of traffic to prompt A and 50% to prompt B. You need to track which users saw which prompt. You need to measure quality, latency, and cost for each variant. You need statistical analysis to determine if the difference is real or just random noise. You need to know, with confidence, which prompt is actually better before you deploy it to 100% of traffic.
+        </p>
+
+        <p>
+            This is where basic observability ends and advanced LLM operations begin. The gap between getting started and production-grade optimization is significant. You need tools specifically designed for managing prompts, evaluating quality, and running experiments at scale.
+        </p>
+
+        <p>
+            That is what we are building in this article. We are moving from reactive debugging to proactive optimization. We are moving from manual testing to automated evaluation. We are moving from gut feelings to data-driven decisions. We are building the infrastructure that lets you iterate on prompts with confidence.
+        </p>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Lucifying Advanced Features -->
+        <h2><i class="fas fa-lightbulb"></i>Lucifying Advanced Features: The Prompt Version Control System</h2>
+
+        <p>
+            Think about how software development worked before Git. You made changes directly to files on a server. If you wanted to try something experimental, you created a copy of the entire codebase and named it "version_2_new_experiment_DO_NOT_DELETE". If you needed to roll back a change, you hoped you still had the old version somewhere. If two developers edited the same file, the second one to save would overwrite the first developer's changes. Collaboration was painful. Experimentation was risky. Accountability was impossible.
+        </p>
+
+        <p>
+            Then Git arrived and changed everything. Suddenly you had a complete history of every change. You could create branches to try experimental features without affecting the main codebase. You could see who made what changes and why. You could roll back to any previous state instantly. You could run multiple experiments in parallel. You could merge proven improvements back into the main branch. Software development became systematically better because you had the right infrastructure for managing change.
+        </p>
+
+        <p>
+            This is exactly what Langfuse's advanced features provide for your LLM applications. They give you Git for prompts. They give you test suites for AI. They give you a complete infrastructure for systematic optimization.
+        </p>
+
+        <h3>The Prompt Registry: Your Central Prompt Repository</h3>
+
+        <p>
+            Imagine a central repository where all your prompts live. Not scattered across your codebase, but in one place. You can see all your prompts at a glance. You can see which ones are currently deployed to production. You can see the entire version history for each prompt. You can create new versions without writing a single line of code. You can deploy a new version to production by clicking a button. You can roll back to the previous version if something goes wrong.
+        </p>
+
+        <p>
+            This is the Prompt Registry. It is like a Content Management System (CMS), but for prompts instead of web pages. Just as non-technical team members can update website content without deploying code, product managers and domain experts can iterate on prompts without waiting for engineering. The best prompt engineer on your team is often not a software engineer. It might be your customer success lead who talks to customers all day and understands their language patterns. The Prompt Registry lets them contribute directly.
+        </p>
+
+        <h3>Test Suites for AI: Datasets and Evaluation</h3>
+
+        <p>
+            With traditional software, you write unit tests. You define inputs and expected outputs. You run the tests automatically whenever code changes. If any test fails, the deployment is blocked. This gives you confidence that your changes did not break existing functionality.
+        </p>
+
+        <p>
+            Langfuse brings this same systematic approach to LLM applications through Datasets and Evaluations. A Dataset is a curated collection of test cases. It might contain 100 real customer questions that your chatbot needs to handle well. It might contain 50 documents that need to be summarized correctly. It might contain edge cases that previously caused failures.
+        </p>
+
+        <p>
+            Evaluations are how you test your LLM application against these datasets. You can run automated evaluations every time you create a new prompt version. You can use LLM-as-judge approaches where a stronger model scores the outputs. You can use custom metrics specific to your domain. You can track quality scores over time and get alerted if quality degrades.
+        </p>
+
+        <p>
+            This transforms prompt iteration from guesswork into science. Instead of wondering if your new prompt is better, you measure it against your dataset. Instead of deploying and hoping, you validate first. Instead of finding problems in production, you catch them in testing.
+        </p>
+
+        <h3>The Experiment Tracker: Clinical Trials for AI</h3>
+
+        <p>
+            When pharmaceutical companies develop new drugs, they do not just give the drug to everyone and see what happens. They run controlled experiments. They split participants into groups. Some get the new drug. Some get a placebo. They measure outcomes carefully. They use statistics to determine if the results are real or just random chance. Only after rigorous testing do they deploy the drug widely.
+        </p>
+
+        <p>
+            Langfuse brings this same rigorous experimental approach to LLM applications. You can configure experiments that automatically route traffic to different prompt variants. You can define success metrics. You can collect data over time. You can run statistical analysis to determine which variant actually performs better. You can make deployment decisions based on data rather than intuition.
+        </p>
+
+        <p>
+            This is especially critical when changes affect millions of users. If you are running a chatbot that handles 10 million conversations per month, even a 1% improvement in customer satisfaction translates to 100,000 better experiences. But you need to be sure that improvement is real. You need statistical significance. You need the infrastructure to measure and analyze results properly.
+        </p>
+
+        <h3>Bringing It All Together: The Continuous Improvement Loop</h3>
+
+        <p>
+            These advanced features work together to create a systematic improvement cycle. You start with prompts in the Prompt Registry. You create a dataset of important test cases. You iterate on your prompts and evaluate each version against the dataset. You identify a promising new version and launch an experiment in production. You analyze the results with statistical rigor. You deploy the winner to all users. You monitor quality continuously. When you identify areas for improvement, you start the cycle again.
+        </p>
+
+        <p>
+            This is how world-class AI teams operate. They do not rely on intuition. They do not make changes blindly. They have infrastructure for systematic optimization. They measure everything. They experiment constantly. They improve continuously.
+        </p>
+
+        <p>
+            The difference between a team with this infrastructure and a team without it is like the difference between a modern software team using Git and CI/CD versus a team manually copying files between servers. One team moves fast with confidence. The other team moves slowly with fear.
+        </p>
+
+        <p>
+            Let us build this infrastructure for your LLM application.
+        </p>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Tech Terms -->
+        <h2><i class="fas fa-book-open"></i>Lucifying the Tech Terms</h2>
+
+        <p>
+            Before we dive into implementation, we need to define the key concepts clearly. These terms represent the building blocks of advanced LLM operations. Understanding them precisely will make everything that follows much clearer.
+        </p>
+
+        <div class="concept-card">
+            <h4 style="color: #14B8A6; margin-top: 0;">Prompt Registry</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> A centralized repository for storing, versioning, and managing all prompts in your LLM application. The Prompt Registry allows you to create, update, and deploy prompts without modifying application code. It maintains a complete version history for each prompt, supports environment-specific deployments (development, staging, production), and provides a web interface for non-technical team members to contribute prompt improvements.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> Your customer support chatbot uses three prompts: one for greeting users, one for answering questions, and one for escalation to human agents. Instead of hardcoding these prompts in your Python files, you store them in the Prompt Registry with names like "greeting_prompt", "qa_prompt", and "escalation_prompt". When your customer success team identifies better phrasing, they update the prompts directly in the Registry and deploy the changes to production without any code deployment.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> The Prompt Registry is like a Content Management System (CMS) such as WordPress or Contentful. Just as a CMS lets non-developers update website content without touching code, the Prompt Registry lets non-engineers improve prompts without waiting for an engineering deployment. The content is separated from the code that displays it.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #3B82F6; margin-top: 0;">Prompt Versioning</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> The practice of maintaining a complete historical record of all changes made to a prompt over time. Each version is immutable and can be referenced, compared, or restored at any time. Prompt versioning enables rollbacks when new versions underperform, A/B testing between specific versions, and understanding how prompts evolved over time.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> Your document summarization prompt starts at version 1. You modify it to be more concise and save version 2. After testing, you modify it again to include bullet points and save version 3. Version 2 performs poorly in production, so you roll back to version 1 while you work on improving version 3. Later, you deploy version 4 which combines the best aspects of versions 1 and 3. The entire history is preserved and accessible.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> Prompt versioning is exactly like Git commits for code. Each commit represents a specific state of the code with a unique identifier. You can compare any two commits. You can revert to any previous commit. You can see who made what changes and when. You can create branches for experiments. Prompt versioning provides this same powerful version control for your prompts instead of your code.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #8B5CF6; margin-top: 0;">Datasets</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> A curated collection of input-output pairs or input-only test cases used for systematic evaluation of LLM applications. Datasets serve as the "unit test suite" for AI, allowing you to validate that changes improve quality without breaking existing functionality. They can be constructed manually by subject matter experts, extracted automatically from production traces, or synthesized using LLMs.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> You are building a medical chatbot that answers patient questions. Your dataset contains 200 real questions that patients have asked, such as "What are the side effects of ibuprofen?" and "Is it safe to take antibiotics during pregnancy?" For each question, you might have an expert-written ideal response, or you might just have the question itself and evaluate the LLM's response using automated metrics or LLM-as-judge approaches.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> A dataset is like a comprehensive unit test suite in software development. Just as you write tests for critical functions to ensure they behave correctly after code changes, you create datasets of critical inputs to ensure your LLM application handles them well after prompt changes. Running your LLM application against the dataset is like running your test suite before deploying.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #06D6A0; margin-top: 0;">Evaluations</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> The systematic process of measuring LLM application quality by running test cases from a dataset and scoring the outputs using defined metrics. Evaluations can use automated metrics (exact match, semantic similarity, sentiment), LLM-as-judge approaches (using a stronger model to score outputs), or custom domain-specific scoring functions. Results are tracked over time to detect quality regressions and measure improvements.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> You run your customer support chatbot against a dataset of 100 customer questions. For each response, you use GPT-4 as a judge to score it on three dimensions: helpfulness (1-5), accuracy (1-5), and tone appropriateness (1-5). The evaluation produces an aggregate quality score of 4.2 out of 5. After updating your prompt, you run the evaluation again and get a score of 4.5, indicating measurable improvement.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> Evaluations are like an automated grading system for essays. A teacher (the LLM judge or metric) reviews each student's essay (LLM output) against a rubric (evaluation criteria) and assigns a grade. Instead of grading 30 students, you are grading 100 LLM outputs. Instead of doing it manually, it is automated. The grades tell you whether your LLM application is improving or declining in quality.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #EC4899; margin-top: 0;">Experiments</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> A controlled comparison of different LLM configurations (prompts, models, parameters) deployed to real production traffic with systematic measurement of outcomes. Experiments split traffic between variants, collect metrics for each variant, and use statistical analysis to determine which variant performs better with confidence. They enable data-driven decisions about what to deploy to all users.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> You create two versions of your summarization prompt: Variant A (current prompt) and Variant B (new experimental prompt). You configure an experiment that sends 50% of traffic to each variant for one week. You measure average quality score, average latency, and average cost for each variant. After collecting 10,000 samples for each variant, statistical analysis shows that Variant B has significantly higher quality (p < 0.01) with similar latency and cost. You confidently deploy Variant B to 100% of traffic.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> Experiments are like clinical drug trials. Pharmaceutical companies do not give a new drug to everyone immediately. They run controlled trials where some patients get the new drug (treatment group) and others get a placebo or existing drug (control group). They measure health outcomes carefully. They use statistics to determine if the new drug is actually better. Only then do they release it widely. LLM experiments follow the same rigorous scientific approach.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #F59E0B; margin-top: 0;">Prompt Templates</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> Reusable prompt patterns that contain variables which are dynamically substituted at runtime. Templates allow you to maintain a single prompt structure while customizing specific parts based on context, user, or other runtime parameters. They support variable interpolation, conditional logic, and composition of multiple template fragments.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> Instead of hardcoding "You are a customer support agent for Acme Corp", you create a template "You are a {role} for {company_name}". At runtime, you substitute role="customer support agent" and company_name="Acme Corp". If you expand to a new product line, you can reuse the same template with different variables: role="technical support specialist" and company_name="Acme Tech Division". One template, many use cases.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> Prompt templates are exactly like mail merge in Microsoft Word. You write a letter template with placeholders like "Dear {first_name}, thank you for your purchase of {product_name}". Then you merge it with a spreadsheet containing customer data to generate personalized letters for hundreds of customers. You write the template once and reuse it with different data each time.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #06B6D4; margin-top: 0;">LLM-as-Judge</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> An evaluation pattern where a powerful LLM (the judge) is used to assess the quality of outputs from another LLM (the system under evaluation). The judge LLM receives the input, the output to evaluate, and a grading rubric, then produces a structured score or critique. This approach approximates human judgment at scale while being much faster and cheaper than actual human evaluation.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> You generate 500 customer support responses using your chatbot. Instead of having humans read and rate all 500, you send each response to GPT-4 with a prompt like "Rate this customer support response on helpfulness (1-5), accuracy (1-5), and professionalism (1-5). Explain your reasoning." GPT-4 evaluates all 500 responses in minutes, providing structured scores that correlate well with human judgment.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> LLM-as-judge is like a senior developer reviewing code written by a junior developer. The senior developer (judge LLM) has more experience and better judgment. They review the junior's code (system LLM output) against established patterns and best practices (grading rubric). They provide structured feedback and a rating. This is faster than having the CTO review every line of code, and more scalable than pair programming, but still maintains quality standards.</p>
+        </div>
+
+        <div class="concept-card">
+            <h4 style="color: #10B981; margin-top: 0;">Statistical Significance</h4>
+            <p style="margin-bottom: 0.75rem;"><strong>Definition:</strong> A measure of confidence that observed differences between experimental variants are real effects rather than random chance. Statistical significance is typically expressed as a p-value, where p < 0.05 means there is less than 5% probability the results occurred by random chance. Achieving statistical significance requires sufficient sample size and properly controlled experiments.</p>
+            <p style="margin-bottom: 0.75rem;"><strong>Simple Example:</strong> You run an A/B test with Prompt A and Prompt B. After 100 samples, Prompt B's average quality score is 4.3 while Prompt A's is 4.1. Is this difference real or just luck? Statistical analysis shows p = 0.32, meaning there is a 32% chance this difference is random. Not significant. You collect 10,000 samples. Now Prompt B scores 4.28 and Prompt A scores 4.12. Statistical analysis shows p = 0.003, meaning only 0.3% chance this is random. This is statistically significant. You can confidently deploy Prompt B.</p>
+            <p style="margin-bottom: 0;"><strong>Analogy:</strong> Statistical significance is like proving a coin is weighted. If you flip a coin 10 times and get 7 heads, you cannot conclude the coin is unfair. That could easily happen by chance with a fair coin. But if you flip it 10,000 times and get 7,000 heads, you can confidently say the coin is weighted. The large number of trials proves the difference is real, not luck. Statistical significance tells you when you have enough data to trust your conclusions.</p>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Making the Advanced Blueprint -->
+        <h2><i class="fas fa-drafting-compass"></i>Making the Advanced Blueprint</h2>
+
+        <p>
+            We now have a clear understanding of the building blocks. Let us assemble them into a systematic implementation plan. This blueprint takes you from basic observability to production-grade LLM operations with proper prompt management, automated evaluation, and rigorous experimentation.
+        </p>
+
+        <p>
+            This is not a linear process. It is a cycle. You will iterate through these steps continuously as you optimize your LLM application over time. But you need to build the infrastructure first, and that requires going through each step deliberately.
+        </p>
+
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 2rem 0;">
+            <div class="flow-step" style="border-color: #14B8A6;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">1</div>
+                <div style="font-weight: 600;">Set Up Prompt Registry</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #3B82F6;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">2</div>
+                <div style="font-weight: 600;">Dynamic Fetching</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #8B5CF6;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">3</div>
+                <div style="font-weight: 600;">Create Datasets</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #06D6A0;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">4</div>
+                <div style="font-weight: 600;">Build Evaluation</div>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 2rem 0;">
+            <div class="flow-step" style="border-color: #EC4899;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">5</div>
+                <div style="font-weight: 600;">Run Experiments</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #F59E0B;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">6</div>
+                <div style="font-weight: 600;">Analyze Results</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #06B6D4;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">7</div>
+                <div style="font-weight: 600;">Deploy Winners</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="border-color: #10B981;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">8</div>
+                <div style="font-weight: 600;">Build Dashboards</div>
+            </div>
+        </div>
+
+        <h3>Step 1: Set Up Prompt Registry</h3>
+
+        <p><strong>What to do:</strong> Create a centralized location in Langfuse for managing all your prompts. Identify every hardcoded prompt in your application and migrate it to the Prompt Registry. Establish naming conventions for prompts (e.g., <code>{service}_{use_case}_{version}</code> like <code>chatbot_greeting_v1</code>). Configure environment labels so you can have different prompt versions in development, staging, and production.</p>
+
+        <p><strong>Why it matters:</strong> Prompts scattered across your codebase create friction. Every prompt change requires code deployment. Product managers and domain experts cannot contribute improvements. You have no visibility into what prompts are actually in production. The Prompt Registry centralizes control and removes deployment bottlenecks. It enables rapid iteration.</p>
+
+        <p><strong>Expected outcome:</strong> All prompts live in one place. You can see at a glance what prompts your application uses. Non-engineers can update prompts through a web interface. You have a clear audit trail of all prompt changes.</p>
+
+        <h3>Step 2: Implement Dynamic Prompt Fetching</h3>
+
+        <p><strong>What to do:</strong> Modify your application code to fetch prompts from Langfuse at runtime instead of using hardcoded strings. Implement caching to avoid fetching prompts on every request (cache them in memory with periodic refresh). Add fallback strategies so your application still works if Langfuse is temporarily unavailable. Configure prompt labels to match your environment (fetch <code>production</code> prompts in production, <code>staging</code> prompts in staging).</p>
+
+        <p><strong>Why it matters:</strong> The Prompt Registry is only useful if your application actually uses it. Dynamic fetching connects your code to the Registry. Caching ensures performance remains excellent. Fallbacks ensure reliability. Once implemented, you can update prompts in production without any code deployment.</p>
+
+        <p><strong>Expected outcome:</strong> Your application fetches prompts from Langfuse instead of using hardcoded strings. Prompt updates in the Registry immediately affect your application (after cache refresh). Performance is unaffected due to caching. Reliability remains high due to fallbacks.</p>
+
+        <h3>Step 3: Create Evaluation Datasets</h3>
+
+        <p><strong>What to do:</strong> Build a collection of test cases that represent critical functionality. Start with 50-100 examples covering common use cases and edge cases. You can extract these from production traces (find examples of good and bad responses), create them manually with subject matter experts, or synthesize them using LLMs. Structure each test case with input data and optionally expected output or evaluation criteria. Version your datasets so you can reproduce evaluation results later.</p>
+
+        <p><strong>Why it matters:</strong> You cannot improve what you cannot measure. Datasets give you a consistent benchmark for measuring quality. They let you catch regressions before they reach production. They enable objective comparison between different prompt versions. Without datasets, you are optimizing blindly.</p>
+
+        <p><strong>Expected outcome:</strong> You have a curated dataset representing critical use cases. You can run your LLM application against this dataset at any time. You have a benchmark for measuring improvements. You can add new test cases as you discover edge cases.</p>
+
+        <h3>Step 4: Build Automated Evaluation Pipeline</h3>
+
+        <p><strong>What to do:</strong> Implement evaluation functions that score your LLM outputs. Start with LLM-as-judge approaches using GPT-4 or Claude to rate outputs on quality dimensions relevant to your domain (helpfulness, accuracy, conciseness, tone). Add custom metrics specific to your use case (e.g., checking if medical advice includes appropriate disclaimers). Create scripts that run your dataset through your LLM application and collect scores. Integrate evaluations into your CI/CD pipeline so they run automatically before deployments.</p>
+
+        <p><strong>Why it matters:</strong> Manual evaluation does not scale. You need automated measurement to iterate quickly. LLM-as-judge provides quality assessment that correlates well with human judgment at a fraction of the cost and time. Custom metrics ensure you measure what actually matters for your application. Automation catches quality regressions before they reach users.</p>
+
+        <p><strong>Expected outcome:</strong> You can evaluate any prompt version against your dataset automatically. You get quality scores within minutes instead of hours or days. You can compare evaluation results across different prompt versions objectively. Quality regressions are caught in testing rather than production.</p>
+
+        <h3>Step 5: Design and Run Experiments</h3>
+
+        <p><strong>What to do:</strong> Identify a prompt or model change you want to test in production. Configure an experiment in Langfuse that routes a percentage of traffic to the new variant while the rest continues using the current version. Define success metrics (quality score, user satisfaction, task completion rate). Set a sample size target based on the minimum effect size you care about. Run the experiment for the planned duration or sample size. Ensure proper randomization so user characteristics are balanced between variants.</p>
+
+        <p><strong>Why it matters:</strong> Not all improvements in testing translate to improvements in production. Real user behavior differs from test datasets. Experiments let you validate changes with actual traffic before full deployment. Proper experimental design ensures your results are trustworthy. Statistical rigor prevents false positives that waste engineering effort.</p>
+
+        <p><strong>Expected outcome:</strong> You have a running experiment comparing two variants on real production traffic. Data is being collected systematically. You know what metrics you are measuring. You have a plan for when to conclude the experiment and make a decision.</p>
+
+        <h3>Step 6: Analyze Results with Statistical Rigor</h3>
+
+        <p><strong>What to do:</strong> After collecting sufficient data, analyze experiment results to determine if differences between variants are statistically significant. Calculate p-values to measure confidence that results are not due to chance. Compute confidence intervals to understand the range of likely effect sizes. Consider practical significance in addition to statistical significance (is the improvement large enough to matter?). Examine segmented results to see if effects differ across user groups or use cases. Document findings with visualizations.</p>
+
+        <p><strong>Why it matters:</strong> Looking at averages without statistics leads to wrong conclusions. Random variation can make worse variants appear better with small sample sizes. Statistical analysis tells you when you have enough confidence to make decisions. Segmented analysis reveals whether changes help or hurt different user groups. Rigorous analysis prevents costly mistakes.</p>
+
+        <p><strong>Expected outcome:</strong> You know with confidence which variant performs better. You understand the magnitude of improvement. You have statistical backing for your decision. You can explain why you are deploying the winning variant with data rather than intuition.</p>
+
+        <h3>Step 7: Deploy Winners and Monitor</h3>
+
+        <p><strong>What to do:</strong> Based on experiment results, deploy the winning variant to 100% of traffic. Update the Prompt Registry to make the winning version the production default. Set up continuous monitoring with alerts for quality degradation, cost increases, or latency spikes. Implement automated evaluations that run periodically on production traffic samples (e.g., daily evaluation on 100 random production traces). Configure alerts that notify you if quality scores drop below thresholds.</p>
+
+        <p><strong>Why it matters:</strong> Winning in an experiment does not guarantee long-term success. User behavior changes. Your application evolves. Input distributions shift. Continuous monitoring catches problems early. Automated evaluation creates ongoing quality assurance. Alerts ensure you respond quickly to issues rather than discovering them weeks later through customer complaints.</p>
+
+        <p><strong>Expected outcome:</strong> The winning variant is deployed to all users. You have monitoring in place to detect quality regressions. You get alerted if something goes wrong. You have ongoing visibility into LLM application health rather than just point-in-time measurements.</p>
+
+        <h3>Step 8: Build Custom Dashboards</h3>
+
+        <p><strong>What to do:</strong> Create tailored dashboards that surface the metrics most important to your team. Track quality trends over time segmented by user type, feature, or use case. Visualize cost attribution by customer or endpoint to identify optimization opportunities. Monitor high-level KPIs (average quality score, p95 latency, cost per conversation) alongside detailed metrics. Share dashboards with stakeholders outside engineering (product managers, executives) to build shared understanding of LLM application performance.</p>
+
+        <p><strong>Why it matters:</strong> Raw observability data is overwhelming. Dashboards provide curated views into what matters. Different stakeholders need different views: engineers need detailed traces, product managers need quality trends, executives need cost and business impact. Custom dashboards make LLM metrics accessible to non-technical team members, enabling better collaboration and decision-making.</p>
+
+        <p><strong>Expected outcome:</strong> Each team member can access dashboards relevant to their role. Quality trends are visible at a glance. Cost and usage patterns are clear. Stakeholders have shared visibility into LLM application health. Data-driven conversations replace anecdotal discussions.</p>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-sync-alt mr-2"></i>The Continuous Improvement Cycle:</strong>
+            <p style="margin: 0.5rem 0 0 0;">
+                These eight steps form a cycle, not a linear sequence. After you deploy a winning variant, you monitor its performance. When you identify opportunities for improvement, you create new prompt versions in the Registry. You evaluate them against your dataset. You run experiments to validate improvements. You analyze results and deploy winners. You monitor continuously. The cycle repeats. Teams that implement this infrastructure iterate 10x faster than teams without it.
+            </p>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Executing the Advanced Blueprint -->
+        <h2><i class="fas fa-cogs"></i>Executing the Advanced Blueprint</h2>
+
+        <p>
+            Now we translate theory into practice. This section provides complete, production-ready code examples for each step of the blueprint. These are not toy examples. They are patterns you can adapt directly into your applications.
+        </p>
+
+        <h3>5.1 Prompt Management in Practice</h3>
+
+        <p>The Prompt Registry removes the friction of prompt iteration. Let us see how to use it effectively.</p>
+
+        <h4>Creating and Managing Prompts</h4>
+
+        <p>You can create prompts through the Langfuse web interface or programmatically via the API. For initial setup, the web interface is fastest. For automation and version control of prompts alongside code, the API is more powerful.</p>
+
+        <div class="code-block">
+            <div class="code-header" style="position: relative;">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <div class="code-title">prompt_management.py</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python"># prompt_management.py
+"""
+Creating and managing prompts in Langfuse Prompt Registry.
+This example shows both UI-based and API-based workflows.
+"""
+from langfuse import Langfuse
+import os
+
+# Initialize Langfuse client
+langfuse = Langfuse(
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
+    host=os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+)
+
+def create_prompt_version():
+    """
+    Create a new version of a prompt programmatically.
+    Use this for CI/CD integration or when managing prompts in version control.
+    """
+    prompt = langfuse.create_prompt(
+        name="customer_support_qa",
+        prompt="You are a helpful customer support agent for {{company_name}}. "
+               "Answer the customer's question accurately and professionally.\n\n"
+               "Company context: {{company_context}}\n\n"
+               "Customer question: {{question}}\n\n"
+               "Provide a clear, accurate answer. If you don't know, say so honestly.",
+        config={
+            "model": "gpt-4",
+            "temperature": 0.7,
+            "max_tokens": 500
+        },
+        labels=["production"],  # Environment label
+        tags=["customer-support", "qa", "v2"]  # Organizational tags
+    )
+
+    print(f"Created prompt version: {prompt.version}")
+    print(f"Prompt ID: {prompt.id}")
+    return prompt
+
+if __name__ == "__main__":
+    create_prompt_version()</code></pre>
+            </div>
+        </div>
+
+        <h4>Fetching Prompts with Caching</h4>
+
+        <p>Once prompts live in the Registry, your application needs to fetch them efficiently. Caching is critical for performance.</p>
+
+        <div class="code-block">
+            <div class="code-header" style="position: relative;">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <div class="code-title">fetch_prompts_cached.py</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python"># fetch_prompts_cached.py
+"""
+Fetching prompts from Langfuse with intelligent caching.
+This pattern ensures low latency while allowing prompt updates without deployment.
+"""
+from langfuse import Langfuse
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+import os
+import threading
+
+class PromptCache:
+    """
+    Thread-safe cache for Langfuse prompts with TTL-based expiration.
+    """
+    def __init__(self, ttl_seconds: int = 300):  # 5 minute default TTL
+        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.ttl_seconds = ttl_seconds
+        self.lock = threading.Lock()
+        self.langfuse = Langfuse(
+            public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+            secret_key=os.environ.get("LANGFUSE_SECRET_KEY")
+        )
+
+    def get_prompt(self, name: str, version: Optional[int] = None,
+                   label: str = "production") -> str:
+        """
+        Get prompt from cache if available and fresh, otherwise fetch from Langfuse.
+
+        Args:
+            name: Prompt name in Langfuse Registry
+            version: Specific version number (None = latest for label)
+            label: Environment label ("production", "staging", etc.)
+
+        Returns:
+            Prompt text with template variables intact
+        """
+        cache_key = f"{name}:{version or label}"
+
+        with self.lock:
+            # Check if cached and not expired
+            if cache_key in self.cache:
+                cached_data = self.cache[cache_key]
+                if datetime.now() < cached_data["expires_at"]:
+                    print(f"Cache hit for {cache_key}")
+                    return cached_data["prompt"]
+
+            # Cache miss or expired - fetch from Langfuse
+            print(f"Cache miss for {cache_key}, fetching from Langfuse")
+            if version:
+                prompt = self.langfuse.get_prompt(name, version=version)
+            else:
+                prompt = self.langfuse.get_prompt(name, label=label)
+
+            # Store in cache with expiration time
+            self.cache[cache_key] = {
+                "prompt": prompt.prompt,
+                "config": prompt.config,
+                "expires_at": datetime.now() + timedelta(seconds=self.ttl_seconds),
+                "version": prompt.version
+            }
+
+            return prompt.prompt
+
+# Global cache instance (singleton pattern)
+prompt_cache = PromptCache(ttl_seconds=300)</code></pre>
+            </div>
+        </div>
+
+        <h3>5.2 Building Evaluation Pipelines</h3>
+
+        <p>Automated evaluation transforms prompt optimization from guesswork into science. Let us build a complete evaluation system.</p>
+
+        <h4>Implementing LLM-as-Judge Evaluation</h4>
+
+        <div class="code-block">
+            <div class="code-header" style="position: relative;">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <div class="code-title">llm_judge_evaluator.py</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python"># llm_judge_evaluator.py
+"""
+LLM-as-judge evaluation with multi-dimensional scoring.
+"""
+from openai import OpenAI
+from langfuse import Langfuse
+from typing import Dict, List, Any
+import os
+import json
+
+client = OpenAI()
+langfuse = Langfuse(
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY")
+)
+
+JUDGE_PROMPT_TEMPLATE = """You are an expert evaluator assessing customer support responses.
+
+Customer Question:
+{input}
+
+Assistant Response:
+{output}
+
+Evaluate this response on the following dimensions (1-5 scale):
+
+1. **Helpfulness**: Does the response actually help the customer?
+   - 1: Not helpful at all, misses the point entirely
+   - 3: Somewhat helpful but incomplete
+   - 5: Extremely helpful, addresses the question completely
+
+2. **Accuracy**: Is the information provided correct?
+   - 1: Contains significant errors or misinformation
+   - 3: Mostly accurate with minor issues
+   - 5: Completely accurate and precise
+
+3. **Professionalism**: Is the tone appropriate for customer support?
+   - 1: Unprofessional, rude, or inappropriate
+   - 3: Acceptable but could be more polished
+   - 5: Exemplary professional tone
+
+4. **Conciseness**: Is the response appropriately concise?
+   - 1: Way too long or way too short
+   - 3: Acceptable length but could be optimized
+   - 5: Perfect length for the question
+
+Return your evaluation as JSON:
+{{
+    "helpfulness": <score>,
+    "accuracy": <score>,
+    "professionalism": <score>,
+    "conciseness": <score>,
+    "reasoning": "<brief explanation of scores>",
+    "overall_score": <average of all scores>
+}}
+"""
+
+def evaluate_with_llm_judge(input_text: str, output_text: str) -> Dict[str, Any]:
+    """
+    Evaluate a single input-output pair using GPT-4 as judge.
+    """
+    judge_prompt = JUDGE_PROMPT_TEMPLATE.format(
+        input=input_text,
+        output=output_text
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": judge_prompt}],
+        temperature=0.2,  # Low temperature for consistent evaluation
+        response_format={"type": "json_object"}
+    )
+
+    evaluation = json.loads(response.choices[0].message.content)
+    return evaluation
+
+def compare_prompt_versions(
+    dataset_name: str,
+    prompt_version_1: str,
+    prompt_version_2: str,
+    model: str = "gpt-3.5-turbo"
+):
+    """
+    Compare two prompt versions side-by-side on the same dataset.
+    """
+    print(f"Evaluating Prompt Version 1...")
+    results_v1 = run_evaluation_on_dataset(dataset_name, prompt_version_1, model)
+
+    print(f"Evaluating Prompt Version 2...")
+    results_v2 = run_evaluation_on_dataset(dataset_name, prompt_version_2, model)
+
+    # Compare results
+    print("\n=== Comparison Results ===")
+    print(f"Dataset: {dataset_name}")
+    print(f"Model: {model}")
+    print(f"\nPrompt Version 1 Overall Score: {results_v1['aggregated_scores']['overall_average']:.2f}")
+    print(f"Prompt Version 2 Overall Score: {results_v2['aggregated_scores']['overall_average']:.2f}")
+
+    improvement = results_v2['aggregated_scores']['overall_average'] - results_v1['aggregated_scores']['overall_average']
+    print(f"\nImprovement: {improvement:+.2f} ({improvement/results_v1['aggregated_scores']['overall_average']*100:+.1f}%)")
+
+    return results_v1, results_v2</code></pre>
+            </div>
+        </div>
+
+        <h3>5.3 Experiment Infrastructure</h3>
+
+        <p>Experiments let you validate improvements with real production traffic before full deployment.</p>
+
+        <h4>Setting Up A/B Experiments</h4>
+
+        <div class="code-block">
+            <div class="code-header" style="position: relative;">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <div class="code-title">experiment_setup.py</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python"># experiment_setup.py
+"""
+Configure and run A/B experiments in production.
+"""
+from langfuse import Langfuse
+import os
+import random
+from typing import Literal
+
+langfuse = Langfuse(
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY")
+)
+
+class ABExperiment:
+    """
+    Manages A/B testing between two prompt versions.
+    """
+    def __init__(
+        self,
+        experiment_name: str,
+        prompt_name: str,
+        version_a: int,  # Control
+        version_b: int,  # Treatment
+        traffic_split: float = 0.5  # % to version B
+    ):
+        self.experiment_name = experiment_name
+        self.prompt_name = prompt_name
+        self.version_a = version_a
+        self.version_b = version_b
+        self.traffic_split = traffic_split
+
+    def get_variant(self, user_id: str) -> Literal["A", "B"]:
+        """
+        Deterministic assignment: same user always gets same variant.
+
+        Uses hash of user_id to ensure consistent assignment across requests.
+        """
+        # Hash user_id to get deterministic random value
+        hash_value = hash(user_id + self.experiment_name)
+        random.seed(hash_value)
+        variant = "B" if random.random() < self.traffic_split else "A"
+        return variant
+
+    def get_prompt_for_user(self, user_id: str) -> tuple[str, int, str]:
+        """
+        Get appropriate prompt version for user.
+
+        Returns:
+            (prompt_text, version, variant)
+        """
+        variant = self.get_variant(user_id)
+        version = self.version_b if variant == "B" else self.version_a
+
+        prompt = langfuse.get_prompt(self.prompt_name, version=version)
+
+        return prompt.prompt, version, variant
+
+# Example usage in production application
+def handle_customer_request(user_id: str, question: str):
+    """
+    Production handler with A/B testing integrated.
+    """
+    from openai import OpenAI
+    client = OpenAI()
+
+    # Set up experiment
+    experiment = ABExperiment(
+        experiment_name="prompt_v3_test",
+        prompt_name="customer_support_qa",
+        version_a=2,  # Current production version
+        version_b=3,  # New experimental version
+        traffic_split=0.5
+    )
+
+    # Get prompt for this user
+    prompt_text, version, variant = experiment.get_prompt_for_user(user_id)
+
+    # Start Langfuse trace
+    trace = langfuse.trace(
+        name="customer_support_request",
+        user_id=user_id,
+        metadata={
+            "experiment": experiment.experiment_name,
+            "variant": variant,
+            "prompt_version": version
+        },
+        tags=[experiment.experiment_name, f"variant_{variant}"]
+    )
+
+    # Make LLM call
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": prompt_text},
+            {"role": "user", "content": question}
+        ]
+    )
+
+    answer = response.choices[0].message.content
+
+    # Log generation to Langfuse
+    trace.generation(
+        name="customer_response",
+        model="gpt-3.5-turbo",
+        input={"system": prompt_text, "user": question},
+        output=answer,
+        usage={
+            "prompt_tokens": response.usage.prompt_tokens,
+            "completion_tokens": response.usage.completion_tokens,
+            "total_tokens": response.usage.total_tokens
+        }
+    )
+
+    return answer</code></pre>
+            </div>
+        </div>
+
+        <h4>Analyzing Experiment Results</h4>
+
+        <div class="code-block">
+            <div class="code-header" style="position: relative;">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <div class="code-title">analyze_experiment.py</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python"># analyze_experiment.py
+"""
+Statistical analysis of A/B experiment results.
+"""
+from langfuse import Langfuse
+import os
+from scipy import stats
+import numpy as np
+from typing import Dict, List
+
+langfuse = Langfuse(
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY")
+)
+
+def analyze_experiment(experiment_name: str):
+    """
+    Perform statistical analysis on experiment results.
+    """
+    print(f"=== Analyzing Experiment: {experiment_name} ===\n")
+
+    # Fetch data
+    data = fetch_experiment_data(experiment_name)
+
+    variant_a_scores = np.array(data["variant_a"])
+    variant_b_scores = np.array(data["variant_b"])
+
+    # Sample sizes
+    n_a = len(variant_a_scores)
+    n_b = len(variant_b_scores)
+
+    print(f"Sample Sizes:")
+    print(f"  Variant A: {n_a}")
+    print(f"  Variant B: {n_b}\n")
+
+    # Descriptive statistics
+    mean_a = np.mean(variant_a_scores)
+    mean_b = np.mean(variant_b_scores)
+    std_a = np.std(variant_a_scores, ddof=1)
+    std_b = np.std(variant_b_scores, ddof=1)
+
+    print(f"Variant A (Control):")
+    print(f"  Mean: {mean_a:.3f}")
+    print(f"  Std Dev: {std_a:.3f}\n")
+
+    print(f"Variant B (Treatment):")
+    print(f"  Mean: {mean_b:.3f}")
+    print(f"  Std Dev: {std_b:.3f}\n")
+
+    # Effect size
+    absolute_difference = mean_b - mean_a
+    relative_difference = (absolute_difference / mean_a) * 100
+
+    print(f"Effect Size:")
+    print(f"  Absolute Difference: {absolute_difference:+.3f}")
+    print(f"  Relative Difference: {relative_difference:+.1f}%\n")
+
+    # Statistical significance (two-sample t-test)
+    t_statistic, p_value = stats.ttest_ind(variant_b_scores, variant_a_scores)
+
+    print(f"Statistical Significance:")
+    print(f"  t-statistic: {t_statistic:.3f}")
+    print(f"  p-value: {p_value:.4f}")
+
+    if p_value < 0.05:
+        print(f"  Result: ✅ Statistically significant (p < 0.05)")
+    else:
+        print(f"  Result: ❌ Not statistically significant (p >= 0.05)")
+
+    # Confidence intervals
+    ci_a = stats.t.interval(0.95, n_a-1, loc=mean_a, scale=std_a/np.sqrt(n_a))
+    ci_b = stats.t.interval(0.95, n_b-1, loc=mean_b, scale=std_b/np.sqrt(n_b))
+
+    print(f"\n95% Confidence Intervals:")
+    print(f"  Variant A: [{ci_a[0]:.3f}, {ci_a[1]:.3f}]")
+    print(f"  Variant B: [{ci_b[0]:.3f}, {ci_b[1]:.3f}]\n")
+
+    # Recommendation
+    print("=== Recommendation ===")
+    if p_value < 0.05:
+        if mean_b > mean_a:
+            print(f"✅ Deploy Variant B to all users")
+            print(f"   Expected improvement: {relative_difference:+.1f}%")
+        else:
+            print(f"⚠️  Variant B performs significantly worse")
+            print(f"   Keep Variant A (control)")
+    else:
+        print(f"⏸️  Insufficient evidence of difference")
+        print(f"   Options:")
+        print(f"   - Continue experiment to collect more data")
+        print(f"   - If practical significance is small, keep current version")
+
+if __name__ == "__main__":
+    analyze_experiment("prompt_v3_test")</code></pre>
+            </div>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Feature Comparison Matrix -->
+        <h2><i class="fas fa-table"></i>Feature Comparison Matrix</h2>
+
+        <p>Understanding when to use each Langfuse feature helps you choose the right tool for your needs.</p>
+
+        <div class="feature-matrix">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Primary Use Case</th>
+                        <th>Setup Complexity</th>
+                        <th>Best For</th>
+                        <th>Output Format</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Tracing</strong></td>
+                        <td>Debug and monitor LLM calls</td>
+                        <td>Low</td>
+                        <td>Understanding what happened in production, debugging failures</td>
+                        <td>Individual traces with full context</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prompt Registry</strong></td>
+                        <td>Centralized prompt management</td>
+                        <td>Medium</td>
+                        <td>Rapid iteration on prompts, non-engineer contributions</td>
+                        <td>Versioned prompts accessible via API</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Datasets</strong></td>
+                        <td>Systematic testing and evaluation</td>
+                        <td>Medium</td>
+                        <td>Quality assurance, regression testing, benchmarking</td>
+                        <td>Curated test cases with inputs/outputs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Evaluations</strong></td>
+                        <td>Automated quality measurement</td>
+                        <td>High</td>
+                        <td>Continuous quality monitoring, prompt comparison</td>
+                        <td>Quality scores and metrics</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Experiments</strong></td>
+                        <td>A/B testing in production</td>
+                        <td>High</td>
+                        <td>Data-driven deployment decisions, validating improvements</td>
+                        <td>Statistical analysis of variants</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-compass mr-2"></i>When to use what:</strong>
+            <ul style="margin: 0.5rem 0 0 1.5rem;">
+                <li><strong>Just getting started?</strong> Start with Tracing to gain visibility</li>
+                <li><strong>Iterating on prompts frequently?</strong> Add Prompt Registry to remove deployment friction</li>
+                <li><strong>Want to measure quality?</strong> Create Datasets and run Evaluations</li>
+                <li><strong>Ready for systematic optimization?</strong> Run Experiments to validate improvements with real traffic</li>
+            </ul>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Conclusion -->
+        <h2><i class="fas fa-flag-checkered"></i>Conclusion</h2>
+
+        <p>
+            You now have the complete infrastructure for professional LLM operations. You moved from basic observability to systematic optimization. Your prompts live in a central registry where anyone can improve them. Your datasets provide consistent benchmarks for quality. Your evaluations catch regressions before production. Your experiments validate improvements with statistical rigor.
+        </p>
+
+        <p>
+            This infrastructure creates a continuous improvement cycle. You monitor production quality. You identify opportunities for improvement. You iterate on prompts in the registry. You validate against your datasets. You run experiments on real traffic. You deploy winners with confidence. You monitor continuously and repeat.
+        </p>
+
+        <p>
+            The teams that build this infrastructure move 10x faster than teams without it. They iterate on prompts multiple times per day instead of multiple times per month. They catch quality issues in testing instead of production. They make deployment decisions based on data instead of intuition. This is the difference between amateur and professional LLM operations.
+        </p>
+
+        <p>
+            In Part 3 of this series, we will explore production patterns and real-world case studies. You will see how companies use these features to scale LLM applications to millions of users. You will learn security and compliance patterns for regulated industries. You will understand cost optimization strategies that reduce bills by 60% while maintaining quality. You will master the complete playbook for production LLM systems.
+        </p>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-graduation-cap mr-2"></i>What you have learned:</strong>
+            <ul style="margin: 0.5rem 0 0 1.5rem;">
+                <li>Prompt Registry for centralized, version-controlled prompt management</li>
+                <li>Datasets for systematic quality testing</li>
+                <li>LLM-as-judge evaluation for automated quality measurement</li>
+                <li>A/B experiments with statistical analysis for confident deployments</li>
+                <li>Complete integration patterns with LangChain and production applications</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box" style="border-color: #3B82F6; background: rgba(59, 130, 246, 0.1);">
+            <strong><i class="fas fa-rocket mr-2"></i>Next steps:</strong>
+            <ol style="margin: 0.5rem 0 0 1.5rem;">
+                <li>Set up your Prompt Registry and migrate your first prompts</li>
+                <li>Create a dataset of 50-100 test cases from production or manual curation</li>
+                <li>Run your first evaluation to establish a quality baseline</li>
+                <li>When ready, configure an experiment to test a prompt improvement</li>
+                <li>Join Part 3 to learn production patterns and scaling strategies</li>
+            </ol>
+        </div>
+
+        <h3>Resources</h3>
+        <ul>
+            <li><a href="https://langfuse.com/docs" target="_blank" style="color: #14B8A6;">Langfuse Documentation</a></li>
+            <li><a href="https://github.com/langfuse/langfuse" target="_blank" style="color: #14B8A6;">Langfuse GitHub Repository</a></li>
+            <li><a href="https://discord.gg/langfuse" target="_blank" style="color: #14B8A6;">Langfuse Discord Community</a></li>
+            <li><a href="./langfuse-getting-started.html" style="color: #14B8A6;">Part 1: Getting Started with Langfuse</a></li>
+        </ul>
+
+        <p style="font-size: 1.125rem; font-weight: 600; margin-top: 2rem;">
+            The infrastructure is built. The path is clear. Now it is time to optimize your LLM application systematically. Let the data guide your decisions. Let the experiments prove your improvements. Let the continuous cycle drive quality higher while keeping costs under control.
+        </p>
+
+        <p style="font-size: 1.125rem; font-weight: 600;">
+            You are no longer guessing. You are engineering.
+        </p>
+
+        <!-- Navigation Footer -->
+        <div class="nav-footer">
+            <a href="./langfuse-getting-started.html" class="nav-link">
+                <i class="fas fa-arrow-left"></i>
+                <span>Part 1: Getting Started</span>
+            </a>
+            <a href="#" class="nav-link" style="opacity: 0.5; cursor: not-allowed;">
+                <span>Part 3: Production Patterns</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block').querySelector('code');
+            const text = codeBlock.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = 'linear-gradient(135deg, #14B8A6 0%, #A855F7 100%)';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
