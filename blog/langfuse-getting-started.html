@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started with Langfuse - The LLM Observability Platform You Need | Zubair Ashfaque</title>
+    <meta name="description" content="Master LLM application monitoring: from basic tracing to production-ready observability. No more blind deployments—see every token, track every cost, debug every failure. Complete blueprint with code examples.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Fraunces:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        /* Animated Grid Background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(6, 214, 160, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
+            animation: bgFloat 30s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-3%, -3%); }
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #14B8A6 0%, #3B82F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(20, 184, 166, 0.15);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            color: #5eead4;
+            padding: 0.6rem 1.25rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            background: #14B8A6;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .product-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .product-card {
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:nth-child(1)::before {
+            background: linear-gradient(135deg, #14B8A6 0%, #06D6A0 100%);
+        }
+
+        .product-card:nth-child(2)::before {
+            background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+        }
+
+        .product-card:nth-child(3)::before {
+            background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+        }
+
+        .product-card:nth-child(4)::before {
+            background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%);
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            border-color: #14B8A6;
+            box-shadow: 0 20px 40px rgba(20, 184, 166, 0.2);
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        .product-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #14B8A6;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #14B8A6 0%, #3B82F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d12;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-bottom: 1px solid #27272a;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ef4444; }
+        .code-dot:nth-child(2) { background: #eab308; }
+        .code-dot:nth-child(3) { background: #22c55e; }
+
+        .code-title {
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            font-family: 'JetBrains Mono', monospace;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .code-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #14B8A6 0%, #3B82F6 100%);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.9rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .concept-card {
+            background: #12121a;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .concept-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .concept-card:nth-child(1)::before { background: #14B8A6; }
+        .concept-card:nth-child(2)::before { background: #3B82F6; }
+        .concept-card:nth-child(3)::before { background: #8B5CF6; }
+        .concept-card:nth-child(4)::before { background: #06D6A0; }
+        .concept-card:nth-child(5)::before { background: #EC4899; }
+        .concept-card:nth-child(6)::before { background: #F59E0B; }
+        .concept-card:nth-child(7)::before { background: #06B6D4; }
+        .concept-card:nth-child(8)::before { background: #10B981; }
+
+        .concept-card:hover {
+            transform: translateX(5px);
+            border-color: #14B8A6;
+        }
+
+        .concept-card:hover::before {
+            opacity: 1;
+        }
+
+        .highlight-box {
+            background: rgba(20, 184, 166, 0.1);
+            border-left: 4px solid #14B8A6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #334155, transparent);
+            margin: 3rem 0;
+        }
+
+        .flow-step {
+            min-width: 140px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: scale(1.05);
+        }
+
+        .flow-arrow {
+            font-size: 1.25rem;
+            color: #14B8A6;
+            opacity: 0.6;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2 i {
+            color: #14B8A6;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #94a3b8;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            line-height: 1.7;
+            color: #cbd5e1;
+        }
+
+        ul {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+            color: #cbd5e1;
+        }
+
+        strong {
+            color: #14B8A6;
+            font-weight: 600;
+        }
+
+        code {
+            background: rgba(20, 184, 166, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: #5eead4;
+        }
+
+        .nav-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #334155;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #14B8A6;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(20, 184, 166, 0.1);
+            transform: translateX(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .product-showcase {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <!-- Main Content Container -->
+    <div class="blog-container">
+
+        <!-- Hero Section -->
+        <div class="hero-badge">
+            <div class="pulse"></div>
+            <span>Production AI • 30 min read</span>
+        </div>
+
+        <h1 class="hero-gradient" style="font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem;">
+            Getting Started with Langfuse
+        </h1>
+
+        <p style="font-size: 1.25rem; color: #94a3b8; margin-bottom: 2rem;">
+            Master LLM application monitoring: from basic tracing to production-ready observability. No more blind deployments—see every token, track every cost, debug every failure.
+        </p>
+
+        <!-- Feature Showcase -->
+        <div class="product-showcase">
+            <div class="product-card">
+                <i class="fas fa-project-diagram" style="color: #14B8A6;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Tracing</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">Track complete LLM conversation threads with full context</p>
+            </div>
+
+            <div class="product-card">
+                <i class="fas fa-file-code" style="color: #3B82F6;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Prompt Management</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">Version control and deployment for your prompts</p>
+            </div>
+
+            <div class="product-card">
+                <i class="fas fa-clipboard-check" style="color: #8B5CF6;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Evaluation</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">Automated quality testing for LLM applications</p>
+            </div>
+
+            <div class="product-card">
+                <i class="fas fa-chart-line" style="color: #EC4899;"></i>
+                <h4 class="text-lg font-semibold mb-2" style="color: #e2e8f0; margin-top: 0;">Analytics</h4>
+                <p class="text-sm" style="color: #94a3b8; margin: 0;">Understand costs, latency, and quality at scale</p>
+            </div>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- The Motivation Section -->
+        <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+        <p>
+            You've built an incredible LLM-powered application. It answers questions, generates content, helps users solve complex problems. Your prototype works beautifully. Users love it during the demo. You deploy to production, and then... silence. Not failure, just uncertainty.
+        </p>
+
+        <p>
+            Is the AI performing well? You don't know. Are costs under control? Hard to say. Did that last prompt change improve quality or make it worse? No way to tell. When a user reports a weird response, can you debug what went wrong? Not without manually reproducing the entire conversation.
+        </p>
+
+        <p>
+            Here's the uncomfortable truth: <strong>every LLM application you deploy to production is a black box</strong>. You can't see what prompts are actually being sent. You don't know how many tokens you're burning per user. You have no idea if response quality is degrading over time. When something breaks, you're debugging by gut feeling and prayer.
+        </p>
+
+        <p>
+            The current state is frustrating. You have beautiful code, elegant RAG pipelines, sophisticated agent workflows—but zero visibility into what's actually happening. Traditional logging captures errors, but LLMs don't fail with stack traces. They fail silently by giving mediocre responses, hallucinating facts, or burning through your API budget with unnecessary tokens.
+        </p>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-star mr-2"></i>The core problem:</strong>
+            There's a massive gap between building LLM prototypes and running production-ready AI systems. Your application works, but you're flying blind. You can't optimize what you can't measure. You can't debug what you can't observe. You can't scale what you don't understand.
+        </div>
+
+        <p>
+            This matters because the competitive advantage increasingly comes from AI systems that actually work reliably at scale. A chatbot that delights users in the demo but frustrates them in production destroys trust. An AI assistant that costs $0.50 per query in testing but $5.00 in production destroys your business model. A content generator that produces great outputs 80% of the time but garbage 20% of the time destroys your brand.
+        </p>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6;">
+            <strong><i class="fas fa-bolt mr-2"></i>Key Innovation:</strong>
+            Langfuse provides complete observability for LLM applications—treating AI inference like production code with full tracing, metrics, evaluation, and debugging capabilities.
+        </div>
+
+        <p style="font-size: 1.1rem; margin-top: 2rem; margin-bottom: 1rem; color: #e2e8f0;">
+            By the end of this guide, you'll understand:
+        </p>
+
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                How to add comprehensive tracing to any LLM application with minimal code changes
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                The difference between traces, observations, generations, and spans
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                When to use cloud-hosted Langfuse versus self-hosted deployments
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                How to collect user feedback and tie it directly to LLM calls
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                How to monitor costs, latency, and quality from day one
+            </li>
+        </ul>
+
+        <p style="font-weight: 600; color: #14B8A6; font-size: 1.1rem; margin-top: 2rem;">
+            What you'll gain:
+        </p>
+
+        <p>
+            A production-ready observability foundation for your LLM applications. No more guessing about performance. No more surprise API bills. No more debugging conversations from vague user reports. Just clear, actionable data about every LLM interaction in your system.
+        </p>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">150+</span>
+                <span class="stat-label">Integrations</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">Open Source</span>
+                <span class="stat-label" style="font-size: 0.75rem;">Community Driven</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">Real-Time</span>
+                <span class="stat-label">Dashboards</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">Enterprise</span>
+                <span class="stat-label">Ready</span>
+            </div>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- The Challenge Section -->
+        <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+        <p>
+            The <strong>challenge</strong> is that LLMs are fundamentally different from traditional software, yet we try to monitor them with traditional tools.
+        </p>
+
+        <p>
+            Traditional applications fail predictably. You get a stack trace pointing to line 47 of <code>auth.py</code>. You see clear error messages like "Connection timeout" or "Invalid JSON." You can reproduce bugs deterministically: same input, same output, every time. Logs capture the failure state, metrics show you where performance degrades, and debuggers let you step through execution line by line.
+        </p>
+
+        <p>
+            LLM applications fail silently and non-deterministically. The same prompt gives different outputs every run. "Failure" isn't a crashed process—it's a chatbot that starts giving mediocre advice. Quality degrades gradually: your AI was great last week, merely okay today, and you have no idea why. Users report "weird responses," but you can't reproduce them because conversations have 20 turns of context you don't have access to.
+        </p>
+
+        <p>
+            Even when LLMs work perfectly, you're hemorrhaging money without knowing it. That innocent-looking RAG query just cost $2.50 because your chunking strategy retrieved 15 irrelevant documents and your prompt had no length limit. Your chatbot works great but costs 10x more than necessary because you're using GPT-4 when GPT-3.5-turbo would suffice. Your batch processing job burned through $500 in API calls before you noticed.
+        </p>
+
+        <p>
+            Then there's the complexity explosion. Your "simple" chatbot is actually a multi-step RAG pipeline: document retrieval, context assembly, prompt construction, LLM call, response parsing, and follow-up generation. When something goes wrong, which step failed? What was the actual input to each LLM call? How long did retrieval take versus generation? Traditional logs give you timestamps and error messages. They don't give you the full trace of a 7-step AI workflow with 4 different LLM calls and 3 vector database queries.
+        </p>
+
+        <p>
+            The compliance problem is equally serious. Regulated industries need to audit AI decisions. "Why did the system recommend this treatment?" "What data did the model use to make this decision?" "Can you prove the system didn't use PII in that response?" Traditional logging isn't built for this. You need to capture prompts, model outputs, retrieval results, and user feedback in a queryable, auditable format.
+        </p>
+
+        <p>
+            The final challenge is iteration speed. You want to improve your prompts, but how do you test changes? Deploy to production and hope for the best? Run manual tests on 10 examples? Neither approach scales. You need systematic evaluation: test your prompt changes against hundreds of real-world examples, compare quality scores, measure cost impact, and roll out winners confidently.
+        </p>
+
+        <!-- Pipeline Diagram -->
+        <div style="background: #12121a; border: 1px solid #27272a; border-radius: 16px; padding: 2rem; margin: 2rem 0;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                <div class="flow-step" style="border-color: #14B8A6;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📄</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">User Query</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color: #3B82F6;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Retrieval</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color: #8B5CF6;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">✂️</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Context</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color: #EC4899;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🧮</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Prompt</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color: #F59E0B;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🤖</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">LLM</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color: #10B981;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Parse</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color: #06B6D4;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💬</div>
+                    <div style="font-size: 0.875rem; color: #cbd5e1;">Response</div>
+                </div>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: #94a3b8; font-style: italic; margin-top: 1rem;">
+            This is where Langfuse enters. Rather than forcing you to cobble together logging, metrics, and custom dashboards, it provides a complete observability platform purpose-built for LLM applications—with full tracing, prompt management, evaluation tools, and analytics out of the box.
+        </p>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Problem Section -->
+        <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+        <p>
+            Let's <strong>lucify</strong> this concept by stepping away from traces and spans for a moment.
+        </p>
+
+        <h3 style="color: #14B8A6; margin-top: 2rem;">The AI Detective Agency</h3>
+
+        <p>
+            Imagine running a detective agency. Traditional software is like solving a straightforward case: a crime happened, you have security camera footage, witness statements are consistent, evidence is physical and unchanging. You can replay the security tape a thousand times and see exactly the same events.
+        </p>
+
+        <p>
+            But now you're solving AI crimes—cases where every witness tells a slightly different story each time you interview them, the "evidence" changes depending on who's looking at it, and you can't replay anything because the original context is lost. This is debugging LLM applications.
+        </p>
+
+        <p style="font-weight: 600; color: #e2e8f0; font-size: 1.1rem; margin-top: 2rem;">
+            Enter the AI Detective Agency System (this is Langfuse):
+        </p>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold mb-3" style="color: #14B8A6; margin-top: 0;">
+                <i class="fas fa-folder-open mr-2"></i>1. The Case File Manager (Tracing)
+            </h4>
+            <p>
+                Every interaction with your AI system is a "case." When a user asks a question, that starts a new case file. Every action taken to answer that question—retrieving documents, constructing prompts, calling the LLM, parsing responses—becomes an entry in the case file.
+            </p>
+            <p>
+                Think of this as a detective's notebook that automatically records every step of the investigation: who was interviewed, what questions were asked, what responses were given, how long each interview took, and how much it cost. Later, when someone asks "why did we conclude that?", you have the complete case file to review.
+            </p>
+            <p style="margin-bottom: 0;">
+                That's what <strong>tracing</strong> does—it's a complete record of everything that happened to answer one user query, with full context, timing, and costs.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold mb-3" style="color: #3B82F6; margin-top: 0;">
+                <i class="fas fa-archive mr-2"></i>2. The Evidence Vault (Observations)
+            </h4>
+            <p>
+                Each step in your case file contains specific evidence. A witness statement (user input). An LLM interview (model response). A database query (vector search results). Each piece of evidence is timestamped, linked to the case, and preserved exactly as it was.
+            </p>
+            <p style="margin-bottom: 0;">
+                In traditional detective work, evidence can be lost or contaminated. In Langfuse, every "observation"—every LLM call, every retrieval, every processing step—is captured with full fidelity. You can see the exact prompt sent, the exact response received, token counts, costs, and latency.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold mb-3" style="color: #8B5CF6; margin-top: 0;">
+                <i class="fas fa-dollar-sign mr-2"></i>3. The Cost Accountant (Analytics)
+            </h4>
+            <p>
+                Your agency has a budget. Every detective hour costs money. Every lab analysis has a price. You need to know: which cases are expensive? Which investigations run over budget? Are we spending wisely?
+            </p>
+            <p style="margin-bottom: 0;">
+                Langfuse tracks costs automatically. Every OpenAI API call, every Claude request, every embedding generation—all costs are computed and attributed to the right case (trace). You can see costs per user, per feature, per time period. No more surprise bills.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold mb-3" style="color: #EC4899; margin-top: 0;">
+                <i class="fas fa-clipboard-check mr-2"></i>4. The Quality Assurance Team (Scores and Feedback)
+            </h4>
+            <p>
+                How do you know if your detectives are doing good work? You ask clients for feedback. You have supervisors review case files. You measure success rates.
+            </p>
+            <p style="margin-bottom: 0;">
+                Langfuse lets you collect feedback on every AI interaction: thumbs up/down from users, quality scores from reviewers, automated evaluations from LLM-as-judge. These scores link directly to traces, so you know exactly which cases (conversations) were good versus bad.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold mb-3" style="color: #F59E0B; margin-top: 0;">
+                <i class="fas fa-chart-bar mr-2"></i>5. The Pattern Analyst (Dashboards)
+            </h4>
+            <p>
+                After solving hundreds of cases, patterns emerge. Certain types of cases take longer. Some detectives (prompts) perform better than others. Specific neighborhoods (user segments) have different needs.
+            </p>
+            <p style="margin-bottom: 0;">
+                Langfuse dashboards show you these patterns. Average response time per endpoint. Cost trends over time. Quality scores by model. You move from solving individual cases to understanding systemic patterns.
+            </p>
+        </div>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6;">
+            <strong><i class="fas fa-puzzle-piece mr-2"></i>Putting It All Together:</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 0;">
+                Your AI Detective Agency handles every user interaction as a case. The Case File Manager (tracing) records every step. The Evidence Vault (observations) preserves every detail. The Cost Accountant (analytics) tracks spending. The QA Team (scores) measures quality. The Pattern Analyst (dashboards) reveals insights.
+            </p>
+        </div>
+
+        <p>
+            When a user reports "your AI gave me a weird answer yesterday," you don't shrug helplessly. You pull up their case file, see the exact conversation, review the evidence (prompts and responses), check the timing and costs, and identify exactly what went wrong. Then you fix it systematically, not by guessing.
+        </p>
+
+        <p style="color: #94a3b8; font-style: italic; font-size: 0.95rem;">
+            <strong>Where this analogy breaks down:</strong> Real LLM systems handle millions of "cases" per day, not dozens. The "evidence" is digital: tokens, embeddings, vector similarities. The "analysts" use statistical dashboards, not whiteboards. But the core concept—complete observability of complex, multi-step processes—holds perfectly.
+        </p>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Tech Terms Section -->
+        <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+        <p>
+            To solve this, we first need to <strong>lucify</strong> the key technical terms that power the Langfuse ecosystem.
+        </p>
+
+        <!-- Technical Term Cards -->
+        <div style="margin-top: 2rem;">
+
+            <!-- Trace -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #14B8A6; margin-top: 0;">
+                    <i class="fas fa-project-diagram mr-2"></i>Trace
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A complete record of a single user interaction with your LLM application, from initial request to final response. Traces capture the entire execution flow, including all nested LLM calls, retrieval steps, and processing operations. Each trace has a unique ID and contains multiple observations as children. Think of it as a conversation thread with full execution context.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> A user asks your chatbot "What's our refund policy?" This creates a trace. Within that trace, you have: (1) an observation for retrieving relevant documents, (2) an observation for the LLM call with the retrieved context, (3) an observation for parsing the LLM response. All three observations belong to one trace, linked by trace ID.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like a flight data recorder for airplanes. When a flight happens, the recorder captures everything: altitude changes, engine performance, control inputs, radio communications. If something goes wrong, investigators pull the recorder and see the complete picture. A trace is your flight recorder for AI interactions—complete, immutable, queryable.
+                </p>
+            </div>
+
+            <!-- Observation -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #3B82F6; margin-top: 0;">
+                    <i class="fas fa-layer-group mr-2"></i>Observation
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A single step or event within a trace, representing one unit of work in your LLM application. Observations can be spans (general processing steps), generations (LLM calls), or events (discrete actions). Each observation has metadata like start time, end time, input/output data, and costs. Observations nest hierarchically to represent complex workflows.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> In a RAG pipeline trace, you have multiple observations: a "retrieval" span containing the vector search operation (500ms, $0.001), a "generation" observation containing the LLM call (2.5s, $0.023), and an "output_parsing" span for post-processing (100ms, $0.000). Each observation captures timing, costs, and data for its specific step.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like checkpoints in a relay race. The race (trace) consists of multiple runners (observations). Each runner has start/stop times, their portion of the race, and individual performance metrics. You can analyze the whole race or zoom into specific runner performances to find bottlenecks.
+                </p>
+            </div>
+
+            <!-- Generation -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #8B5CF6; margin-top: 0;">
+                    <i class="fas fa-robot mr-2"></i>Generation
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A specific type of observation representing an LLM inference call. Generations capture the complete context of model invocation: model name, prompt content, completion output, token counts, cost, latency, and temperature/top-p parameters. This is the core observation type for tracking LLM usage. Generations automatically calculate costs based on model pricing.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> Your code calls OpenAI's GPT-4 with a prompt about refund policies. Langfuse creates a generation observation capturing: model="gpt-4-turbo-preview", prompt="Based on this context... what is the refund policy?", completion="Our refund policy states...", prompt_tokens=450, completion_tokens=120, total_cost=$0.0234, latency=2.8s.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like a detailed phone call record for AI. Just as phone bills show: who you called (model), how long you talked (latency), how much it cost ($0.0234), and what plan you used (temperature settings)—generations show complete LLM call details. You can review any call later to see exactly what was said and what it cost.
+                </p>
+            </div>
+
+            <!-- Span -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #06D6A0; margin-top: 0;">
+                    <i class="fas fa-folder-tree mr-2"></i>Span
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A generic observation type representing a logical unit of work that may contain nested observations. Spans wrap operations like retrieval, data processing, API calls, or business logic. They provide hierarchical structure to traces, showing parent-child relationships between different processing steps. Spans don't have to involve LLM calls—they track any workflow component.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> A "document_retrieval" span contains the complete retrieval process: vector search (200ms), reranking (150ms), and filtering (50ms). These nested operations appear as child observations under the retrieval span. The span itself shows total time (400ms) and aggregated metadata about what was retrieved.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like folders in a file system. The main folder (span) contains subfolders and files (child observations). You can navigate into the folder to see details or look at folder properties to see aggregate information (total size, file count). Spans organize traces hierarchically so complex workflows remain readable.
+                </p>
+            </div>
+
+            <!-- Score -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #EC4899; margin-top: 0;">
+                    <i class="fas fa-star mr-2"></i>Score
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A quantitative or qualitative metric assigned to a trace or observation, measuring quality, relevance, or user satisfaction. Scores can be user-provided (thumbs up/down, star ratings), automatically computed (LLM-as-judge evaluations), or derived from business metrics (conversion rates). Scores link directly to traces, enabling quality analysis and model comparison.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> A user gives a thumbs up to a chatbot response. This creates a score of value=1, name="user_feedback" attached to the trace. Separately, an automated evaluation scores the response for factual accuracy (score=0.87) and helpfulness (score=0.92). All three scores attach to the same trace for later analysis.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like restaurant reviews. Each dining experience (trace) gets rated on multiple dimensions: food quality (one score), service (another score), value for money (third score), overall satisfaction (fourth score). You can analyze which restaurants (prompts/models) consistently get high scores and identify patterns in low-rated experiences.
+                </p>
+            </div>
+
+            <!-- Prompt -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #F59E0B; margin-top: 0;">
+                    <i class="fas fa-file-code mr-2"></i>Prompt
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A managed template stored in Langfuse that can be versioned, deployed, and dynamically retrieved in your application code. Prompts support variable substitution, linking to production/staging environments, and change tracking. This enables prompt engineering workflows separate from code deployments: update prompts without redeploying applications.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> You create a prompt in Langfuse UI named "customer_support_greeting" with content "You are a helpful customer service agent for {company_name}. Greet the customer professionally." Your code fetches this prompt at runtime with fetch_prompt("customer_support_greeting"), substitutes company_name, and uses it for LLM calls. When you improve the greeting, you update it in Langfuse—no code changes needed.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like a centralized content management system (CMS) for prompts. Just as marketing teams update website copy in a CMS without touching code, prompt engineers can update prompt templates in Langfuse without redeploying applications. Version history shows what changed when, and you can roll back bad prompts instantly.
+                </p>
+            </div>
+
+            <!-- Dataset -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #06B6D4; margin-top: 0;">
+                    <i class="fas fa-database mr-2"></i>Dataset
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A curated collection of test examples used for evaluating LLM application quality. Each dataset contains input-output pairs (or just inputs for generative tasks) representing real-world scenarios. Datasets enable systematic testing: run your current prompt against 100 test cases, compare results with previous versions, identify regressions before deploying changes.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> You create a dataset named "customer_support_test_cases" with 50 real customer questions and their ideal responses. Before changing your RAG prompt, you run both the old and new prompts against this dataset. The new prompt scores 0.89 average quality versus 0.76 for the old—statistical proof the change is an improvement.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like a test suite in software development. Before pushing code, you run unit tests to ensure nothing broke. Before deploying prompt changes, you run evaluation against datasets to ensure quality didn't degrade. Datasets are your regression test suite for AI—systematic, repeatable, quantifiable.
+                </p>
+            </div>
+
+            <!-- Experiment -->
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold mb-3" style="color: #10B981; margin-top: 0;">
+                    <i class="fas fa-flask mr-2"></i>Experiment
+                </h4>
+                <p class="mb-2">
+                    <strong>Definition:</strong> A controlled comparison of different prompts, models, or configurations to determine which performs better on specific metrics. Experiments use A/B testing methodology with statistical rigor: split traffic, measure outcomes, calculate significance. This enables data-driven decisions about what to deploy to production.
+                </p>
+                <p class="text-sm mb-2" style="color: #94a3b8;">
+                    <strong>Simple Example:</strong> You want to test two greeting prompts for your chatbot. You create an experiment routing 50% of users to Prompt A and 50% to Prompt B. After 1,000 interactions, you analyze: Prompt A has 85% user satisfaction, Prompt B has 78% satisfaction, with p-value < 0.05 (statistically significant). You confidently deploy Prompt A to all users.
+                </p>
+                <p class="text-sm" style="color: #94a3b8; margin-bottom: 0;">
+                    <strong>Analogy:</strong> Like clinical drug trials. Before approving a new drug (prompt), run a controlled experiment: treatment group gets Drug A, control group gets Drug B. Measure outcomes (side effects, recovery rate). Use statistics to determine if Drug A is truly better or just lucky. Experiments bring the same rigor to AI optimization.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Making the Blueprint Section -->
+        <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+        <p>
+            Now, let's <strong>make the blueprint</strong> for implementing production-grade LLM observability with Langfuse.
+        </p>
+
+        <h3 style="text-align: center; color: #14B8A6; margin-top: 2.5rem; margin-bottom: 2rem;">
+            6-Step Langfuse Implementation
+        </h3>
+
+        <!-- Interactive Flow Diagram -->
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 4px solid rgba(20, 184, 166, 0.3); border-radius: 24px; padding: 3rem; margin: 2rem 0;">
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+                <!-- Step 1 -->
+                <div class="flow-step" style="border-color: #8B5CF6; background: rgba(139, 92, 246, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem; color: #8B5CF6;">①</div>
+                        <div style="text-align: left;">
+                            <h4 style="color: #8B5CF6; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Choose Your Deployment Architecture</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                Decide between cloud-hosted (fastest setup, zero infrastructure) or self-hosted (full control, on-premise compliance). Cloud is ideal for startups and teams moving fast. Self-hosted fits regulated industries (healthcare, finance) or companies with strict data residency requirements.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow" style="text-align: center; opacity: 0.4;">↓</div>
+
+                <!-- Step 2 -->
+                <div class="flow-step" style="border-color: #06D6A0; background: rgba(6, 214, 160, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem; color: #06D6A0;">②</div>
+                        <div style="text-align: left;">
+                            <h4 style="color: #06D6A0; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Install and Configure SDK</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                Set up Python or TypeScript SDK, configure API keys, initialize Langfuse client. Choose integration pattern: decorators for automatic tracing, manual SDK for custom control, or native OpenAI SDK integration. Verify setup by sending test traces to dashboard.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow" style="text-align: center; opacity: 0.4;">↓</div>
+
+                <!-- Step 3 -->
+                <div class="flow-step" style="border-color: #3B82F6; background: rgba(59, 130, 246, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem; color: #3B82F6;">③</div>
+                        <div style="text-align: left;">
+                            <h4 style="color: #3B82F6; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Instrument Your First LLM Call</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                Add basic tracing to simplest LLM interaction. Understand trace structure: trace ID links observations, parent IDs create hierarchy. View trace in dashboard to see input, output, timing, and costs. This gives immediate value: visibility into one LLM call.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow" style="text-align: center; opacity: 0.4;">↓</div>
+
+                <!-- Step 4 -->
+                <div class="flow-step" style="border-color: #14B8A6; background: rgba(20, 184, 166, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem; color: #14B8A6;">④</div>
+                        <div style="text-align: left;">
+                            <h4 style="color: #14B8A6; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Add Observability to Complex Workflows</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                Extend tracing to multi-step pipelines: RAG systems with retrieval + generation, multi-agent workflows, async batch processing. Use nested observations to show hierarchy. Implement context managers for cleaner code. Result: complete visibility into complex AI systems.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow" style="text-align: center; opacity: 0.4;">↓</div>
+
+                <!-- Step 5 -->
+                <div class="flow-step" style="border-color: #EC4899; background: rgba(236, 72, 153, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem; color: #EC4899;">⑤</div>
+                        <div style="text-align: left;">
+                            <h4 style="color: #EC4899; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Collect User Feedback</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                Integrate thumbs up/down buttons or star ratings into your UI. Link feedback directly to traces using trace IDs. Implement LLM-as-judge evaluations for automated quality scoring. Now you can measure user satisfaction and correlate it with specific prompts, models, or contexts.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow" style="text-align: center; opacity: 0.4;">↓</div>
+
+                <!-- Step 6 -->
+                <div class="flow-step" style="border-color: #10B981; background: rgba(16, 185, 129, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem; color: #10B981;">⑥</div>
+                        <div style="text-align: left;">
+                            <h4 style="color: #10B981; margin: 0 0 0.5rem 0; font-size: 1.1rem;">Configure Monitoring Dashboards</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">
+                                Set up dashboards showing key metrics: cost per user, average latency, quality score trends, error rates. Create alerts for anomalies: cost spikes, latency degradation, quality drops. Define SLOs (service level objectives) and track them in real-time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Cloud vs Self-Hosted Comparison -->
+        <h3 style="text-align: center; color: #14B8A6; margin-top: 3rem; margin-bottom: 1.5rem;">
+            Cloud vs Self-Hosted Deployment
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
+
+            <!-- Cloud -->
+            <div style="background: #12121a; border: 2px solid #06B6D4; border-radius: 16px; padding: 2rem;">
+                <h4 style="color: #06B6D4; margin-top: 0; font-size: 1.3rem; text-align: center;">☁️ Cloud (Recommended)</h4>
+
+                <div style="margin: 1.5rem 0;">
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Best For:</strong> Most teams, fast iteration, zero ops</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Setup Time:</strong> 5 minutes</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Infrastructure:</strong> Managed by Langfuse</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Data Location:</strong> EU or US regions</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Pricing:</strong> Free tier + usage-based</p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #10B981;">✅</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">5 min signup</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #10B981;">✅</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Fully managed</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #10B981;">✅</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Always latest version</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #10B981;">✅</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">SOC 2 certified</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Self-Hosted -->
+            <div style="background: #12121a; border: 2px solid #8B5CF6; border-radius: 16px; padding: 2rem;">
+                <h4 style="color: #8B5CF6; margin-top: 0; font-size: 1.3rem; text-align: center;">🏢 Self-Hosted</h4>
+
+                <div style="margin: 1.5rem 0;">
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Best For:</strong> Regulated industries, on-premise requirements</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Setup Time:</strong> 1-2 hours</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Infrastructure:</strong> Docker/Kubernetes you manage</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Data Location:</strong> Your infrastructure</p>
+                    <p style="margin-bottom: 0.75rem;"><strong style="color: #14B8A6;">Pricing:</strong> Open source, free to use</p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #10B981;">✅</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Your infrastructure</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #10B981;">✅</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">You control everything</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #F59E0B;">⚙️</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Manual upgrades</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #F59E0B;">⚙️</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">You manage infrastructure</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <!-- Executing the Blueprint Section -->
+        <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+        <p style="font-weight: 600; color: #e2e8f0; font-size: 1.1rem;">
+            Let's carry out the blueprint plan.
+        </p>
+
+        <p style="color: #94a3b8; font-style: italic;">
+            All complete code examples, Jupyter notebooks, and sample applications are available in the GitHub repository:
+            <a href="https://github.com/langfuse/langfuse-examples" target="_blank" style="color: #14B8A6; text-decoration: underline;">github.com/langfuse/langfuse-examples</a>
+        </p>
+
+        <!-- Code examples will be added in the next task -->
+
+        <h3 style="color: #8B5CF6; margin-top: 3rem;">6.1 Environment Setup (Steps 1-2)</h3>
+
+        <p>
+            Start by creating a clean Python environment and installing the Langfuse SDK. The installation is lightweight—just the core SDK plus integrations for your specific LLM provider.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">setup.sh</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-bash"># Create and activate virtual environment
+python -m venv langfuse-env
+source langfuse-env/bin/activate  # On Windows: langfuse-env\Scripts\activate
+
+# Install core Langfuse SDK
+pip install langfuse
+
+# Install LLM provider SDKs (choose what you use)
+pip install openai          # OpenAI GPT models
+pip install anthropic       # Anthropic Claude
+pip install langchain       # LangChain integration
+pip install llama-index     # LlamaIndex integration
+
+# Verify installation
+python -c "import langfuse; print(f'Langfuse version: {langfuse.__version__}')"</code></pre>
+            </div>
+        </div>
+
+        <h4>For Cloud Deployment (Recommended):</h4>
+
+        <p>
+            Sign up at <a href="https://cloud.langfuse.com" target="_blank" style="color: #14B8A6; text-decoration: underline;">cloud.langfuse.com</a> to get your API keys. Create a project and copy your public and secret keys.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">.env</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-bash"># .env file for cloud deployment
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com  # Default, can omit
+
+# Your LLM provider API key
+OPENAI_API_KEY=sk-proj-...</code></pre>
+            </div>
+        </div>
+
+        <h4>For Self-Hosted Deployment:</h4>
+
+        <p>
+            Use Docker Compose for the fastest self-hosted setup. Langfuse runs on PostgreSQL with minimal resource requirements.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">docker-compose.yml</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-yaml">version: '3.8'
+
+services:
+  langfuse-server:
+    image: langfuse/langfuse:latest
+    depends_on:
+      - langfuse-db
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@langfuse-db:5432/langfuse
+      NEXTAUTH_SECRET: your-secret-key-change-this
+      SALT: your-salt-change-this
+      NEXTAUTH_URL: http://localhost:3000
+    networks:
+      - langfuse-network
+
+  langfuse-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse-data:/var/lib/postgresql/data
+    networks:
+      - langfuse-network
+
+volumes:
+  langfuse-data:
+
+networks:
+  langfuse-network:</code></pre>
+            </div>
+        </div>
+
+        <p>Start the services:</p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">terminal</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-bash">docker-compose up -d</code></pre>
+            </div>
+        </div>
+
+        <p>
+            Access Langfuse at <code>http://localhost:3000</code>. Create your first project and get API keys from Settings.
+        </p>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-info-circle mr-2"></i>Why these choices:</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 0;">
+                Cloud deployment is zero-ops and handles scaling automatically. Self-hosted gives you complete control over data location and compliance requirements. The Docker setup uses PostgreSQL (robust, proven) and Next.js frontend (fast, modern). For production self-hosted, add Redis for caching and consider managed PostgreSQL (RDS, Cloud SQL) for reliability.
+            </p>
+        </div>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6;">
+            <strong><i class="fas fa-gift mr-2"></i>Free Tier:</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 0;">
+                Langfuse Cloud offers a generous free tier: 50K traces/month, all features included. Perfect for side projects and small teams. Paid plans start at usage beyond free tier.
+            </p>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <h3 style="color: #3B82F6; margin-top: 3rem;">6.2 Basic Tracing Implementation (Step 3)</h3>
+
+        <p>
+            Let's add tracing to your first LLM call. We'll start with the simplest possible example, then show the structure of what gets captured.
+        </p>
+
+        <h4>Method 1: OpenAI Integration (Easiest)</h4>
+
+        <p>
+            If you're using the OpenAI SDK, Langfuse has native integration requiring zero code changes to existing calls.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">simple_openai_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse.openai import OpenAI
+import os
+
+# Initialize OpenAI client with Langfuse observability
+# This wraps the standard OpenAI client - all existing code works unchanged
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+# Your existing OpenAI code - no changes needed!
+response = client.chat.completions.create(
+    model="gpt-4-turbo-preview",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is the capital of France?"}
+    ],
+    temperature=0.7,
+    max_tokens=100
+)
+
+print(response.choices[0].message.content)
+
+# That's it! Check Langfuse dashboard to see the trace
+# Automatically captured: prompt, completion, tokens, cost, latency, model</code></pre>
+            </div>
+        </div>
+
+        <p style="font-weight: 600; color: #14B8A6; margin-top: 1.5rem;">What gets captured automatically:</p>
+        <ul>
+            <li>Complete conversation messages (system, user, assistant)</li>
+            <li>Model configuration (temperature, max_tokens, top_p)</li>
+            <li>Token counts (prompt_tokens, completion_tokens, total_tokens)</li>
+            <li>Cost calculation (based on model pricing: GPT-4 $0.01/1K prompt, $0.03/1K completion)</li>
+            <li>Latency measurement (time from request to response)</li>
+            <li>Model name and version</li>
+        </ul>
+
+        <h4>Method 2: Decorator Pattern (More Control)</h4>
+
+        <p>
+            For non-OpenAI LLMs or custom workflows, use decorators for clean, minimal code changes.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">decorator_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse.decorators import observe, langfuse_context
+from anthropic import Anthropic
+import os
+
+# Initialize Langfuse (happens once at app startup)
+from langfuse import Langfuse
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+# Decorator automatically creates traces for function calls
+@observe()
+def ask_claude(question: str) -> str:
+    """
+    Ask Claude a question and return the response.
+    The @observe decorator automatically:
+    - Creates a trace for this function call
+    - Captures function inputs (question)
+    - Captures function outputs (return value)
+    - Measures execution time
+    """
+    client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+    # Make the LLM call
+    response = client.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=1024,
+        messages=[
+            {"role": "user", "content": question}
+        ]
+    )
+
+    # Manually log the generation for detailed tracking
+    langfuse_context.update_current_observation(
+        input=question,
+        output=response.content[0].text,
+        model="claude-3-opus-20240229",
+        usage={
+            "input": response.usage.input_tokens,
+            "output": response.usage.output_tokens
+        }
+    )
+
+    return response.content[0].text
+
+# Use the function normally
+answer = ask_claude("Explain quantum computing in simple terms")
+print(answer)
+
+# Check Langfuse dashboard - you'll see a trace with all details</code></pre>
+            </div>
+        </div>
+
+        <p style="font-weight: 600; color: #14B8A6; margin-top: 1.5rem;">What the decorator adds:</p>
+        <ul>
+            <li>Automatic trace creation with unique trace ID</li>
+            <li>Function name as trace name</li>
+            <li>Input parameters captured (question="Explain quantum...")</li>
+            <li>Output value captured (the LLM response text)</li>
+            <li>Execution time measured automatically</li>
+            <li>Error handling (if function raises exception, trace shows error)</li>
+        </ul>
+
+        <h4>Method 3: Manual SDK (Full Control)</h4>
+
+        <p>
+            For complete control over trace structure, use the manual SDK approach. This is verbose but gives you exact control over what gets logged.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">manual_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse import Langfuse
+import openai
+import os
+import time
+
+# Initialize Langfuse client
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+# Initialize OpenAI client (standard)
+openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def chat_with_gpt(user_message: str):
+    """
+    Manually traced OpenAI chat completion.
+    Shows exact control over what gets logged.
+    """
+    # Create a trace - this represents the entire conversation
+    trace = langfuse.trace(
+        name="chatbot_interaction",
+        user_id="user_12345",  # Optional: link to your user ID
+        session_id="session_abc",  # Optional: group related traces
+        metadata={
+            "environment": "production",
+            "feature": "customer_support"
+        }
+    )
+
+    # Record when generation starts
+    start_time = time.time()
+
+    # Make the OpenAI call
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": user_message}
+    ]
+
+    response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        temperature=0.7
+    )
+
+    # Calculate latency
+    latency = time.time() - start_time
+
+    # Create a generation observation within the trace
+    generation = trace.generation(
+        name="gpt_response",
+        model="gpt-3.5-turbo",
+        model_parameters={
+            "temperature": 0.7,
+            "max_tokens": None
+        },
+        input=messages,
+        output=response.choices[0].message.content,
+        usage={
+            "promptTokens": response.usage.prompt_tokens,
+            "completionTokens": response.usage.completion_tokens,
+            "totalTokens": response.usage.total_tokens
+        },
+        metadata={
+            "latency_seconds": latency
+        }
+    )
+
+    # Langfuse automatically calculates cost based on model and tokens
+    # For GPT-3.5-turbo: $0.0015/1K prompt tokens, $0.002/1K completion tokens
+
+    return response.choices[0].message.content
+
+# Use the function
+result = chat_with_gpt("What are the benefits of exercise?")
+print(result)
+
+# Flush ensures all data is sent to Langfuse before script exits
+langfuse.flush()</code></pre>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-lightbulb mr-2"></i>When to use each method:</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li><strong>OpenAI Integration:</strong> Use when you're already using OpenAI SDK and want zero-friction observability. Literally no code changes to existing calls.</li>
+                <li><strong>Decorator Pattern:</strong> Use for clean code with automatic tracing. Great for new projects or when you control the codebase. Minimal boilerplate.</li>
+                <li><strong>Manual SDK:</strong> Use when you need exact control over metadata, want to add custom fields, or need to trace non-standard operations. More verbose but most flexible.</li>
+            </ul>
+        </div>
+
+        <h4>Viewing Your First Trace:</h4>
+
+        <p>After running any of the above examples, open your Langfuse dashboard:</p>
+
+        <ol>
+            <li>Navigate to "Traces" in the left sidebar</li>
+            <li>You'll see your trace listed with name, timestamp, user ID, and cost</li>
+            <li>Click the trace to see full details:
+                <ul>
+                    <li>Complete input and output</li>
+                    <li>Token usage breakdown</li>
+                    <li>Calculated cost</li>
+                    <li>Latency measurement</li>
+                    <li>All metadata you added</li>
+                </ul>
+            </li>
+            <li>Expand nested observations to see hierarchy</li>
+        </ol>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6;">
+            <strong><i class="fas fa-check-circle mr-2"></i>First trace checklist:</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>✅ Trace appears in dashboard</li>
+                <li>✅ Input and output visible</li>
+                <li>✅ Token counts accurate</li>
+                <li>✅ Cost calculated correctly</li>
+                <li>✅ Latency measured</li>
+            </ul>
+            <p style="margin-top: 0.5rem; margin-bottom: 0;">
+                If any of these are missing, check your API keys and ensure <code>langfuse.flush()</code> is called before script exit.
+            </p>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <h3 style="color: #14B8A6; margin-top: 3rem;">6.3 Advanced Tracing Patterns (Step 4)</h3>
+
+        <p>
+            Now let's extend tracing to real-world complexity: multi-step RAG pipelines, nested operations, and async workflows.
+        </p>
+
+        <h4>Pattern 1: RAG Pipeline with Nested Observations</h4>
+
+        <p>
+            A typical RAG system has multiple steps: query understanding, retrieval, reranking, context assembly, generation. Let's trace each step to understand bottlenecks.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">rag_pipeline_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse.decorators import observe, langfuse_context
+from openai import OpenAI
+import os
+import numpy as np
+from typing import List, Dict
+
+# Mock functions for illustration - replace with your actual implementation
+def vector_search(query: str, top_k: int = 5) -> List[Dict]:
+    """Simulated vector database search"""
+    # In reality: query your Pinecone, Weaviate, ChromaDB, etc.
+    return [
+        {"text": "Document 1 content...", "score": 0.92},
+        {"text": "Document 2 content...", "score": 0.87},
+        {"text": "Document 3 content...", "score": 0.81},
+    ]
+
+def rerank_results(query: str, docs: List[Dict]) -> List[Dict]:
+    """Simulated reranking with cross-encoder"""
+    # In reality: use Cohere rerank, cross-encoder model, etc.
+    return docs[:2]  # Keep top 2
+
+@observe()  # Creates a span for this retrieval step
+def retrieve_context(query: str) -> List[Dict]:
+    """
+    Retrieve relevant documents for the query.
+    This creates a span containing nested operations.
+    """
+    # Vector search (you could add @observe to this too for deeper nesting)
+    langfuse_context.update_current_observation(
+        name="vector_search",
+        metadata={"top_k": 5}
+    )
+    initial_results = vector_search(query, top_k=5)
+
+    # Rerank results
+    langfuse_context.update_current_observation(
+        name="rerank_results"
+    )
+    final_results = rerank_results(query, initial_results)
+
+    return final_results
+
+@observe()  # Creates a span for prompt construction
+def build_prompt(query: str, context_docs: List[Dict]) -> str:
+    """
+    Construct the final prompt with retrieved context.
+    """
+    context_text = "\n\n".join([doc["text"] for doc in context_docs])
+
+    prompt = f"""Based on the following context, answer the question.
+
+Context:
+{context_text}
+
+Question: {query}
+
+Answer:"""
+
+    return prompt
+
+@observe()  # Creates the top-level trace for entire RAG pipeline
+def rag_query(question: str) -> str:
+    """
+    Complete RAG pipeline: retrieve, construct prompt, generate answer.
+    The @observe decorator creates a trace, and nested function calls
+    create child observations automatically.
+    """
+    # Step 1: Retrieve relevant context
+    context_docs = retrieve_context(question)
+
+    # Step 2: Build prompt with context
+    prompt = build_prompt(question, context_docs)
+
+    # Step 3: Generate answer
+    langfuse_context.update_current_observation(
+        metadata={"num_context_docs": len(context_docs)}
+    )
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4-turbo-preview",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant. Answer based only on the provided context."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7
+    )
+
+    # Log the generation details
+    langfuse_context.update_current_observation(
+        output=response.choices[0].message.content,
+        usage={
+            "promptTokens": response.usage.prompt_tokens,
+            "completionTokens": response.usage.completion_tokens
+        }
+    )
+
+    return response.choices[0].message.content
+
+# Use the RAG pipeline
+answer = rag_query("What is our company's remote work policy?")
+print(answer)
+
+# View in Langfuse dashboard:
+# Trace: rag_query
+#   ├─ Span: retrieve_context (shows retrieval time)
+#   ├─ Span: build_prompt (shows prompt construction time)
+#   └─ Generation: OpenAI call (shows tokens, cost, latency)</code></pre>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-chart-line mr-2"></i>What you see in the dashboard:</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>Top-level trace: "rag_query" with total execution time</li>
+                <li>Three nested observations showing the pipeline flow</li>
+                <li>Each observation has its own timing, so you can identify bottlenecks</li>
+                <li>The generation observation shows token usage and cost</li>
+                <li>If retrieval is slow, you see it immediately in the timeline</li>
+            </ul>
+        </div>
+
+        <p style="font-weight: 600; color: #14B8A6;">Why this matters:</p>
+        <p>
+            RAG pipelines often have hidden performance issues. Is your vector search slow? Is reranking taking too long? Is the LLM call itself the bottleneck? Without nested tracing, you're guessing. With it, you have data.
+        </p>
+
+        <h4>Pattern 2: LangChain Integration</h4>
+
+        <p>
+            LangChain is one of the most popular frameworks for LLM applications. Langfuse integrates seamlessly with LangChain callbacks.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">langchain_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langchain_openai import ChatOpenAI
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+from langfuse.callback import CallbackHandler
+import os
+
+# Initialize Langfuse callback handler
+langfuse_handler = CallbackHandler(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+# Create your LangChain components as usual
+llm = ChatOpenAI(
+    model="gpt-3.5-turbo",
+    temperature=0.7,
+    openai_api_key=os.getenv("OPENAI_API_KEY")
+)
+
+prompt = PromptTemplate(
+    input_variables=["product", "feature"],
+    template="Write a short marketing tagline for {product} highlighting {feature}."
+)
+
+chain = LLMChain(llm=llm, prompt=prompt)
+
+# Run the chain with Langfuse callback - that's it!
+result = chain.invoke(
+    {"product": "smartwatch", "feature": "health tracking"},
+    config={"callbacks": [langfuse_handler]}
+)
+
+print(result["text"])
+
+# Automatically traced:
+# - LangChain execution flow
+# - Prompt template with variables
+# - LLM call with tokens and cost
+# - Chain metadata and timing</code></pre>
+            </div>
+        </div>
+
+        <p style="font-weight: 600; color: #14B8A6;">LangChain integration benefits:</p>
+        <ul>
+            <li>Automatic tracing of chains, agents, and tools</li>
+            <li>Prompt template tracking (see what variables were substituted)</li>
+            <li>Agent decision logging (which tools were called and why)</li>
+            <li>Retrieval QA chain visibility (documents retrieved, reranking, generation)</li>
+            <li>Zero changes to existing LangChain code beyond adding the callback</li>
+        </ul>
+
+        <h4>Pattern 3: Async Batch Processing</h4>
+
+        <p>
+            Production systems often process thousands of requests in parallel. Here's how to trace async workloads efficiently.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">async_batch_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">import asyncio
+from langfuse.decorators import observe
+from openai import AsyncOpenAI
+import os
+
+# Initialize async OpenAI client
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+@observe()
+async def process_single_query(query: str, query_id: str) -> str:
+    """
+    Process a single query asynchronously.
+    Each call gets its own trace.
+    """
+    response = await client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": query}]
+    )
+
+    return response.choices[0].message.content
+
+@observe()
+async def process_batch(queries: list[str]) -> list[str]:
+    """
+    Process multiple queries in parallel.
+    Creates a parent trace with child traces for each query.
+    """
+    # Create tasks for parallel processing
+    tasks = [
+        process_single_query(query, f"query_{i}")
+        for i, query in enumerate(queries)
+    ]
+
+    # Wait for all to complete
+    results = await asyncio.gather(*tasks)
+
+    return results
+
+# Example: Process 100 customer questions in parallel
+async def main():
+    queries = [
+        "What is your return policy?",
+        "How do I reset my password?",
+        "What payment methods do you accept?",
+        # ... 97 more queries
+    ] * 10  # Simulate 10 copies for 30 total
+
+    results = await process_batch(queries)
+    print(f"Processed {len(results)} queries")
+
+# Run async batch
+asyncio.run(main())
+
+# View in dashboard:
+# - One parent trace: process_batch
+# - 30 child traces: one per query
+# - Aggregate metrics: total cost, average latency, throughput</code></pre>
+            </div>
+        </div>
+
+        <p style="font-weight: 600; color: #14B8A6;">Async tracing features:</p>
+        <ul>
+            <li>Each async task gets its own trace automatically</li>
+            <li>Parent-child relationships preserved</li>
+            <li>Concurrent execution visible in timeline view</li>
+            <li>Aggregate metrics computed across all child traces</li>
+            <li>No performance overhead from tracing async code</li>
+        </ul>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <h3 style="color: #EC4899; margin-top: 3rem;">6.4 User Feedback Integration (Step 5)</h3>
+
+        <p>
+            The most valuable signal for LLM quality is user feedback. Let's connect feedback directly to traces.
+        </p>
+
+        <h4>Pattern 1: Thumbs Up/Down Feedback</h4>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">user_feedback.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse import Langfuse
+from langfuse.decorators import observe, langfuse_context
+from openai import OpenAI
+import os
+
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+@observe()
+def generate_response(user_input: str) -> dict:
+    """Generate LLM response and return with trace ID for feedback."""
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": user_input}]
+    )
+
+    answer = response.choices[0].message.content
+
+    # Get the current trace ID
+    trace_id = langfuse_context.get_current_trace_id()
+
+    return {
+        "answer": answer,
+        "trace_id": trace_id
+    }
+
+def collect_feedback(trace_id: str, user_rating: int):
+    """
+    Record user feedback linked to specific trace.
+
+    Args:
+        trace_id: The trace ID from generation
+        user_rating: 1 for thumbs up, 0 for thumbs down
+    """
+    langfuse.score(
+        trace_id=trace_id,
+        name="user_feedback",
+        value=user_rating,  # 1 or 0
+        comment=None  # Optional: can include user's comment
+    )
+
+# Simulate a conversation flow
+result = generate_response("How do I track my order?")
+print(f"Answer: {result['answer']}")
+print(f"Trace ID: {result['trace_id']}")
+
+# User clicks thumbs up
+collect_feedback(result['trace_id'], user_rating=1)
+
+# Now in Langfuse dashboard:
+# - The trace shows a score: user_feedback = 1
+# - You can filter traces by score: "show me all thumbs down"
+# - Analyze patterns: which prompts get low ratings?
+
+langfuse.flush()</code></pre>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-sync mr-2"></i>How this works in production:</strong>
+            <ol style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>Your backend generates response and returns <code>trace_id</code> to frontend</li>
+                <li>Frontend shows response with thumbs up/down buttons</li>
+                <li>User clicks thumbs down</li>
+                <li>Frontend sends <code>POST /api/feedback</code> with <code>trace_id</code> and <code>rating=0</code></li>
+                <li>Backend calls <code>langfuse.score()</code> to record feedback</li>
+                <li>Feedback instantly appears in Langfuse dashboard linked to that exact conversation</li>
+            </ol>
+        </div>
+
+        <h4>Pattern 2: LLM-as-Judge Evaluation</h4>
+
+        <p>
+            Sometimes you want automated quality scoring without waiting for user feedback. Use another LLM to judge quality.
+        </p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">llm_judge.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse import Langfuse
+from langfuse.decorators import observe, langfuse_context
+from openai import OpenAI
+import os
+
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+@observe()
+def generate_answer(question: str) -> dict:
+    """Generate answer to user question."""
+    response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": question}]
+    )
+
+    answer = response.choices[0].message.content
+    trace_id = langfuse_context.get_current_trace_id()
+
+    return {"answer": answer, "trace_id": trace_id, "question": question}
+
+def evaluate_answer_quality(question: str, answer: str, trace_id: str):
+    """
+    Use GPT-4 to evaluate the quality of the answer.
+    Scores on: correctness, helpfulness, conciseness.
+    """
+    evaluation_prompt = f"""You are an expert evaluator. Evaluate this question-answer pair.
+
+Question: {question}
+Answer: {answer}
+
+Rate the answer on these dimensions (scale 0-10):
+1. Correctness: Is the answer factually accurate?
+2. Helpfulness: Does it address what the user asked?
+3. Conciseness: Is it clear without being verbose?
+
+Respond in this exact format:
+Correctness: X
+Helpfulness: Y
+Conciseness: Z
+Overall: (average of above)
+Reasoning: (brief explanation)"""
+
+    eval_response = openai_client.chat.completions.create(
+        model="gpt-4-turbo-preview",
+        messages=[{"role": "user", "content": evaluation_prompt}],
+        temperature=0.3  # Lower temperature for consistent evaluation
+    )
+
+    eval_text = eval_response.choices[0].message.content
+
+    # Parse scores (simplified - add robust parsing in production)
+    lines = eval_text.strip().split('\n')
+    correctness = float(lines[0].split(':')[1].strip())
+    helpfulness = float(lines[1].split(':')[1].strip())
+    conciseness = float(lines[2].split(':')[1].strip())
+    overall = float(lines[3].split(':')[1].strip())
+    reasoning = lines[4].split(':', 1)[1].strip()
+
+    # Record all scores
+    langfuse.score(trace_id=trace_id, name="correctness", value=correctness/10, comment=reasoning)
+    langfuse.score(trace_id=trace_id, name="helpfulness", value=helpfulness/10)
+    langfuse.score(trace_id=trace_id, name="conciseness", value=conciseness/10)
+    langfuse.score(trace_id=trace_id, name="overall_quality", value=overall/10)
+
+# Generate answer and evaluate it
+result = generate_answer("What is the speed of light?")
+print(result['answer'])
+
+# Automatically evaluate quality
+evaluate_answer_quality(result['question'], result['answer'], result['trace_id'])
+
+langfuse.flush()
+
+# Dashboard now shows:
+# - The generation trace
+# - Four scores: correctness, helpfulness, conciseness, overall
+# - Comments with reasoning
+# - You can filter: "show me answers with correctness < 0.7"</code></pre>
+            </div>
+        </div>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6;">
+            <strong><i class="fas fa-graduation-cap mr-2"></i>LLM-as-judge best practices:</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>Use a stronger model to judge (e.g., GPT-4 judging GPT-3.5 outputs)</li>
+                <li>Lower temperature for consistent evaluation</li>
+                <li>Use structured output format for parsing</li>
+                <li>Evaluate on multiple dimensions (not just one overall score)</li>
+                <li>Include reasoning in comments for debugging</li>
+                <li>Run async so evaluation doesn't slow down user responses</li>
+            </ul>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <h3 style="color: #10B981; margin-top: 3rem;">6.5 Dashboard Configuration (Step 6)</h3>
+
+        <p>
+            Langfuse provides powerful analytics out of the box. Let's configure dashboards to track what matters.
+        </p>
+
+        <h4>Built-in Metrics (Available Immediately)</h4>
+
+        <p>Once you have traces, these metrics are automatically available:</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+            <div class="concept-card">
+                <h4 style="color: #14B8A6; margin-top: 0;">💰 Cost Metrics</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Total spend over time</li>
+                    <li>Cost per user/session</li>
+                    <li>Cost by model</li>
+                    <li>Most expensive traces</li>
+                </ul>
+            </div>
+            <div class="concept-card">
+                <h4 style="color: #3B82F6; margin-top: 0;">⚡ Performance Metrics</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Average latency (p50, p95, p99)</li>
+                    <li>Throughput (requests per minute)</li>
+                    <li>Error rate</li>
+                    <li>Latency by model/endpoint</li>
+                </ul>
+            </div>
+            <div class="concept-card">
+                <h4 style="color: #8B5CF6; margin-top: 0;">⭐ Quality Metrics</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Average user rating</li>
+                    <li>Distribution of scores</li>
+                    <li>Quality trends over time</li>
+                    <li>Correlation between cost and quality</li>
+                </ul>
+            </div>
+            <div class="concept-card">
+                <h4 style="color: #EC4899; margin-top: 0;">📊 Usage Metrics</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Total requests</li>
+                    <li>Unique users</li>
+                    <li>Requests by feature</li>
+                    <li>Token consumption trends</li>
+                </ul>
+            </div>
+        </div>
+
+        <h4>Creating Custom Dashboards</h4>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">dashboard_config.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse import Langfuse
+import os
+from datetime import datetime, timedelta
+
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+def get_daily_metrics():
+    """
+    Fetch key metrics for the last 24 hours.
+    Use this to build custom dashboards or alerts.
+    """
+    # Get all traces from last 24 hours
+    traces = langfuse.get_traces(
+        from_timestamp=datetime.now() - timedelta(days=1),
+        to_timestamp=datetime.now()
+    )
+
+    # Calculate metrics
+    total_traces = len(traces.data)
+    total_cost = sum(trace.calculated_total_cost or 0 for trace in traces.data)
+    avg_latency = sum(trace.latency or 0 for trace in traces.data) / total_traces if total_traces > 0 else 0
+
+    # Get scores
+    scores = langfuse.get_scores(
+        from_timestamp=datetime.now() - timedelta(days=1)
+    )
+    avg_user_rating = sum(s.value for s in scores.data if s.name == "user_feedback") / len(scores.data) if scores.data else 0
+
+    return {
+        "total_requests": total_traces,
+        "total_cost_usd": total_cost,
+        "avg_latency_ms": avg_latency * 1000,
+        "avg_user_rating": avg_user_rating
+    }
+
+# Example: Daily metrics for monitoring
+metrics = get_daily_metrics()
+print(f"Today's Metrics:")
+print(f"  Requests: {metrics['total_requests']}")
+print(f"  Cost: ${metrics['total_cost_usd']:.2f}")
+print(f"  Latency: {metrics['avg_latency_ms']:.0f}ms")
+print(f"  User Rating: {metrics['avg_user_rating']:.2f}")
+
+# Use this to:
+# - Send to your internal monitoring (Datadog, Grafana)
+# - Trigger alerts if metrics exceed thresholds
+# - Display in admin dashboard
+# - Generate daily reports</code></pre>
+            </div>
+        </div>
+
+        <h4>Setting Up Alerts</h4>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">alert_config.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from langfuse import Langfuse
+import os
+
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+def check_cost_threshold():
+    """Alert if daily cost exceeds budget."""
+    metrics = get_daily_metrics()  # From previous example
+
+    DAILY_BUDGET = 50.00  # $50 per day
+
+    if metrics['total_cost_usd'] > DAILY_BUDGET:
+        # Trigger alert - send to Slack, email, PagerDuty, etc.
+        alert_message = f"⚠️ Daily cost exceeded budget: ${metrics['total_cost_usd']:.2f} / ${DAILY_BUDGET}"
+        print(alert_message)
+        # send_to_slack(alert_message)
+        return True
+    return False
+
+def check_quality_degradation():
+    """Alert if user ratings drop below threshold."""
+    metrics = get_daily_metrics()
+
+    QUALITY_THRESHOLD = 0.7  # 70% satisfaction
+
+    if metrics['avg_user_rating'] < QUALITY_THRESHOLD:
+        alert_message = f"⚠️ Quality degradation detected: {metrics['avg_user_rating']:.2f} rating (threshold: {QUALITY_THRESHOLD})"
+        print(alert_message)
+        # send_to_pagerduty(alert_message)
+        return True
+    return False
+
+# Run these checks periodically (cron job, scheduler, etc.)
+check_cost_threshold()
+check_quality_degradation()</code></pre>
+            </div>
+        </div>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6;">
+            <strong><i class="fas fa-bell mr-2"></i>Production alert strategy:</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>Run checks every hour via cron or scheduler</li>
+                <li>Use different thresholds for different environments (prod vs staging)</li>
+                <li>Alert different channels based on severity (Slack for warnings, PagerDuty for critical)</li>
+                <li>Include trace links in alerts for immediate debugging</li>
+                <li>Set up escalation policies (alert dev team after 2 hours of issues)</li>
+            </ul>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+
+        <h3 style="color: #06B6D4; margin-top: 3rem;">6.6 Integration Ecosystem</h3>
+
+        <p>
+            Langfuse integrates with the entire LLM ecosystem. Here's how to use it with popular frameworks.
+        </p>
+
+        <h4>LlamaIndex Integration</h4>
+
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                    <div class="code-dot"></div>
+                </div>
+                <span class="code-title">llamaindex_trace.py</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <div class="code-content">
+                <pre><code class="language-python">from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.core.callbacks import CallbackManager
+from llama_index.llms.openai import OpenAI as LlamaIndexOpenAI
+from langfuse.llama_index import LlamaIndexCallbackHandler
+import os
+
+# Initialize Langfuse callback for LlamaIndex
+langfuse_handler = LlamaIndexCallbackHandler(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY")
+)
+
+# Configure LlamaIndex to use Langfuse
+Settings.callback_manager = CallbackManager([langfuse_handler])
+Settings.llm = LlamaIndexOpenAI(model="gpt-3.5-turbo")
+
+# Build your RAG system as usual
+documents = SimpleDirectoryReader("./data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+
+# Query the index - automatically traced!
+query_engine = index.as_query_engine()
+response = query_engine.query("What is the main topic of these documents?")
+
+print(response)
+
+# Langfuse automatically captures:
+# - Document retrieval steps
+# - Embedding generation
+# - Vector search
+# - LLM calls for synthesis
+# - Complete RAG pipeline hierarchy</code></pre>
+            </div>
+        </div>
+
+        <p style="font-weight: 600; color: #14B8A6;">What LlamaIndex integration gives you:</p>
+        <ul>
+            <li>Automatic tracing of entire RAG pipeline</li>
+            <li>Visibility into retrieval quality (which documents were selected)</li>
+            <li>Embedding generation costs and latency</li>
+            <li>Response synthesis steps</li>
+            <li>Node postprocessor operations</li>
+        </ul>
+
+        <!-- Component Summary Table -->
+        <h4 style="margin-top: 3rem;">Component Summary</h4>
+
+        <div style="overflow-x: auto; margin: 2rem 0;">
+            <table style="width: 100%; border-collapse: collapse; background: #12121a; border: 1px solid #27272a; border-radius: 8px; overflow: hidden;">
+                <thead>
+                    <tr style="background: rgba(20, 184, 166, 0.1);">
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #14B8A6; color: #14B8A6;">Component</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #14B8A6; color: #14B8A6;">Use Case</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #14B8A6; color: #14B8A6;">Code Change</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #14B8A6; color: #14B8A6;">What You Get</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #27272a;">
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>OpenAI Integration</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">Using OpenAI SDK</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Import from langfuse.openai</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Automatic trace, cost, tokens</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #27272a;">
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>Decorator Pattern</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">Any LLM/framework</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Add @observe()</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Clean code, nested traces</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #27272a;">
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>Manual SDK</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">Full control</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Explicit trace creation</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Custom metadata, hierarchy</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #27272a;">
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>LangChain Callback</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">LangChain apps</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Add callback handler</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Chain/agent/tool tracing</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #27272a;">
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>LlamaIndex Callback</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">LlamaIndex RAG</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Add callback handler</td>
+                        <td style="padding: 1rem; color: #94a3b8;">RAG pipeline visibility</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #27272a;">
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>User Feedback</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">Quality monitoring</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Call langfuse.score()</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Link ratings to traces</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 1rem; color: #cbd5e1;"><strong>LLM-as-Judge</strong></td>
+                        <td style="padding: 1rem; color: #94a3b8;">Automated eval</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Extra LLM call</td>
+                        <td style="padding: 1rem; color: #94a3b8;">Continuous quality scores</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Conclusion Section -->
+        <div class="section-divider"></div>
+
+        <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+        <p>
+            Langfuse transforms LLM applications from black boxes to fully observable systems. What seemed like magic—understanding why your AI behaves certain ways, tracking every dollar spent, debugging production issues—becomes straightforward data analysis.
+        </p>
+
+        <h3 style="color: #14B8A6;">Key Takeaways:</h3>
+
+        <ul>
+            <li><strong>Tracing is fundamental:</strong> Every interaction should be traced. Start with basic tracing, expand to nested observations for complex workflows.</li>
+            <li><strong>Integration is easy:</strong> Whether using OpenAI, LangChain, LlamaIndex, or custom code, adding Langfuse takes minutes. Minimal code changes, maximum visibility.</li>
+            <li><strong>User feedback is gold:</strong> Connect thumbs up/down directly to traces. This links subjective quality ("users hate this") to objective data ("this prompt/model combination").</li>
+            <li><strong>Async works perfectly:</strong> No special handling needed for concurrent workloads. Each async task gets proper tracing automatically.</li>
+            <li><strong>Dashboards drive decisions:</strong> Built-in analytics show cost trends, latency patterns, quality metrics. Build custom alerts for production monitoring.</li>
+        </ul>
+
+        <p>
+            Start simple. Add basic tracing to one LLM call. See the trace in the dashboard. Then expand: nest observations for complex workflows, add user feedback, set up alerts. Production LLM observability grows from working primitives, not grand architectures.
+        </p>
+
+        <h3 style="color: #14B8A6; margin-top: 2rem;">What We've Covered:</h3>
+
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                Installation and setup (cloud or self-hosted)
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                Basic tracing patterns (OpenAI, decorators, manual)
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                Advanced workflows (RAG, LangChain, async batch)
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                User feedback integration (manual and LLM-as-judge)
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                Dashboard configuration and alerts
+            </li>
+            <li style="padding-left: 1.5rem; position: relative; margin-bottom: 0.75rem;">
+                <i class="fas fa-check-circle" style="color: #14B8A6; position: absolute; left: 0; top: 0.25rem;"></i>
+                Framework integrations (LangChain, LlamaIndex)
+            </li>
+        </ul>
+
+        <h3 style="color: #8B5CF6; margin-top: 2rem;">What Part 2 Will Cover:</h3>
+
+        <ul>
+            <li>Prompt management: version control for prompts</li>
+            <li>Datasets and evaluation: systematic testing</li>
+            <li>A/B experiments: compare prompts with statistical rigor</li>
+            <li>Advanced analytics: segment analysis, cost attribution</li>
+            <li>Guardrails: PII detection, content moderation</li>
+            <li>Production patterns: multi-tenant, compliance, security</li>
+        </ul>
+
+        <h3 style="color: #14B8A6; margin-top: 2rem;">Next Steps:</h3>
+
+        <ul>
+            <li>Try the complete code examples in <a href="https://github.com/langfuse/langfuse-examples" target="_blank" style="color: #14B8A6; text-decoration: underline;">github.com/langfuse/langfuse-examples</a></li>
+            <li>Sign up for free tier at <a href="https://cloud.langfuse.com" target="_blank" style="color: #14B8A6; text-decoration: underline;">cloud.langfuse.com</a></li>
+            <li>Read the official docs at <a href="https://langfuse.com/docs" target="_blank" style="color: #14B8A6; text-decoration: underline;">langfuse.com/docs</a></li>
+            <li>Join the community at <a href="https://discord.gg/langfuse" target="_blank" style="color: #14B8A6; text-decoration: underline;">discord.gg/langfuse</a></li>
+        </ul>
+
+        <div class="highlight-box" style="background: rgba(20, 184, 166, 0.15); border-color: #14B8A6; margin-top: 2rem;">
+            <p style="font-size: 1.1rem; margin: 0;">
+                The gap between LLM prototypes and production systems is observability. Langfuse provides the bridge. You've built something remarkable—now you can see it working, optimize it systematically, and ship it confidently.
+            </p>
+        </div>
+
+        <!-- Navigation Footer -->
+        <div class="nav-footer">
+            <a href="../index.html#journal" class="nav-link">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Blog Home</span>
+            </a>
+            <a href="#" class="nav-link" style="opacity: 0.5; pointer-events: none;">
+                <span>Part 2: Advanced Features</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Copyright Footer -->
+        <div style="text-align: center; margin-top: 2rem; padding: 2rem 0; border-top: 1px solid #334155; color: #64748b; font-size: 0.875rem;">
+            © 2026 Zubair Ashfaque | Built with insights from production LLM systems
+        </div>
+
+    </div>
+
+    <!-- Prism.js for Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+    <!-- Copy Code Button Functionality -->
+    <script>
+        // Add copy buttons to code blocks
+        document.querySelectorAll('.code-block').forEach((block) => {
+            const button = block.querySelector('.copy-btn');
+            const code = block.querySelector('code');
+
+            if (button && code) {
+                button.addEventListener('click', () => {
+                    navigator.clipboard.writeText(code.textContent);
+                    button.textContent = 'Copied!';
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                    }, 2000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
