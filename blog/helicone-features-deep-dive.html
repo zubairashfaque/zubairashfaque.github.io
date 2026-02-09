@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helicone Features Deep Dive — From Tracing to Prompt Management | Zubair Ashfaque</title>
+    <meta name="description" content="Master session tracing, semantic caching, rate limiting, and prompt versioning. Transform basic logging into a production control plane with header-based configuration.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .analogy-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .blueprint-step {
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 4px solid #3b82f6;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .blueprint-step:hover {
+            border-left-color: #6366f1;
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3);
+        }
+
+        .flow-arrow {
+            color: #3b82f6;
+            font-size: 2rem;
+            text-align: center;
+            margin: 0.5rem 0;
+        }
+
+        .comparison-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            margin: 3rem 0;
+        }
+
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #3b82f6;
+        }
+
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #6366f1;
+        }
+
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #06b6d4;
+        }
+
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        article li {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .breadcrumb a {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #6366f1;
+        }
+
+        .provider-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .provider-table th {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #3b82f6;
+            border-bottom: 2px solid #334155;
+        }
+
+        .provider-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+
+        .provider-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .provider-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+            }
+
+            article p, article ul, article ol {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-cyan-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>Helicone Features Deep Dive</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Helicone Features Deep Dive — From Tracing to Prompt Management
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                Master session tracing, semantic caching, rate limiting, and prompt versioning. Transform basic logging into a production control plane with header-based configuration.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>February 12, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>16 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Helicone</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">LLM Observability</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Caching</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Rate Limiting</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Prompt Engineering</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                In <a href="helicone-getting-started.html" style="color: #06b6d4; text-decoration: underline;">Part 1</a>, we transformed LLM applications from black boxes into observable systems. With two lines of code, you gained visibility into every request—costs, latency, tokens, full request/response bodies. You can now answer "How much did we spend last week?" and "Which users consume the most tokens?"
+            </p>
+
+            <p>
+                But <strong>visibility alone doesn't give you control</strong>.
+            </p>
+
+            <p>
+                Your dashboard shows a 47-step multi-agent workflow, but you can't tell which agent is the bottleneck. You're making the same GPT-4 call hundreds of times per day with identical prompts, wasting $200/month on redundant requests. Users regularly exceed their intended budgets because there are no guardrails. Your prompt evolved through six iterations in production, and nobody documented which version is currently deployed. When OpenAI rate limits your API key, your entire application crashes instead of gracefully falling back to Claude.
+            </p>
+
+            <p>
+                Production LLM systems need more than logs—they need <strong>session tracing to understand agent workflows</strong>, <strong>caching to eliminate redundant costs</strong>, <strong>rate limiting to enforce budgets</strong>, <strong>prompt versioning to track changes</strong>, and <strong>provider fallbacks to maintain reliability</strong>.
+            </p>
+
+            <p>
+                The questions this article answers are:
+            </p>
+
+            <ul class="list-disc">
+                <li>"How do I trace complex multi-agent workflows and attribute costs to specific conversation threads?"</li>
+                <li>"Can I cache LLM responses to reduce costs by 30-50% without writing caching infrastructure?"</li>
+                <li>"How do I enforce per-user rate limits and budget caps to prevent cost overruns?"</li>
+                <li>"What's the right way to version prompts in production and roll back when needed?"</li>
+                <li>"How do I set up automatic fallbacks from GPT-4 to Claude when providers have outages?"</li>
+            </ul>
+
+            <p>
+                This guide provides the complete blueprint for transforming basic observability into a production control plane. By the end, you'll implement session tracing for multi-agent systems, configure semantic caching with TTL policies, set up granular rate limiting, manage prompt versions through code, and establish retry+fallback chains—all using Helicone's header-based approach.
+            </p>
+
+            <div class="highlight-box" style="background: rgba(6, 182, 212, 0.1); border-left: 4px solid #06b6d4; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-info-circle mr-2"></i>Key Pattern:</strong>
+                Every advanced Helicone feature uses headers. No SDK changes, no middleware installation, no code refactoring. Add <code>Helicone-Cache-Enabled: true</code> to enable caching. Add <code>Helicone-Session-Id</code> to trace workflows. Add <code>Helicone-RateLimit-Policy</code> to enforce quotas. Control everything through HTTP headers.
+            </div>
+
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-exclamation-triangle mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is that visibility without control creates a false sense of security. You can see your LLM requests in a dashboard, but that doesn't prevent cost overruns, enable workflow tracing, or let you roll back problematic prompt changes. Observability showed you the problem—now you need production-grade controls to actually manage it.
+            </p>
+
+            <p>
+                Consider a healthcare AI triage system that uses multiple agents: one agent handles initial symptom intake, another performs diagnostic analysis, a third reviews lab results, and a fourth generates the final report. With basic logging from Part 1, you can see that this workflow cost $1.20. But you <strong>can't see which agent consumed the most budget</strong>, you <strong>can't trace the conversation thread</strong> through all four steps, and you <strong>can't identify bottlenecks</strong> in the multi-agent pipeline.
+            </p>
+
+            <p>
+                Or imagine your application makes the same diabetes diagnosis query hundreds of times per day: "What is diabetes?" Basic logging shows you made 400 identical requests costing $0.03 each—that's $12/day or $360/month wasted on redundant work. GPT-4's response never changes for this deterministic question, yet you're paying full price every time because <strong>you have no caching layer</strong>.
+            </p>
+
+            <p>
+                Then there's the budget problem. A user accidentally triggers an infinite loop that makes 10,000 API calls in an hour, costing $450 before you notice. Your dashboard shows the spike, but it happened in the past—<strong>you have no rate limits or quotas</strong> to prevent it. Another team member tweaks a prompt in production, response quality tanks, but <strong>nobody documented which prompt version is deployed</strong>, so rolling back requires guesswork.
+            </p>
+
+            <p>
+                When OpenAI hits rate limits at 3PM on a Tuesday, your entire application crashes with 429 errors. You're paying for Claude and Gemini subscriptions as backups, but you <strong>have no automatic fallback logic</strong> to switch providers when primary models fail.
+            </p>
+
+            <p>
+                The production reality is clear:
+            </p>
+
+            <ul>
+                <li><strong>Session tracing:</strong> You need hierarchical paths to trace multi-agent workflows and understand parent-child relationships between requests</li>
+                <li><strong>Semantic caching:</strong> You need to cache LLM responses with TTLs to reduce costs by 30-50% for deterministic queries</li>
+                <li><strong>Rate limiting:</strong> You need per-user quotas (requests/hour or dollars/day) to prevent runaway costs</li>
+                <li><strong>Prompt versioning:</strong> You need to track which prompt version is in production and enable instant rollbacks</li>
+                <li><strong>Provider fallbacks:</strong> You need automatic retries with exponential backoff and cross-provider failover chains</li>
+            </ul>
+
+            <p>
+                Helicone transforms observability into a control plane by exposing all these features through HTTP headers. No SDKs, no middleware, no code changes beyond adding headers to requests. This is production-grade LLM infrastructure delivered with the same simplicity that made Part 1's basic logging possible.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-binoculars mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let's <strong>lucify</strong> this concept with an everyday analogy.
+            </p>
+
+            <div class="analogy-card">
+                <p>
+                    Imagine running a busy restaurant kitchen during dinner rush. Orders come in from the dining room, and your kitchen staff needs to coordinate to fulfill them. One cook handles appetizers, another manages main courses, a third works the grill, and a fourth plates desserts. Each dish for a single table travels through multiple stations before going out together.
+                </p>
+
+                <p>
+                    Now imagine you added a kitchen display system (KDS) that tracks every order. You can see the full order ticket follow each dish through the prep stations—the scallops go from prep to grill to plating, and you can trace the entire path. That's <strong>session tracing</strong>: following a single conversation through multiple agent steps with hierarchical paths like <code>/triage/analysis/lab-review</code>.
+                </p>
+
+                <p>
+                    Next, you realize you're making the same hollandaise sauce from scratch 50 times a night. It's always the same recipe, takes 8 minutes each time, and uses expensive ingredients. So you prep a large batch in advance and portion it out when orders arrive. That's <strong>caching</strong>: making identical LLM calls once, storing the response with a TTL, and reusing it instead of paying full price repeatedly.
+                </p>
+
+                <p>
+                    During peak hours, you can only handle 120 orders per hour before quality degrades. So you implement table reservations to limit seating and prevent kitchen overload. That's <strong>rate limiting</strong>: enforcing quotas like "100 requests per user per hour" or "$5 per user per day" to prevent cost overruns.
+                </p>
+
+                <p>
+                    When your fish supplier runs out of salmon at 7PM, you don't close the kitchen—you automatically call your backup supplier and substitute with tuna for remaining orders. That's <strong>provider fallback</strong>: when OpenAI hits rate limits, Helicone automatically retries with Claude or Gemini instead of failing the request.
+                </p>
+            </div>
+
+            <p>
+                <strong>Limitation of this analogy:</strong> Restaurant kitchens have physical space constraints and ingredient spoilage, while LLM requests are stateless and cached responses don't "go bad" (though they do have TTLs). Also, kitchen stations work in serial (one step after another), while LLM multi-agent workflows can be parallel or conditional. But the core pattern holds: complex operations need tracing, repeated work needs caching, capacity needs limiting, and failures need fallback plans.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-graduation-cap mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                To solve this, we first need to <strong>lucify</strong> the key technical terms that enable production control. Understanding these five concepts will clarify how Helicone transforms basic logging into a full observability and control plane.
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-sitemap mr-2"></i>Session Tracing
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Session tracing groups related LLM requests into hierarchical trees using session IDs and paths, allowing you to follow a single conversation or workflow through multiple agent steps and understand parent-child relationships between requests.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> A patient query flows through 4 agents with paths <code>/triage</code> → <code>/triage/analysis</code> → <code>/triage/analysis/lab-review</code> → <code>/triage/report</code>. In the dashboard, you see a collapsible tree showing which agent cost the most, which was slowest, and the full conversation thread.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Session tracing is like tracking a package through the postal system. Each step (sorting facility, delivery truck, local post office) gets its own scan, but they're all linked by the same tracking number so you can see the complete journey from origin to destination.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-box-open mr-2"></i>Semantic Caching
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Semantic caching stores LLM responses by request hash and reuses them for identical prompts within a TTL window, eliminating redundant API calls. A cache hit returns the stored response instantly at near-zero cost instead of making a new $0.03 call.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Your app asks "What is diabetes?" 400 times/day. With <code>Helicone-Cache-Enabled: true</code> and <code>max-age=86400</code> (24 hours), the first call costs $0.03 and goes to GPT-4. The next 399 calls hit cache and cost $0, saving $11.97/day ($359/month).
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Semantic caching is like photocopying a document instead of retyping it every time. The first copy takes 5 minutes to create from scratch, but subsequent copies take 10 seconds and cost pennies. Why recreate identical work?
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-warehouse mr-2"></i>Bucket Caching
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Bucket caching caches non-deterministic prompts (temperature > 0) by grouping similar requests into "buckets" of size N and returning any response from that bucket randomly. This enables approximate caching when exact matching is impossible due to randomness.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You generate 5 creative product descriptions for "wireless headphones" with temperature=0.7. With <code>Helicone-Cache-Bucket-Max-Size: 5</code>, the first 5 requests populate the bucket with different responses. Request #6 randomly returns one of those 5 instead of calling the API, saving cost while maintaining variety.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Bucket caching is like a restaurant's "chef's special" where the dish varies slightly each night. Instead of creating a new special from scratch every time, the chef rotates through 5 pre-made variations. Diners still get variety, but the kitchen saves prep time.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Rate Limiting Policy
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> A rate limiting policy defines a quota (max requests or cost), a time window, a unit (requests or cents), and an optional segment (global, per-user, per-property) using the syntax <code>quota;w=window;u=unit;s=segment</code>. Helicone enforces this and returns 429 errors when limits are exceeded.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> Policy <code>"100;w=3600;s=user"</code> means "100 requests per user per hour." User Alice makes 100 requests in 30 minutes; her 101st request gets rejected with 429 status. Bob's requests are unaffected because the limit is <code>s=user</code> (per-user), not global.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Rate limiting is like a data plan with caps. You get 5GB/month per line (per-user quota). If you exceed 5GB, your speed gets throttled (429 errors). Your family members' lines aren't affected by your overuse because each line has its own quota.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-exchange-alt mr-2"></i>Provider Fallback
+                </h4>
+                <p class="text-base text-gray-300 mb-2">
+                    <strong>Definition:</strong> Provider fallback automatically retries failed LLM requests with exponential backoff and can switch to backup providers when the primary fails. You specify models like <code>"gpt-4o/claude-sonnet-4"</code> to try GPT-4o first, then fall back to Claude if OpenAI returns errors or hits rate limits.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You set <code>model="gpt-4o/claude-sonnet-4"</code> and <code>Helicone-Retry-Enabled: true</code>. OpenAI hits rate limits at 3PM (429 error). Helicone automatically retries with Claude Sonnet 4 after 1 second, and your request succeeds instead of failing.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Provider fallback is like having backup suppliers for a critical ingredient. If your primary flour supplier runs out, you automatically call supplier #2, then supplier #3 if needed. Your bakery never stops producing bread because you have redundancy built in.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                Now, let's <strong>make the blueprint</strong> for activating Helicone's advanced features. This eight-step plan shows you exactly how to enable session tracing, caching, rate limiting, prompt versioning, and retries—all through HTTP headers without code refactoring.
+            </p>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-sitemap mr-2"></i>Step 1: Add Session Headers for Tracing
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    For multi-agent workflows, add <code>Helicone-Session-Id</code> and <code>Helicone-Session-Path</code> headers to group related requests. Use hierarchical paths like <code>/triage</code>, <code>/triage/analysis</code>, <code>/triage/analysis/lab-review</code> to show parent-child relationships. Every agent in the workflow shares the same session ID but has a unique path.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Trace entire conversation threads through multiple agents and attribute costs to specific workflow steps in the dashboard's session tree view.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-box-open mr-2"></i>Step 2: Enable Caching with TTL
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    For deterministic queries (temperature=0), add <code>Helicone-Cache-Enabled: true</code> and <code>Cache-Control: max-age=86400</code> to cache responses for 24 hours. For creative prompts, use bucket caching with <code>Helicone-Cache-Bucket-Max-Size: 5</code> to return one of 5 pre-generated variations. Per-user caching uses <code>Helicone-Cache-Seed</code> to namespace responses.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Reduce costs by 30-50% for frequently repeated queries without building custom caching infrastructure.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Step 3: Configure Rate Limit Policies
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    Enforce quotas with <code>Helicone-RateLimit-Policy</code> header using the syntax <code>quota;w=window;u=unit;s=segment</code>. Example: <code>"100;w=3600;s=user"</code> (100 requests/hour per user) or <code>"500;w=86400;u=cents;s=user"</code> ($5/day per user). Segment can be <code>user</code>, <code>property</code>, or omitted for global limits.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Prevent runaway costs from infinite loops or malicious users exceeding intended budgets. Returns 429 errors when limits are exceeded.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-exchange-alt mr-2"></i>Step 4: Set Up Retry + Fallback Chains
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    Handle provider outages with automatic retries and fallbacks. Use <code>Helicone-Retry-Enabled: true</code>, <code>Helicone-Retry-Num: 3</code>, and <code>Helicone-Retry-Factor: 2</code> for exponential backoff (1s, 2s, 4s delays). Specify fallback models like <code>model="gpt-4o/claude-sonnet-4"</code> to try GPT-4o first, then Claude if OpenAI fails.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Maintain high availability by automatically switching providers when one hits rate limits or has outages. Critical for production reliability.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-edit mr-2"></i>Step 5: Create Prompts in Playground
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    Use the Helicone Playground to create prompt templates with variables. Define prompts like "Summarize {document} in {style} tone" and test different variable combinations. Export the prompt with a version ID. Prompts support Jinja2 templating for complex logic.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Centralize prompt management outside code. Enables A/B testing, version control, and instant rollbacks without deploying new code.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-code-branch mr-2"></i>Step 6: Deploy Prompt Versions
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    Reference prompt versions in your code with <code>Helicone-Prompt-Id: diabetes-query-v2</code>. Helicone substitutes the versioned prompt template and logs which version was used. Update prompts in the dashboard and redeploy by changing the version number in code—no prompt text lives in your repository.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Track exactly which prompt version generated each response. Roll back to v1 instantly if v2 degrades quality.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-star mr-2"></i>Step 7: Post Evaluation Scores
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    After receiving LLM responses, post human or AI evaluation scores to Helicone using the Feedback API. Track metrics like "accuracy", "helpfulness", "tone" with numeric scores or boolean values. Associate scores with the original request ID to analyze quality trends over time.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Measure response quality at scale. Identify which prompts, models, or agent steps produce the best outcomes and optimize based on data.
+                </p>
+            </div>
+
+            <div class="blueprint-step">
+                <h3 style="color: #06b6d4; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-users mr-2"></i>Step 8: Track Per-User Analytics
+                </h3>
+                <p style="margin-bottom: 0.5rem; color: #cbd5e1;">
+                    Add <code>Helicone-User-Id</code> headers to every request to segment analytics by user. The dashboard's Users page shows per-user request counts, costs, average latency, and error rates. Combine with rate limiting (<code>s=user</code>) to enforce per-user budgets.
+                </p>
+                <p style="margin: 0; font-size: 0.875rem; color: #94a3b8;">
+                    <strong>Why this matters:</strong> Identify power users consuming budget, detect unusual usage patterns, and provide transparent cost attribution for multi-tenant applications.
+                </p>
+            </div>
+
+            <div style="background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-balance-scale mr-2" style="color: #fbbf24;"></i>Trade-offs to consider:</strong>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem; color: #cbd5e1;">
+                    Helicone offers three integration methods. The <strong>AI Gateway</strong> (recommended) adds ~1-5ms latency but provides unified multi-provider routing. <strong>Provider-specific proxies</strong> add ~50-80ms latency but let you keep provider keys local. <strong>Async logging</strong> adds zero latency but sacrifices proxy features like caching and rate limiting. For most production applications, the AI Gateway's minimal latency overhead is worthwhile for the operational simplicity.
+                </p>
+            </div>
+
+            <!-- Blueprint Flow Diagram -->
+            <div style="margin: 3rem 0;">
+                <h3 style="text-align: center; color: #3b82f6; margin-bottom: 2rem;">
+                    <i class="fas fa-project-diagram mr-2"></i>6-Step Integration Flow
+                </h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div class="flow-step">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">1</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #fff;">Create Account</div>
+                        <div style="font-size: 0.875rem; color: #cbd5e1;">Sign up at helicone.ai<br>Generate API key</div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">2</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #fff;">Configure Keys</div>
+                        <div style="font-size: 0.875rem; color: #cbd5e1;">Add provider keys<br>to dashboard</div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">3</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #fff;">Change Base URL</div>
+                        <div style="font-size: 0.875rem; color: #cbd5e1;">Point to<br>ai-gateway.helicone.ai</div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">4</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #fff;">Add Auth</div>
+                        <div style="font-size: 0.875rem; color: #cbd5e1;">Use Helicone<br>API key</div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">5</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #fff;">Make API Call</div>
+                        <div style="font-size: 0.875rem; color: #cbd5e1;">Run your app<br>as normal</div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">6</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: #fff;">View Dashboard</div>
+                        <div style="font-size: 0.875rem; color: #cbd5e1;">See costs, tokens,<br>latency metrics</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-tools mr-3"></i>Executing the Blueprint</h2>
+
+            <p>
+                <strong>Let's carry out the blueprint plan</strong> with real, working code demonstrating session tracing, caching, rate limiting, retries, and the kitchen sink example combining all features.
+            </p>
+
+            <div class="github-card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 1rem; padding: 2rem; margin: 2rem 0;">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0">
+                        <i class="fab fa-github text-5xl text-blue-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <i class="fas fa-code-branch mr-2 text-blue-400"></i>
+                            Complete Code Examples
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            All Part 2 examples are in the <code>part2-features/</code> directory. Includes multi-agent session tracing, 3 caching strategies, 4 rate limiting policies, retry+fallback chains, and a kitchen sink example combining all headers. Total: 5 files, 467 lines of tested code.
+                        </p>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="https://github.com/zubairashfaque/helicone-examples" target="_blank" class="btn-primary">
+                                <i class="fab fa-github mr-2"></i>View on GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-sitemap mr-2"></i>Example 1: Multi-Agent Session Tracing</h3>
+
+            <p>
+                Track a 4-agent healthcare workflow using hierarchical session paths. Each agent shares the same session ID but has a unique path showing parent-child relationships:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python"># part2-features/session_tracing.py
+from openai import OpenAI
+import os
+import uuid
+
+client = OpenAI(
+    base_url="https://ai-gateway.helicone.ai",
+    api_key=os.getenv("HELICONE_API_KEY"),
+)
+
+session_id = str(uuid.uuid4())
+patient_id = "patient_12345"
+
+# Agent 1: Triage (Parent)
+triage_response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Patient reports: fatigue, increased thirst..."}],
+    max_tokens=150,
+    extra_headers={
+        "Helicone-Session-Id": session_id,
+        "Helicone-Session-Path": "/triage",              # Root level
+        "Helicone-Property-Agent": "triage",
+        "Helicone-User-Id": patient_id,
+    }
+)
+
+# Agent 2: Analysis (Child of triage)
+analysis_response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": f"Analyze: {triage_response.choices[0].message.content}"}],
+    max_tokens=300,
+    extra_headers={
+        "Helicone-Session-Id": session_id,
+        "Helicone-Session-Path": "/triage/analysis",     # Child level
+        "Helicone-Property-Agent": "analysis",
+        "Helicone-User-Id": patient_id,
+    }
+)
+
+# Agent 3: Lab Review (Grandchild)
+lab_response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": f"Review labs for: {analysis_response.choices[0].message.content}"}],
+    max_tokens=200,
+    extra_headers={
+        "Helicone-Session-Id": session_id,
+        "Helicone-Session-Path": "/triage/analysis/lab-review",  # Grandchild level
+        "Helicone-Property-Agent": "lab-review",
+        "Helicone-User-Id": patient_id,
+    }
+)
+
+# Dashboard shows hierarchical tree: /triage → /triage/analysis → /triage/analysis/lab-review
+# Click on session to see total cost, per-agent costs, conversation thread</code></pre>
+            </div>
+
+            <p>
+                <strong>Key observation:</strong> All three agents share <code>session_id</code> but use hierarchical paths. The dashboard renders this as a collapsible tree where you can expand <code>/triage</code> to see its children, drill into costs per agent, and replay the entire conversation thread.
+            </p>
+
+            <h3><i class="fas fa-box-open mr-2"></i>Example 2: Semantic Caching with TTL</h3>
+
+            <p>
+                Save 30-50% on costs by caching deterministic queries. Full implementation in <a href="https://github.com/zubairashfaque/helicone-examples/blob/main/part2-features/caching_examples.py" target="_blank" style="color: #06b6d4; text-decoration: underline;">caching_examples.py</a>:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python"># Basic caching: cache for 24 hours
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is diabetes?"}],
+    max_tokens=200,
+    temperature=0,  # Deterministic responses
+    extra_headers={
+        "Helicone-Cache-Enabled": "true",
+        "Cache-Control": "max-age=86400",  # 24 hours in seconds
+    }
+)
+
+# First request: costs $0.03, goes to GPT-4
+# Next 399 requests in 24h: cost $0, instant cache hits
+# Savings: $11.97/day = $359/month</code></pre>
+            </div>
+
+            <h3><i class="fas fa-tachometer-alt mr-2"></i>Example 3: Rate Limiting Policies</h3>
+
+            <p>
+                Enforce per-user quotas to prevent cost overruns. Full implementation in <a href="https://github.com/zubairashfaque/helicone-examples/blob/main/part2-features/rate_limiting.py" target="_blank" style="color: #06b6d4; text-decoration: underline;">rate_limiting.py</a>:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python"># Example 1: Per-user request limit (100 requests/hour)
+extra_headers={
+    "Helicone-User-Id": user_id,
+    "Helicone-RateLimit-Policy": "100;w=3600;s=user"
+}
+
+# Example 2: Per-user cost limit ($5/day)
+extra_headers={
+    "Helicone-User-Id": user_id,
+    "Helicone-RateLimit-Policy": "500;w=86400;u=cents;s=user"  # 500 cents = $5
+}
+
+# When limit exceeded: 429 error returned, user must wait for window reset</code></pre>
+            </div>
+
+            <h3><i class="fas fa-exchange-alt mr-2"></i>Example 4: Retry + Provider Fallback</h3>
+
+            <p>
+                Maintain high availability with automatic retries and cross-provider failover. Full implementation in <a href="https://github.com/zubairashfaque/helicone-examples/blob/main/part2-features/retry_fallback.py" target="_blank" style="color: #06b6d4; text-decoration: underline;">retry_fallback.py</a>:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python"># Try GPT-4o first, fallback to Claude if OpenAI fails
+response = client.chat.completions.create(
+    model="gpt-4o/claude-sonnet-4",  # Primary / Fallback
+    messages=[{"role": "user", "content": "Critical query with fallback"}],
+    max_tokens=100,
+    extra_headers={
+        "Helicone-Retry-Enabled": "true",
+        "Helicone-Retry-Num": "3",         # Max 3 retries
+        "Helicone-Retry-Factor": "2",      # Exponential backoff: 1s, 2s, 4s
+        "Helicone-Fallback-Enabled": "true",
+    }
+)
+# If OpenAI hits rate limits: automatic retry with Claude after 1s delay</code></pre>
+            </div>
+
+            <h3><i class="fas fa-rocket mr-2"></i>Example 5: Kitchen Sink (All Features Combined)</h3>
+
+            <p>
+                Combine session tracing, caching, rate limiting, and prompt versioning in a single request. Full implementation in <a href="https://github.com/zubairashfaque/helicone-examples/blob/main/part2-features/kitchen_sink.py" target="_blank" style="color: #06b6d4; text-decoration: underline;">kitchen_sink.py</a>:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python">response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is diabetes?"}],
+    max_tokens=200,
+    temperature=0,
+    extra_headers={
+        # Session tracing
+        "Helicone-Session-Id": "kitchen-sink-001",
+        "Helicone-Session-Path": "/demo",
+
+        # User tracking
+        "Helicone-User-Id": "demo-user",
+
+        # Custom properties
+        "Helicone-Property-Environment": "demo",
+        "Helicone-Property-Feature": "kitchen-sink",
+
+        # Caching
+        "Helicone-Cache-Enabled": "true",
+        "Cache-Control": "max-age=3600",
+
+        # Rate limiting
+        "Helicone-RateLimit-Policy": "100;w=3600;s=user",
+
+        # Prompt versioning
+        "Helicone-Prompt-Id": "diabetes-query-v1",
+    }
+)
+# Single request using 6 advanced features simultaneously!</code></pre>
+            </div>
+
+            <div style="background: rgba(6, 182, 212, 0.1); border-left: 4px solid #06b6d4; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-lightbulb mr-2" style="color: #06b6d4;"></i>Complete Examples on GitHub:</strong>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem; color: #cbd5e1;">
+                    All 5 Part 2 examples (session tracing, caching, rate limiting, retry+fallback, kitchen sink) are available in the <strong>part2-features/</strong> directory with full documentation. Total: 467 lines of tested, production-ready code. View at <a href="https://github.com/zubairashfaque/helicone-examples/tree/main/part2-features" target="_blank" style="color: #06b6d4; text-decoration: underline;">github.com/zubairashfaque/helicone-examples</a>
+                </p>
+            </div>
+
+            <p>
+                <strong>What just happened:</strong> By changing the <code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">base_url</code> from OpenAI's default to <code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">ai-gateway.helicone.ai</code> and swapping your API key, every request now flows through Helicone. The AI Gateway looks up your OpenAI key (configured in Step 2), forwards the request, logs the round-trip, and returns the response. Your application code is unchanged—same parameters, same response format, same error handling.
+            </p>
+
+            <h3><i class="fas fa-code mr-2"></i>TypeScript: AI Gateway Integration</h3>
+
+            <p>
+                The pattern is identical in TypeScript:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-typescript">import OpenAI from "openai";
+
+// BEFORE Helicone
+// const client = new OpenAI();
+
+// AFTER Helicone
+const client = new OpenAI({
+  baseURL: "https://ai-gateway.helicone.ai",
+  apiKey: process.env.HELICONE_API_KEY,
+});
+
+const response = await client.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages: [
+    { role: "system", content: "You are a helpful medical assistant." },
+    { role: "user", content: "What are the symptoms of Type 2 diabetes?" }
+  ],
+  max_tokens: 500,
+});
+
+console.log(response.choices[0].message.content);
+// Automatically logged: tokens, cost ($), latency (ms), TTFT, model, status</code></pre>
+            </div>
+
+            <h3><i class="fas fa-server mr-2"></i>Alternative: Provider-Specific Proxy</h3>
+
+            <p>
+                If you prefer managing provider keys locally (never uploading them to Helicone's dashboard), use the provider-specific proxy approach:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python">from openai import OpenAI
+import os
+
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),          # Your key stays local
+    base_url="https://oai.helicone.ai/v1",         # Helicone's OpenAI proxy
+    default_headers={
+        "Helicone-Auth": f"Bearer {os.getenv('HELICONE_API_KEY')}"
+    }
+)
+
+# Use exactly as before—all calls are logged
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Hello, world!"}]
+)</code></pre>
+            </div>
+
+            <p>
+                <strong>Key difference:</strong> Here you're passing <em>both</em> your OpenAI key (in <code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">api_key</code>) and your Helicone key (in headers). Helicone never sees your OpenAI key—it's sent directly to OpenAI's API through the proxy. This adds ~50-80ms latency vs. the AI Gateway's ~1-5ms, but some organizations prefer this model for security/compliance reasons.
+            </p>
+
+            <!-- Integration Methods Comparison -->
+            <div style="margin: 3rem 0;">
+                <h3 style="text-align: center; color: #3b82f6; margin-bottom: 2rem;">
+                    <i class="fas fa-code-branch mr-2"></i>Three Integration Methods Compared
+                </h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <div class="comparison-card">
+                        <h4 style="color: #3b82f6; margin: 0 0 1rem 0; font-size: 1.25rem;">
+                            <i class="fas fa-rocket mr-2"></i>AI Gateway
+                        </h4>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Latency:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">~1-5ms overhead</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Key Management:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">Provider keys in Helicone dashboard</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Features:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">All features available</div>
+                        </div>
+                        <div style="margin-bottom: 0;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Best For:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">New projects, multi-provider routing</div>
+                        </div>
+                    </div>
+
+                    <div class="comparison-card">
+                        <h4 style="color: #3b82f6; margin: 0 0 1rem 0; font-size: 1.25rem;">
+                            <i class="fas fa-network-wired mr-2"></i>Provider Proxy
+                        </h4>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Latency:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">~50-80ms overhead</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Key Management:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">Provider keys stay local</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Features:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">All features available</div>
+                        </div>
+                        <div style="margin-bottom: 0;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Best For:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">Security/compliance requirements</div>
+                        </div>
+                    </div>
+
+                    <div class="comparison-card">
+                        <h4 style="color: #3b82f6; margin: 0 0 1rem 0; font-size: 1.25rem;">
+                            <i class="fas fa-bolt mr-2"></i>Async Logging
+                        </h4>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Latency:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">0ms (zero overhead)</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Key Management:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">Provider keys stay local</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Features:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">Observability only (no caching/rate limiting)</div>
+                        </div>
+                        <div style="margin-bottom: 0;">
+                            <div style="font-weight: 600; color: #06b6d4; margin-bottom: 0.5rem;">Best For:</div>
+                            <div style="font-size: 0.9rem; color: #cbd5e1;">Latency-critical applications</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-exchange-alt mr-2"></i>Multi-Provider Routing with AI Gateway</h3>
+
+            <p>
+                The AI Gateway's killer feature is provider-agnostic routing. Switch between OpenAI, Claude, and Gemini by changing one string:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python">client = OpenAI(
+    base_url="https://ai-gateway.helicone.ai",
+    api_key=os.getenv("HELICONE_API_KEY"),
+)
+
+# OpenAI GPT-4o
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Explain HIPAA compliance"}]
+)
+
+# Anthropic Claude—same client, same format
+response = client.chat.completions.create(
+    model="claude-sonnet-4-20250514",
+    messages=[{"role": "user", "content": "Explain HIPAA compliance"}]
+)
+
+# Google Gemini—same client, same format
+response = client.chat.completions.create(
+    model="gemini-2.0-flash",
+    messages=[{"role": "user", "content": "Explain HIPAA compliance"}]
+)</code></pre>
+            </div>
+
+            <p>
+                All three requests use the same OpenAI-compatible Python client. Helicone's AI Gateway translates the request to each provider's format, handles authentication, logs everything uniformly, and returns results in OpenAI's response schema. No provider-specific SDKs, no format conversions, no switching between clients.
+            </p>
+
+            <p>
+                <strong>Cost tracking benefit:</strong> Because Helicone logs all three requests in a unified format, you can compare costs across providers directly in the dashboard. See instantly that Gemini Flash costs 10× less than GPT-4o for the same task.
+            </p>
+
+            <!-- Multi-Provider Benefits Grid -->
+            <div style="margin: 3rem 0;">
+                <h3 style="text-align: center; color: #3b82f6; margin-bottom: 2rem;">
+                    <i class="fas fa-star mr-2"></i>Why Multi-Provider Routing Matters
+                </h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <div class="comparison-card" style="border-left: 4px solid #3b82f6;">
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <i class="fas fa-dollar-sign text-4xl text-green-400 mb-2" style="display: block;"></i>
+                        </div>
+                        <h4 style="color: #3b82f6; margin-bottom: 0.5rem; text-align: center;">Cost Optimization</h4>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; margin: 0; text-align: center;">
+                            Route to cheapest provider for each task. Gemini Flash: <strong>10× cheaper</strong> than GPT-4o for summaries.
+                        </p>
+                    </div>
+
+                    <div class="comparison-card" style="border-left: 4px solid #10b981;">
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <i class="fas fa-shield-alt text-4xl text-blue-400 mb-2" style="display: block;"></i>
+                        </div>
+                        <h4 style="color: #10b981; margin-bottom: 0.5rem; text-align: center;">Vendor Independence</h4>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; margin: 0; text-align: center;">
+                            Never locked into one provider. Switch models without rewriting code or learning new SDKs.
+                        </p>
+                    </div>
+
+                    <div class="comparison-card" style="border-left: 4px solid #8b5cf6;">
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <i class="fas fa-sync-alt text-4xl text-purple-400 mb-2" style="display: block;"></i>
+                        </div>
+                        <h4 style="color: #8b5cf6; margin-bottom: 0.5rem; text-align: center;">Automatic Fallbacks</h4>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; margin: 0; text-align: center;">
+                            Part 2 covers fallback chains: try GPT-4o → if fails, fallback to Claude → if fails, use Gemini.
+                        </p>
+                    </div>
+
+                    <div class="comparison-card" style="border-left: 4px solid #f59e0b;">
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <i class="fas fa-flask text-4xl text-yellow-400 mb-2" style="display: block;"></i>
+                        </div>
+                        <h4 style="color: #f59e0b; margin-bottom: 0.5rem; text-align: center;">Easy A/B Testing</h4>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; margin: 0; text-align: center;">
+                            Compare GPT-4o vs Claude Sonnet on the same prompts. See quality + cost differences side-by-side.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider Table -->
+            <table class="provider-table">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Helicone Proxy URL</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>OpenAI</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">oai.helicone.ai/v1</code></td>
+                        <td>Dedicated subdomain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Anthropic</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">anthropic.helicone.ai</code></td>
+                        <td>Dedicated subdomain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Azure OpenAI</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">gateway.helicone.ai</code></td>
+                        <td>Uses Helicone-Target-Url header</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Google Gemini</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">gateway.helicone.ai</code></td>
+                        <td>Uses Helicone-Target-Url header</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Together AI</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">together.helicone.ai</code></td>
+                        <td>Dedicated subdomain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Groq</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">groq.helicone.ai</code></td>
+                        <td>Dedicated subdomain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DeepSeek</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">deepseek.helicone.ai</code></td>
+                        <td>Dedicated subdomain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AWS Bedrock</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">bedrock.helicone.ai</code></td>
+                        <td>Dedicated subdomain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Any other</strong></td>
+                        <td><code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">gateway.helicone.ai</code></td>
+                        <td>Universal gateway with Helicone-Target-Url</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3><i class="fas fa-hospital mr-2"></i>Real-World Example: Healthcare AI Triage Assistant</h3>
+
+            <p>
+                Here's a complete example that demonstrates Helicone's value in a production scenario. This healthcare triage assistant classifies patient symptoms and uses Helicone headers to enable department-level cost analytics, per-patient tracking, and prompt versioning:
+            </p>
+
+            <div class="code-block">
+                <pre><code class="language-python">from openai import OpenAI
+import os
+
+client = OpenAI(
+    base_url="https://ai-gateway.helicone.ai",
+    api_key=os.getenv("HELICONE_API_KEY"),
+)
+
+def triage_patient(patient_id: str, symptoms: str, department: str) -> str:
+    """Classify patient symptoms with full Helicone observability."""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a medical triage assistant. Classify urgency as: "
+                    "EMERGENCY, URGENT, STANDARD, or LOW-PRIORITY. Give rationale."
+                ),
+            },
+            {"role": "user", "content": f"Patient symptoms: {symptoms}"},
+        ],
+        max_tokens=200,
+        temperature=0.1,  # Low temp for consistency
+        extra_headers={
+            "Helicone-User-Id": patient_id,                    # Per-patient analytics
+            "Helicone-Property-Department": department,          # Filter by department
+            "Helicone-Property-App": "triage-assistant",        # App-wide tagging
+            "Helicone-Property-Environment": "production",      # Track by environment
+            "Helicone-Prompt-Id": "triage-classifier-v1",       # Prompt versioning
+        },
+    )
+
+    return response.choices[0].message.content
+
+# Usage
+result = triage_patient(
+    patient_id="patient-7829",
+    symptoms="Severe chest pain, shortness of breath, radiating to left arm",
+    department="cardiology"
+)
+print(result)
+# Output: "EMERGENCY — Symptoms consistent with acute coronary syndrome..."</code></pre>
+            </div>
+
+            <p>
+                <strong>What this unlocks in the Helicone dashboard:</strong>
+            </p>
+
+            <ul>
+                <li><strong>Per-department costs:</strong> Filter by <code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">Property: Department = cardiology</code> to see total cardiology LLM spend</li>
+                <li><strong>Per-patient history:</strong> Filter by <code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">User: patient-7829</code> to view all triage requests for this patient</li>
+                <li><strong>Prompt versioning:</strong> Filter by <code style="background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">Prompt-Id: triage-classifier-v1</code> to analyze this specific prompt's performance and costs over time</li>
+                <li><strong>Environment tracking:</strong> Separate production from staging costs</li>
+            </ul>
+
+            <p>
+                This example uses just five Helicone headers to transform a basic LLM call into a fully instrumented, production-ready operation. Check out the complete code with error handling and additional examples in the GitHub repository.
+            </p>
+
+            <!-- Dashboard Features Preview -->
+            <div style="margin: 3rem 0;">
+                <h3 style="text-align: center; color: #3b82f6; margin-bottom: 2rem;">
+                    <i class="fas fa-desktop mr-2"></i>Your Helicone Dashboard at a Glance
+                </h3>
+
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #334155; border-radius: 1rem; padding: 2rem; margin: 2rem 0;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <!-- Requests View -->
+                        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #3b82f6; border-radius: 0.75rem; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <i class="fas fa-list text-3xl text-blue-400"></i>
+                                <h4 style="color: #3b82f6; margin: 0; font-size: 1.25rem;">Requests</h4>
+                            </div>
+                            <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+                                Every API call logged with full context
+                            </p>
+                            <div style="background: rgba(0, 0, 0, 0.3); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-family: monospace; color: #cbd5e1;">
+                                <div style="margin-bottom: 0.5rem;">
+                                    <span style="color: #fbbf24;">Model:</span> gpt-4o-mini<br>
+                                    <span style="color: #fbbf24;">Tokens:</span> 150 in / 89 out<br>
+                                    <span style="color: #fbbf24;">Cost:</span> $0.004<br>
+                                    <span style="color: #fbbf24;">Latency:</span> 1,230ms<br>
+                                    <span style="color: #fbbf24;">TTFT:</span> 340ms
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Analytics -->
+                        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #10b981; border-radius: 0.75rem; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <i class="fas fa-chart-line text-3xl text-green-400"></i>
+                                <h4 style="color: #10b981; margin: 0; font-size: 1.25rem;">Cost Analytics</h4>
+                            </div>
+                            <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+                                Track spending across models and users
+                            </p>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                <div style="background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                                    <div style="color: #10b981; font-size: 1.5rem; font-weight: 700;">$247</div>
+                                    <div style="color: #94a3b8; font-size: 0.75rem;">This Month</div>
+                                </div>
+                                <div style="background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                                    <div style="color: #10b981; font-size: 1.5rem; font-weight: 700;">12.4K</div>
+                                    <div style="color: #94a3b8; font-size: 0.75rem;">Requests</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Analytics -->
+                        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #8b5cf6; border-radius: 0.75rem; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <i class="fas fa-users text-3xl text-purple-400"></i>
+                                <h4 style="color: #8b5cf6; margin: 0; font-size: 1.25rem;">User Analytics</h4>
+                            </div>
+                            <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+                                Per-user costs and consumption patterns
+                            </p>
+                            <div style="font-size: 0.75rem; color: #cbd5e1;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #334155;">
+                                    <span>user-7829</span>
+                                    <span style="color: #8b5cf6; font-weight: 600;">$12.40</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #334155;">
+                                    <span>user-4521</span>
+                                    <span style="color: #8b5cf6; font-weight: 600;">$8.20</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                                    <span>user-9103</span>
+                                    <span style="color: #8b5cf6; font-weight: 600;">$5.60</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters & Search -->
+                        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #06b6d4; border-radius: 0.75rem; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <i class="fas fa-filter text-3xl text-cyan-400"></i>
+                                <h4 style="color: #06b6d4; margin: 0; font-size: 1.25rem;">Powerful Filters</h4>
+                            </div>
+                            <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+                                Query by any dimension with HQL
+                            </p>
+                            <div style="background: rgba(6, 182, 212, 0.1); padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="font-size: 0.75rem; color: #06b6d4;">
+                                    <i class="fas fa-search mr-1"></i>
+                                    Filter by model, status, date...
+                                </div>
+                            </div>
+                            <div style="background: rgba(6, 182, 212, 0.1); padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="font-size: 0.75rem; color: #06b6d4;">
+                                    <i class="fas fa-tag mr-1"></i>
+                                    Custom property filtering
+                                </div>
+                            </div>
+                            <div style="background: rgba(6, 182, 212, 0.1); padding: 0.5rem; border-radius: 0.5rem;">
+                                <div style="font-size: 0.75rem; color: #06b6d4;">
+                                    <i class="fas fa-code mr-1"></i>
+                                    HQL for complex queries
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sessions & Tracing -->
+                        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #f59e0b; border-radius: 0.75rem; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <i class="fas fa-project-diagram text-3xl text-yellow-400"></i>
+                                <h4 style="color: #f59e0b; margin: 0; font-size: 1.25rem;">Session Tracing</h4>
+                            </div>
+                            <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+                                Visualize multi-step agent workflows
+                            </p>
+                            <div style="font-family: monospace; font-size: 0.75rem; color: #cbd5e1; line-height: 1.8;">
+                                <div><span style="color: #f59e0b;">└─</span> /triage</div>
+                                <div style="margin-left: 1rem;"><span style="color: #f59e0b;">├─</span> /triage/intake</div>
+                                <div style="margin-left: 1rem;"><span style="color: #f59e0b;">├─</span> /triage/analysis</div>
+                                <div style="margin-left: 1rem;"><span style="color: #f59e0b;">└─</span> /triage/report</div>
+                            </div>
+                        </div>
+
+                        <!-- Alerts & Monitoring -->
+                        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #ef4444; border-radius: 0.75rem; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <i class="fas fa-bell text-3xl text-red-400"></i>
+                                <h4 style="color: #ef4444; margin: 0; font-size: 1.25rem;">Alerts</h4>
+                            </div>
+                            <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1rem;">
+                                Get notified before problems escalate
+                            </p>
+                            <div style="font-size: 0.75rem; color: #cbd5e1;">
+                                <div style="margin-bottom: 0.5rem;">
+                                    <i class="fas fa-exclamation-triangle mr-1" style="color: #fbbf24;"></i>
+                                    Cost threshold: $500/day
+                                </div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <i class="fas fa-exclamation-triangle mr-1" style="color: #fbbf24;"></i>
+                                    Error rate: >5%
+                                </div>
+                                <div>
+                                    <i class="fas fa-exclamation-triangle mr-1" style="color: #fbbf24;"></i>
+                                    Latency spike: >3s avg
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #334155;">
+                        <p style="color: #94a3b8; font-size: 0.9rem; margin: 0;">
+                            <i class="fas fa-info-circle mr-2" style="color: #3b82f6;"></i>
+                            All this data is automatically captured from your 2-line code change
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-flag-checkered mr-3"></i>What's Next in Part 3</h2>
+
+            <p>
+                With observability and control features enabled, Part 3 will take you to production readiness. We'll cover:
+            </p>
+
+            <ul>
+                <li><strong>Complete AutoGen multi-agent example:</strong> Build a healthcare AI system with triage → specialist agents → report generator. Full Helicone instrumentation with session tracing and cost attribution.</li>
+                <li><strong>LLM security:</strong> Integrate Meta Llama Guard (14-category threat detection) and Prompt Guard headers to protect against prompt injection, jailbreaks, and adversarial inputs.</li>
+                <li><strong>Self-hosting with Docker:</strong> Deploy your own Helicone instance on-premise with PostgreSQL, ClickHouse, and the web UI. Complete docker-compose.yml included.</li>
+                <li><strong>Cost optimization strategies:</strong> Five proven techniques (caching, model routing, prompt optimization, batch processing, smart rate limiting) with estimated savings.</li>
+                <li><strong>Helicone vs LangSmith vs Langfuse:</strong> Feature comparison, pricing analysis, and when to choose each platform.</li>
+            </ul>
+
+            <p>
+                The complete series takes you from zero to production-ready LLM operations in 3 parts. See you in Part 3!
+            </p>
+
+            <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 1rem; padding: 2rem; margin: 3rem 0; text-align: center;">
+                <h3 style="color: #3b82f6; margin-bottom: 1rem;">
+                    <i class="fas fa-rocket mr-2"></i>Start Building Today
+                </h3>
+                <p style="margin-bottom: 1.5rem; color: #cbd5e1;">
+                    Clone the repository, add your Helicone API key, and run any example in under 60 seconds.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://github.com/zubairashfaque/helicone-examples" target="_blank" class="btn-primary">
+                        <i class="fab fa-github mr-2"></i>View GitHub Repository
+                    </a>
+                    <a href="https://helicone.ai/dashboard" target="_blank" class="btn-primary" style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);">
+                        <i class="fas fa-chart-line mr-2"></i>Open Helicone Dashboard
+                    </a>
+                </div>
+            </div>
+
+        </article>
+
+        <div class="section-divider"></div>
+
+        <!-- Footer Navigation -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #334155;">
+            <a href="helicone-getting-started.html" class="text-slate-400 hover:text-cyan-400 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Part 1: Getting Started
+            </a>
+            <a href="helicone-production-best-practices.html" class="text-slate-400 hover:text-cyan-400 transition">
+                Part 3: Production Best Practices<i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
