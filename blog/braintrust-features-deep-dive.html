@@ -203,6 +203,241 @@
                 font-size: 1rem;
             }
         }
+
+        /* Taxonomy Tree Styles */
+        .taxonomy-tree {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .tree-root {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .tree-node {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .root-node {
+            border: 3px solid #06b6d4;
+            padding: 1.5rem 2rem;
+        }
+
+        .tree-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        .tree-branches {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .tree-branch {
+            position: relative;
+        }
+
+        .category-node {
+            margin-bottom: 1rem;
+        }
+
+        .tree-leaves {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tree-leaf {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid #06b6d4;
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .tree-leaf:hover {
+            background: rgba(6, 182, 212, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Trace Visualization Styles */
+        .trace-visualization {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .trace-container {
+            margin-top: 1rem;
+        }
+
+        .trace-span {
+            border-left: 3px solid #06b6d4;
+            padding: 0.75rem 0 0.75rem 1rem;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .trace-span::before {
+            content: '';
+            position: absolute;
+            left: -3px;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            background: #06b6d4;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+
+        .root-span {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .child-span {
+            border-color: #8b5cf6;
+        }
+
+        .child-span::before {
+            background: #8b5cf6;
+        }
+
+        .grandchild-span {
+            border-color: #3b82f6;
+        }
+
+        .grandchild-span::before {
+            background: #3b82f6;
+        }
+
+        .span-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .span-name {
+            font-weight: 600;
+            color: #e2e8f0;
+            flex: 1;
+        }
+
+        .span-duration {
+            color: #06b6d4;
+            font-weight: 600;
+        }
+
+        .span-cost {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .span-metrics {
+            margin-left: 1.5rem;
+            margin-top: 0.25rem;
+        }
+
+        /* AI Proxy Architecture Styles */
+        .ai-proxy-architecture {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .architecture-layer {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        .architecture-node {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .architecture-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        .proxy-node {
+            border-color: #8b5cf6;
+        }
+
+        .proxy-features {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .feature-badge {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid #8b5cf6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+        }
+
+        .architecture-arrow {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .provider-node {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .provider-node:hover {
+            border-color: #06b6d4;
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .provider-node span {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
     </style>
 </head>
 <body>
@@ -414,6 +649,65 @@
                 <p class="text-gray-400 text-sm">
                     <strong>Analogy:</strong> Think of tracing like following a package through a shipping network. The trace is the complete journey from sender to recipient (order ID #12345). Spans are individual steps: picked up from sender (5 min), loaded on truck (2 min), sorted at facility (15 min), delivered to recipient (10 min). Each step has a timestamp, location, and parent-child relationship showing the sequence.
                 </p>
+            </div>
+
+            <!-- Trace Hierarchy Visualization -->
+            <div class="trace-visualization">
+                <h4 class="text-xl font-bold text-cyan-400 mb-4">
+                    <i class="fas fa-project-diagram mr-2"></i>Example Trace Hierarchy
+                </h4>
+
+                <div class="trace-container">
+                    <!-- Root Trace -->
+                    <div class="trace-span root-span">
+                        <div class="span-header">
+                            <i class="fas fa-layer-group mr-2"></i>
+                            <span class="span-name">RAG Query: "What is Braintrust?"</span>
+                            <span class="span-duration">2,340ms</span>
+                            <span class="span-cost">$0.012</span>
+                        </div>
+
+                        <!-- Child Span 1 -->
+                        <div class="trace-span child-span ml-8">
+                            <div class="span-header">
+                                <i class="fas fa-search mr-2 text-violet-400"></i>
+                                <span class="span-name">retrieve_context()</span>
+                                <span class="span-duration">320ms</span>
+                            </div>
+                        </div>
+
+                        <!-- Child Span 2 with nested grandchild -->
+                        <div class="trace-span child-span ml-8">
+                            <div class="span-header">
+                                <i class="fas fa-robot mr-2 text-blue-400"></i>
+                                <span class="span-name">llm_call() - gpt-4o</span>
+                                <span class="span-duration">1,800ms</span>
+                                <span class="span-cost">$0.008</span>
+                            </div>
+                            <div class="span-metrics text-xs text-gray-400 ml-6">
+                                450 input tokens, 200 output tokens, TTFT: 340ms
+                            </div>
+
+                            <!-- Grandchild Span -->
+                            <div class="trace-span grandchild-span ml-16">
+                                <div class="span-header">
+                                    <i class="fas fa-stream mr-2 text-cyan-400"></i>
+                                    <span class="span-name">streaming_response()</span>
+                                    <span class="span-duration">1,460ms</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Child Span 3 -->
+                        <div class="trace-span child-span ml-8">
+                            <div class="span-header">
+                                <i class="fas fa-cog mr-2 text-green-400"></i>
+                                <span class="span-name">post_process()</span>
+                                <span class="span-duration">220ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="concept-card">
@@ -680,6 +974,87 @@
             <p>
                 The autoevals library provides 25+ pre-built scorers organized into five categories. Use this reference to choose appropriate scorers for your evaluation use case.
             </p>
+
+            <!-- Scorer Taxonomy Tree Diagram -->
+            <div class="taxonomy-tree">
+                <h4 class="text-2xl font-bold text-cyan-400 mb-6">
+                    <i class="fas fa-sitemap mr-3"></i>Complete Scorer Taxonomy
+                </h4>
+
+                <!-- Root Node -->
+                <div class="tree-root">
+                    <div class="tree-node root-node">
+                        <i class="fas fa-star text-3xl text-cyan-400"></i>
+                        <h5 class="text-xl font-bold mt-2">Braintrust Scorers</h5>
+                        <p class="text-sm text-slate-400">25+ Pre-built + Custom</p>
+                    </div>
+                </div>
+
+                <!-- Category Branches -->
+                <div class="tree-branches">
+                    <!-- Branch 1: Heuristic Scorers -->
+                    <div class="tree-branch">
+                        <div class="tree-node category-node" style="background: rgba(139, 92, 246, 0.2); border: 2px solid #8b5cf6;">
+                            <i class="fas fa-calculator mr-2 text-violet-400"></i>
+                            <h5 class="font-bold">Heuristic Scorers</h5>
+                            <p class="text-xs text-slate-400">Fast, deterministic</p>
+                        </div>
+                        <div class="tree-leaves">
+                            <div class="tree-leaf">ExactMatch</div>
+                            <div class="tree-leaf">Levenshtein</div>
+                            <div class="tree-leaf">NumericDiff</div>
+                            <div class="tree-leaf">JSONDiff</div>
+                        </div>
+                    </div>
+
+                    <!-- Branch 2: LLM-Based Scorers -->
+                    <div class="tree-branch">
+                        <div class="tree-node category-node" style="background: rgba(59, 130, 246, 0.2); border: 2px solid #3b82f6;">
+                            <i class="fas fa-robot mr-2 text-blue-400"></i>
+                            <h5 class="font-bold">LLM-Based Scorers</h5>
+                            <p class="text-xs text-slate-400">Semantic understanding</p>
+                        </div>
+                        <div class="tree-leaves">
+                            <div class="tree-leaf">Factuality</div>
+                            <div class="tree-leaf">ClosedQA</div>
+                            <div class="tree-leaf">Battle</div>
+                            <div class="tree-leaf">Humor</div>
+                            <div class="tree-leaf">Security</div>
+                            <div class="tree-leaf">Summarization</div>
+                        </div>
+                    </div>
+
+                    <!-- Branch 3: RAGAS Scorers -->
+                    <div class="tree-branch">
+                        <div class="tree-node category-node" style="background: rgba(217, 70, 239, 0.2); border: 2px solid #d946ef;">
+                            <i class="fas fa-search mr-2 text-fuchsia-400"></i>
+                            <h5 class="font-bold">RAGAS Scorers</h5>
+                            <p class="text-xs text-slate-400">RAG-specific metrics</p>
+                        </div>
+                        <div class="tree-leaves">
+                            <div class="tree-leaf">Faithfulness</div>
+                            <div class="tree-leaf">AnswerRelevancy</div>
+                            <div class="tree-leaf">ContextPrecision</div>
+                            <div class="tree-leaf">ContextRecall</div>
+                            <div class="tree-leaf">AnswerCorrectness</div>
+                        </div>
+                    </div>
+
+                    <!-- Branch 4: Custom Scorers -->
+                    <div class="tree-branch">
+                        <div class="tree-node category-node" style="background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981;">
+                            <i class="fas fa-code mr-2 text-green-400"></i>
+                            <h5 class="font-bold">Custom Scorers</h5>
+                            <p class="text-xs text-slate-400">Your domain logic</p>
+                        </div>
+                        <div class="tree-leaves">
+                            <div class="tree-leaf">Inline Functions</div>
+                            <div class="tree-leaf">Persistent Scorers</div>
+                            <div class="tree-leaf">Multi-Score</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <table>
                 <thead>
@@ -1249,6 +1624,82 @@ print(f"Version v1.1 added {len(new_cases)} new test cases")
                         <i class="fas fa-times text-orange-400 text-2xl mb-2"></i>
                         <p class="text-sm font-semibold text-slate-300">xAI</p>
                         <p class="text-xs text-slate-500">Grok 2</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Proxy Multi-Model Architecture -->
+            <div class="ai-proxy-architecture">
+                <h4 class="text-xl font-bold text-cyan-400 mb-6">
+                    <i class="fas fa-project-diagram mr-2"></i>AI Proxy Architecture
+                </h4>
+
+                <!-- Client Side -->
+                <div class="architecture-layer">
+                    <div class="architecture-node client-node">
+                        <i class="fas fa-laptop-code text-4xl text-cyan-400"></i>
+                        <h5 class="font-bold text-lg mt-2">Your Application</h5>
+                        <p class="text-sm text-slate-400 mt-1">OpenAI client with custom base_url</p>
+                    </div>
+                </div>
+
+                <div class="architecture-arrow">
+                    <i class="fas fa-arrow-down text-3xl text-cyan-400"></i>
+                </div>
+
+                <!-- Proxy Layer -->
+                <div class="architecture-layer">
+                    <div class="architecture-node proxy-node">
+                        <i class="fas fa-server text-5xl text-violet-400"></i>
+                        <h5 class="font-bold text-lg mt-2">Braintrust AI Proxy</h5>
+                        <div class="proxy-features">
+                            <span class="feature-badge">Caching</span>
+                            <span class="feature-badge">Logging</span>
+                            <span class="feature-badge">Load Balancing</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">api.braintrust.dev/v1/proxy</p>
+                    </div>
+                </div>
+
+                <div class="architecture-arrow">
+                    <i class="fas fa-arrow-down text-3xl text-cyan-400"></i>
+                </div>
+
+                <!-- Provider Fan-Out -->
+                <div class="architecture-layer">
+                    <div class="provider-grid">
+                        <div class="provider-node">
+                            <i class="fas fa-brain text-2xl text-green-400"></i>
+                            <span>OpenAI</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-robot text-2xl text-blue-400"></i>
+                            <span>Anthropic</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-gem text-2xl text-red-400"></i>
+                            <span>Google</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-cloud text-2xl text-yellow-400"></i>
+                            <span>AWS Bedrock</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-star text-2xl text-purple-400"></i>
+                            <span>Mistral</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-cube text-2xl text-pink-400"></i>
+                            <span>Together</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-bolt text-2xl text-orange-400"></i>
+                            <span>Groq</span>
+                        </div>
+                        <div class="provider-node">
+                            <i class="fas fa-rocket text-2xl text-cyan-400"></i>
+                            <span>xAI</span>
+                        </div>
                     </div>
                 </div>
             </div>

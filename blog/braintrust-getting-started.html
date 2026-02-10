@@ -177,6 +177,113 @@
                 font-size: 1rem;
             }
         }
+
+        /* Comparison Table Styles */
+        .comparison-table-container {
+            margin: 2rem 0;
+        }
+
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .before-column {
+            border: 2px solid #ef4444;
+        }
+
+        .after-column {
+            border: 2px solid #10b981;
+        }
+
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .comparison-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .comparison-list li:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .before-column .comparison-list li::before {
+            content: '✗';
+            color: #ef4444;
+        }
+
+        .after-column .comparison-list li::before {
+            content: '✓';
+            color: #10b981;
+        }
+
+        /* Architecture Diagram Styles */
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 180px;
+            transition: all 0.3s ease;
+        }
+
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Terminal Output Styles */
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -257,6 +364,40 @@
                 This guide provides a systematic blueprint for evaluation-first AI development. You will learn Braintrust's core architecture, run your first experiment comparing model outputs, and understand how the same scoring framework works identically in development experiments and production monitoring. No hand-waving about "tune your parameters." Instead, you get working code, complete examples, and a clear mental model for building AI systems that ship on data instead of vibes.
             </p>
 
+            <!-- Before/After Comparison Table -->
+            <div class="comparison-table-container">
+                <div class="grid md:grid-cols-2 gap-6 my-8">
+                    <div class="comparison-column before-column">
+                        <h4 class="text-xl font-bold text-red-400 mb-4">
+                            <i class="fas fa-times-circle mr-2"></i>Without Braintrust<br/>
+                            <span class="text-base font-normal text-slate-400">(Shipping on Vibes)</span>
+                        </h4>
+                        <ul class="comparison-list">
+                            <li>Manual spot-checking (sample 3-5 cases)</li>
+                            <li>No historical record of changes</li>
+                            <li>Regressions discovered by users</li>
+                            <li>No systematic comparison</li>
+                            <li>Quality measured by gut feeling</li>
+                            <li>Feedback loop: weeks</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-column after-column">
+                        <h4 class="text-xl font-bold text-green-400 mb-4">
+                            <i class="fas fa-check-circle mr-2"></i>With Braintrust<br/>
+                            <span class="text-base font-normal text-slate-400">(Systematic Evaluation)</span>
+                        </h4>
+                        <ul class="comparison-list">
+                            <li>Test all cases (100% coverage)</li>
+                            <li>Full experiment history & diffs</li>
+                            <li>Regressions caught in CI/CD</li>
+                            <li>Automatic comparison & metrics</li>
+                            <li>Quality measured by scorers</li>
+                            <li>Feedback loop: minutes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <div class="highlight-box" style="background: rgba(139, 92, 246, 0.1); border-left: 4px solid #8b5cf6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem;">
                 <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
                 Braintrust's evaluation-first architecture means the same scoring framework works identically in development and production. The <code>Factuality</code> scorer you use in offline experiments runs automatically on production traces. This design creates a tight feedback loop that gets tighter with use.
@@ -313,6 +454,32 @@
             <p>
                 To solve this, we first need to <strong>lucify</strong> the key technical terms that form Braintrust's evaluation architecture. Understanding these terms clearly will make the blueprint implementation much easier to follow.
             </p>
+
+            <!-- Three-Component Model Architecture -->
+            <div class="architecture-diagram">
+                <h3 class="text-2xl font-bold text-violet-400 mb-6 text-center">
+                    <i class="fas fa-cube mr-2"></i>The Three-Component Eval Model
+                </h3>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                    <div class="architecture-box" style="background: rgba(139, 92, 246, 0.2); border: 2px solid #8b5cf6;">
+                        <i class="fas fa-database text-4xl text-violet-400"></i>
+                        <h4 class="text-xl font-bold mt-3 mb-2">1. DATA</h4>
+                        <p class="text-sm text-slate-300">Test cases with input/expected</p>
+                    </div>
+                    <div class="text-violet-400 text-3xl font-bold">→</div>
+                    <div class="architecture-box" style="background: rgba(6, 182, 212, 0.2); border: 2px solid #06b6d4;">
+                        <i class="fas fa-cog text-4xl text-cyan-400"></i>
+                        <h4 class="text-xl font-bold mt-3 mb-2">2. TASK</h4>
+                        <p class="text-sm text-slate-300">Your AI function</p>
+                    </div>
+                    <div class="text-cyan-400 text-3xl font-bold">→</div>
+                    <div class="architecture-box" style="background: rgba(59, 130, 246, 0.2); border: 2px solid #3b82f6;">
+                        <i class="fas fa-chart-line text-4xl text-blue-400"></i>
+                        <h4 class="text-xl font-bold mt-3 mb-2">3. SCORES</h4>
+                        <p class="text-sm text-slate-300">Quality metrics (0.0-1.0)</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="concept-card">
                 <h4 class="text-xl font-semibold text-violet-400 mb-3">
@@ -667,6 +834,32 @@ Eval(
 #   100.00% (+50.00%) 'LevenshteinScorer' score (1 improvement, 0 regressions)
 #
 # Braintrust automatically compares against previous run and highlights improvements</code></pre>
+            </div>
+
+            <!-- Terminal Output Mockups -->
+            <div class="my-6">
+                <div class="terminal-output">
+                    <div class="terminal-header">
+                        First Run Output
+                    </div>
+                    <pre class="terminal-body">=========================SUMMARY=========================
+<span class="text-yellow-400">50.00%</span> 'LevenshteinScorer' score
+0.00s duration
+
+See results at https://braintrust.dev/app/Say%20Hi%20Bot/p/experiments</pre>
+                </div>
+
+                <div class="terminal-output mt-4">
+                    <div class="terminal-header">
+                        Second Run Output (After Improvement)
+                    </div>
+                    <pre class="terminal-body">=========================SUMMARY=========================
+<span class="text-green-400">100.00% (+50.00%)</span> 'LevenshteinScorer' score
+<span class="text-green-400">(1 improvement, 0 regressions)</span>
+0.00s (+0.00%) 'duration'
+
+See results at https://braintrust.dev/app/Say%20Hi%20Bot/p/experiments</pre>
+                </div>
             </div>
 
             <p>

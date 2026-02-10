@@ -177,6 +177,337 @@
             font-size: 2rem;
             margin: 0.5rem 0;
         }
+
+        /* Cost-Quality Chart Styles */
+        .cost-quality-chart {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #d946ef;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+        }
+
+        .chart-axes {
+            position: relative;
+            height: 100%;
+        }
+
+        .chart-plot-area {
+            position: relative;
+            width: calc(100% - 60px);
+            height: calc(100% - 60px);
+            margin-left: 60px;
+            margin-bottom: 60px;
+            background: rgba(30, 41, 59, 0.3);
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+        }
+
+        .data-point {
+            position: absolute;
+            transform: translate(-50%, 50%);
+            cursor: pointer;
+        }
+
+        .point-marker {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .data-point:hover .point-marker {
+            transform: scale(1.5);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        }
+
+        .point-label {
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #06b6d4;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            text-align: center;
+        }
+
+        .data-point:hover .point-label {
+            opacity: 1;
+        }
+
+        .pareto-frontier {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .frontier-label {
+            position: absolute;
+            top: 20%;
+            right: 10%;
+            color: #06b6d4;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .y-axis {
+            position: absolute;
+            left: 0;
+            height: calc(100% - 60px);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding-right: 0.5rem;
+        }
+
+        .axis-ticks-vertical {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            margin-top: 1.5rem;
+        }
+
+        .x-axis {
+            position: absolute;
+            bottom: 0;
+            left: 60px;
+            width: calc(100% - 60px);
+        }
+
+        .axis-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .axis-tick {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .axis-ticks {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .axis-ticks-vertical span {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* CI/CD Pipeline Styles */
+        .cicd-pipeline {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #d946ef;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .pipeline-stage {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-stage:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+
+        .pipeline-arrow {
+            font-size: 2rem;
+            color: #06b6d4;
+            font-weight: bold;
+        }
+
+        .decision-stage {
+            border-color: #eab308;
+        }
+
+        .success-stage {
+            border-color: #10b981;
+        }
+
+        .failure-stage {
+            border-color: #ef4444;
+            margin-top: 1rem;
+        }
+
+        .decision-paths {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .path-yes, .path-no {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* A/B Test Results Styles */
+        .ab-test-results {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #d946ef;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .results-table {
+            overflow-x: auto;
+        }
+
+        .results-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        .results-table th {
+            background: rgba(217, 70, 239, 0.2);
+            color: #d946ef;
+            font-weight: 600;
+        }
+
+        .improvement-row {
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .regression-row {
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .neutral-row {
+            background: rgba(100, 116, 139, 0.05);
+        }
+
+        .score {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .change {
+            font-weight: 600;
+        }
+
+        .change.positive {
+            color: #10b981;
+        }
+
+        .change.negative {
+            color: #ef4444;
+        }
+
+        .change.neutral {
+            color: #94a3b8;
+        }
+
+        .change-detail {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .summary-row {
+            background: rgba(217, 70, 239, 0.15);
+            font-weight: 600;
+        }
+
+        .decision-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid #10b981;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .decision-box h5 {
+            color: #10b981;
+            font-size: 1.25rem;
+            margin: 1rem 0 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+
+            .pipeline-flow {
+                flex-direction: column;
+            }
+
+            .pipeline-arrow {
+                transform: rotate(90deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1016,6 +1347,69 @@ Eval(
             The <code>@traced</code> decorator automatically creates spans for each agent step, building a complete hierarchy in the Braintrust trace viewer. This lets you see exactly which agent consumed the most tokens, where latency bottlenecks occurred, and which step caused quality issues if scores are low.
         </p>
 
+        <!-- CI/CD Pipeline Diagram -->
+        <div class="cicd-pipeline">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-6">
+                <i class="fas fa-code-branch mr-2"></i>CI/CD Evaluation Pipeline
+            </h4>
+
+            <div class="pipeline-flow">
+                <div class="pipeline-stage stage-1" style="border-color: #3b82f6;">
+                    <i class="fas fa-code text-3xl text-blue-400"></i>
+                    <h5 class="font-bold mt-2">1. Code Change</h5>
+                    <p class="text-sm text-slate-400 mt-1">Developer commits</p>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-stage stage-2" style="border-color: #8b5cf6;">
+                    <i class="fas fa-play-circle text-3xl text-violet-400"></i>
+                    <h5 class="font-bold mt-2">2. Trigger CI</h5>
+                    <p class="text-sm text-slate-400 mt-1">GitHub Actions starts</p>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-stage stage-3" style="border-color: #06b6d4;">
+                    <i class="fas fa-flask text-3xl text-cyan-400"></i>
+                    <h5 class="font-bold mt-2">3. Run Evals</h5>
+                    <p class="text-sm text-slate-400 mt-1">braintrust eval *.py</p>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-stage decision-stage">
+                    <i class="fas fa-code-branch text-3xl text-yellow-400"></i>
+                    <h5 class="font-bold mt-2">4. Quality Gate</h5>
+                    <p class="text-sm text-slate-400 mt-1">Score > threshold?</p>
+                    <div class="decision-paths">
+                        <div class="path-yes">
+                            <i class="fas fa-check-circle text-green-400"></i>
+                            <span class="text-sm">Pass</span>
+                        </div>
+                        <div class="path-no">
+                            <i class="fas fa-times-circle text-red-400"></i>
+                            <span class="text-sm">Fail</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4 mt-6">
+                <div class="pipeline-stage success-stage">
+                    <i class="fas fa-check-circle text-3xl text-green-400"></i>
+                    <h5 class="font-bold mt-2 text-green-400">5. Merge Allowed</h5>
+                    <p class="text-sm text-slate-400 mt-1">Deploy to production</p>
+                </div>
+
+                <div class="pipeline-stage failure-stage">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-400"></i>
+                    <h5 class="font-bold mt-2 text-red-400">5. Merge Blocked</h5>
+                    <p class="text-sm text-slate-400 mt-1">Fix regressions first</p>
+                </div>
+            </div>
+        </div>
+
         <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
             <i class="fas fa-code-branch mr-2"></i>Step 3: CI/CD Integration with GitHub Actions
         </h3>
@@ -1230,6 +1624,77 @@ Eval(
 # This creates a chain: v1 → v2 → v3 → ... where each iteration beats the last</code></pre>
         </div>
 
+        <!-- A/B Test Results Diff Table -->
+        <div class="ab-test-results">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-6">
+                <i class="fas fa-balance-scale mr-2"></i>A/B Test Results: Prompt Variants
+            </h4>
+
+            <div class="results-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Case Input</th>
+                            <th>Variant A<br/><span class="text-sm font-normal">(Original)</span></th>
+                            <th>Variant B<br/><span class="text-sm font-normal">(Improved)</span></th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="improvement-row">
+                            <td>Classify sentiment: "I love this product!"</td>
+                            <td class="score">0.85</td>
+                            <td class="score">0.95</td>
+                            <td class="change positive">
+                                <i class="fas fa-arrow-up mr-1"></i>+0.10 (+12%)
+                            </td>
+                        </tr>
+                        <tr class="improvement-row">
+                            <td>Classify sentiment: "Not bad, could be better"</td>
+                            <td class="score">0.70</td>
+                            <td class="score">0.90</td>
+                            <td class="change positive">
+                                <i class="fas fa-arrow-up mr-1"></i>+0.20 (+29%)
+                            </td>
+                        </tr>
+                        <tr class="neutral-row">
+                            <td>Classify sentiment: "It's okay"</td>
+                            <td class="score">0.80</td>
+                            <td class="score">0.80</td>
+                            <td class="change neutral">
+                                <i class="fas fa-minus mr-1"></i>±0.00
+                            </td>
+                        </tr>
+                        <tr class="regression-row">
+                            <td>Classify sentiment: "Terrible experience"</td>
+                            <td class="score">0.95</td>
+                            <td class="score">0.85</td>
+                            <td class="change negative">
+                                <i class="fas fa-arrow-down mr-1"></i>-0.10 (-11%)
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="summary-row">
+                            <td><strong>Aggregate Score</strong></td>
+                            <td class="score"><strong>0.825</strong></td>
+                            <td class="score"><strong>0.875</strong></td>
+                            <td class="change positive">
+                                <i class="fas fa-arrow-up mr-1"></i><strong>+0.05 (+6%)</strong>
+                                <div class="change-detail">3 improvements, 1 regression</div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="decision-box">
+                <i class="fas fa-thumbs-up text-3xl text-green-400"></i>
+                <h5>Recommendation: Deploy Variant B</h5>
+                <p class="text-slate-400">Net improvement of +6% with acceptable trade-offs</p>
+            </div>
+        </div>
+
         <p class="mt-4">
             In the Braintrust dashboard, select both experiments and click "Compare". You will see:
         </p>
@@ -1310,6 +1775,99 @@ Eval(
         <p class="mt-6">
             Cost optimization strategies in Braintrust:
         </p>
+
+        <!-- Cost vs Quality Trade-off Chart -->
+        <div class="cost-quality-chart">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-6">
+                <i class="fas fa-chart-scatter mr-2"></i>Cost vs Quality Trade-off
+            </h4>
+
+            <div class="chart-container">
+                <div class="chart-axes">
+                    <div class="y-axis">
+                        <span class="axis-label">Quality Score</span>
+                        <div class="axis-line"></div>
+                        <div class="axis-ticks-vertical">
+                            <span>1.0</span>
+                            <span>0.8</span>
+                            <span>0.6</span>
+                            <span>0.4</span>
+                            <span>0.2</span>
+                        </div>
+                    </div>
+
+                    <div class="chart-plot-area">
+                        <!-- High quality, high cost -->
+                        <div class="data-point high-quality high-cost" style="left: 80%; bottom: 90%;">
+                            <div class="point-marker bg-red-500"></div>
+                            <div class="point-label">GPT-4o<br/>$0.015/1K</div>
+                        </div>
+
+                        <!-- Good quality, medium cost -->
+                        <div class="data-point good-quality medium-cost" style="left: 50%; bottom: 75%;">
+                            <div class="point-marker bg-blue-500"></div>
+                            <div class="point-label">Claude Sonnet<br/>$0.003/1K</div>
+                        </div>
+
+                        <div class="data-point good-quality medium-cost" style="left: 45%; bottom: 72%;">
+                            <div class="point-marker bg-purple-500"></div>
+                            <div class="point-label">Gemini Flash<br/>$0.002/1K</div>
+                        </div>
+
+                        <!-- Medium quality, low cost -->
+                        <div class="data-point medium-quality low-cost" style="left: 25%; bottom: 55%;">
+                            <div class="point-marker bg-green-500"></div>
+                            <div class="point-label">GPT-4o-mini<br/>$0.0004/1K</div>
+                        </div>
+
+                        <!-- Lower quality, very low cost -->
+                        <div class="data-point lower-quality very-low-cost" style="left: 10%; bottom: 40%;">
+                            <div class="point-marker bg-yellow-500"></div>
+                            <div class="point-label">Llama 3.1<br/>$0.0001/1K</div>
+                        </div>
+
+                        <!-- Pareto frontier line -->
+                        <svg class="pareto-frontier" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path d="M 10,60 Q 30,45 50,25 T 80,10" stroke="#06b6d4" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                        </svg>
+
+                        <div class="frontier-label">
+                            <i class="fas fa-star mr-1"></i>Pareto Frontier
+                        </div>
+                    </div>
+
+                    <div class="x-axis">
+                        <div class="axis-line"></div>
+                        <span class="axis-label">Cost per 1K Tokens (USD)</span>
+                        <div class="axis-ticks">
+                            <span>$0</span>
+                            <span>$0.005</span>
+                            <span>$0.010</span>
+                            <span>$0.015</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-marker bg-red-500"></div>
+                    <span>Premium (highest quality)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker bg-blue-500"></div>
+                    <span>Balanced (good quality, reasonable cost)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker bg-green-500"></div>
+                    <span>Economical (solid quality, low cost)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker bg-yellow-500"></div>
+                    <span>Budget (acceptable quality, minimal cost)</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Cost Optimization Diagram -->
         <div class="architecture-diagram">
