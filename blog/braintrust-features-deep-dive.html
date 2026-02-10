@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Braintrust Features Deep Dive — From Scoring to Production Monitoring | Zubair Ashfaque</title>
+    <meta name="description" content="Master the complete Braintrust feature set: 25+ pre-built scorers, custom scoring logic, dataset versioning, production tracing, prompt management, and the AI Proxy for multi-model access.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="assets/blog-styles.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #06b6d4;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+        }
+
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #06b6d4, transparent);
+            margin: 3rem 0;
+        }
+
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #06b6d4;
+        }
+
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #3b82f6;
+        }
+
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        article li {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .breadcrumb a {
+            color: #06b6d4;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #3b82f6;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #475569;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: #1e293b;
+            color: #06b6d4;
+            font-weight: 600;
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #334155;
+        }
+
+        td {
+            padding: 0.75rem;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+            }
+
+            article p, article ul, article ol {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-cyan-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>Braintrust Features Deep Dive</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Braintrust Features Deep Dive — From Scoring to Production Monitoring
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                Master the complete Braintrust feature set: 25+ pre-built scorers, custom scoring logic, dataset versioning, production tracing, prompt management, and the AI Proxy for multi-model access.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>February 10, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>17 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Braintrust</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">LLM Observability</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Autoevals</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">Prompt Engineering</span>
+                <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm">AI Proxy</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                You have run your first Braintrust evaluation. You understand the Data/Task/Scores model. You have seen how diff mode quantifies improvements and regressions across experiments. But here is the challenge: moving from 5 test cases to 500 test cases introduces feature complexity that most teams are not prepared for. The evaluation infrastructure that worked for your proof of concept breaks down when you need comprehensive scoring taxonomies, dataset version control, production trace analysis, and multi-model orchestration.
+            </p>
+
+            <p>
+                The problem is feature explosion. When you scale evaluation to production, you suddenly need answers to questions like "How do I score outputs when there is no single correct answer?", "How do I version datasets so I can reproduce experiments from three months ago?", "How do I trace nested LLM calls through my RAG pipeline?", "How do I deploy prompts to staging versus production without changing code?", and "How do I access Claude, Gemini, and Llama through the same client interface?" These are not edge cases. These are the blocking issues that prevent teams from moving evaluation-first architectures from development to production.
+            </p>
+
+            <p>
+                This matters because context is everything in production AI systems. You cannot systematically improve what you cannot systematically measure. The questions this article answers are:
+            </p>
+
+            <ul class="list-disc">
+                <li>"How do I choose between heuristic scorers, LLM-as-judge scorers, and custom code scorers for my specific use case?"</li>
+                <li>"What is the complete Braintrust scoring taxonomy and when should I use each type?"</li>
+                <li>"How do I create datasets programmatically, version them properly, and generate them from production logs?"</li>
+                <li>"How do I trace multi-step LLM workflows with nested spans and compute automatic metrics like TTFT and cost?"</li>
+                <li>"How do I deploy prompts with environment-based versioning and use the AI Proxy to access 100+ models through a single interface?"</li>
+            </ul>
+
+            <p>
+                This guide provides a systematic blueprint for production-grade Braintrust features. You will learn the complete scoring taxonomy with 25+ pre-built scorers organized by category, the dataset lifecycle from creation to reconciliation, the logging and tracing architecture with span hierarchies, prompt management from playground to production, the AI Proxy for multi-provider access with edge caching, and framework integrations covering LangChain, LlamaIndex, CrewAI, and agent workflows. By the end, you will have the feature knowledge to build evaluation infrastructure that scales from prototype to production.
+            </p>
+
+            <div class="highlight-box" style="background: rgba(6, 182, 212, 0.1); border-left: 4px solid #06b6d4; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+                Braintrust's feature architecture is unified by the evaluation-first philosophy. The same scorers work in offline experiments and online production monitoring. Datasets are versioned automatically and can be generated from production logs with one click. The AI Proxy is open-source (MIT) and self-hostable. Every feature feeds back into the eval loop.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is that scaling from basic evaluations to production-grade AI systems requires mastering a complex feature taxonomy spanning scoring functions, dataset management, production observability, prompt versioning, and multi-model orchestration, where each component has hidden complexity that trips up even experienced teams.
+            </p>
+
+            <p>
+                When you start with Braintrust, you use simple scorers like ExactMatch on inline test data with a single LLM call. This works for prototypes. But production systems introduce cascading complexity. Your outputs might have multiple valid correct answers, requiring semantic similarity scorers instead of exact matching. Your test data grows to hundreds of cases that need versioning so you can reproduce experiments. Your application makes nested LLM calls (retrieve context, then generate response, then fact-check) that need full trace hierarchies to debug. Your prompts need to be tested in staging before production deployment. And you need to A/B test across OpenAI, Anthropic, and Google models without rewriting your codebase.
+            </p>
+
+            <p>
+                This complexity explosion manifests in three painful ways. First, teams hit scorer limitations where ExactMatch produces 0% scores on semantically correct outputs, but they do not know about the 25+ other scorers available or how to write custom ones. Second, dataset chaos emerges where test cases are scattered across files, experiments cannot be reproduced because data changed, and production logs never feed back into evaluation datasets. Third, production blindness occurs where LLM calls in staging work perfectly but production traces show mysterious failures, with no visibility into which span in a multi-step pipeline caused the issue.
+            </p>
+
+            <p>
+                What is needed is comprehensive feature mastery that connects scoring, datasets, tracing, prompts, and model access into a unified evaluation workflow. This is what separates teams that ship on vibes from teams that ship on data.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let's <strong>lucify</strong> this concept using an analogy that captures the feature complexity challenge.
+            </p>
+
+            <p>
+                Imagine you are a restaurant chef who starts by cooking meals at home for your family. You use a basic recipe (heuristic scoring like ExactMatch), cook one dish at a time (single test case), taste it yourself (manual evaluation), and make adjustments for next time (iteration without records). This works fine for family dinners. Your "scoring" is simple: did everyone enjoy it or not?
+            </p>
+
+            <p>
+                Now imagine opening a commercial restaurant serving 200 customers per night. Suddenly you need a sophisticated grading rubric for consistency (three types of scorers: taste, presentation, portion size). You need a recipe book that versions every dish with ingredient measurements (dataset versioning). You need a kitchen workflow that tracks timing for appetizers, entrees, and desserts in parallel (trace and span hierarchy). You need a system for deploying new menu items to test with focus groups before going live (prompt staging environments). And you need reliable suppliers for multiple ingredient sources with consistent quality (AI Proxy accessing multiple LLM providers).
+            </p>
+
+            <p>
+                The home cooking approach does not scale to restaurant operations just like basic Eval() does not scale to production without mastering the full feature set. You need the scoring taxonomy to measure quality across dimensions (heuristic exact matching, LLM-based factuality judges, custom business logic). You need dataset infrastructure to version test cases and reconcile them with production data. You need tracing to understand complex multi-step workflows. You need prompt management to safely deploy changes. And you need the AI Proxy to access multiple model providers through one interface with caching and load balancing.
+            </p>
+
+            <p>
+                The analogy breaks down in one way: scaling restaurant operations takes months of hiring and training. Scaling Braintrust features takes hours of configuration. The infrastructure already exists. You just need to know which features to use and when.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                To solve this, we first need to <strong>lucify</strong> the key technical terms that define Braintrust's production feature set.
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-flask mr-2"></i>Pre-built Scorers
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> Ready-to-use scoring functions from the Braintrust autoevals library that measure output quality across common dimensions. The library provides 25+ scorers organized into five categories: heuristic (ExactMatch, Levenshtein, NumericDiff), LLM-based (Factuality, ClosedQA, Battle, Humor, Security, Summarization), embedding (EmbeddingSimilarity), RAGAS (Faithfulness, AnswerRelevancy, ContextPrecision, AnswerCorrectness), and statistical (BLEU). All scorers output values between 0.0 and 1.0.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You are building a medical Q&A system. Use Factuality to check if answers are factually correct, ClosedQA to verify the question was answered, and Faithfulness (from RAGAS) to ensure the answer is grounded in retrieved context. These three pre-built scorers comprehensively measure quality without writing custom code.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of pre-built scorers like measuring cups in cooking. You could estimate "about a cup of flour" by eye (manual evaluation), but using the standard 1-cup measuring tool (pre-built scorer) gives consistent, reproducible results every time. The autoevals library is your set of standard measuring tools for common quality dimensions.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-code mr-2"></i>Custom Scorers
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> User-defined scoring functions that measure domain-specific quality dimensions not covered by pre-built scorers. Custom scorers come in two forms: inline functions (defined directly in your eval code, return <code>{name, score}</code>) and persistent scorers (created via <code>project.scorers.create()</code>, deployed via <code>npx braintrust push</code>, reusable across projects). Both follow the same signature: <code>function(input, output, expected) → {name: string, score: 0.0-1.0}</code>.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You have a classification task with four valid categories: EMERGENCY, URGENT, STANDARD, LOW-PRIORITY. Write a custom scorer that returns 1.0 if the output is in this set and 0.0 otherwise. This catches format violations that pre-built scorers would miss.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of custom scorers like creating your own recipe scoring rubric for a cooking competition. Standard criteria (taste, presentation) are pre-built scorers. But if you are judging "authenticity to regional cuisine" or "creative use of local ingredients," you need custom criteria specific to your competition theme.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-gavel mr-2"></i>LLM-as-Judge
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A scoring approach where an LLM evaluates another LLM's output against quality criteria defined in a prompt template. Braintrust's LLM-as-judge scorers support template variables (<code>{{input}}</code>, <code>{{output}}</code>, <code>{{expected}}</code>), chain-of-thought reasoning (<code>useCot: true</code>), and choice-to-score mappings (A=1.0, B=0.5, C=0.0). This enables nuanced evaluation for subjective criteria like tone, creativity, or factual consistency where heuristic scoring fails.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You want to score "helpfulness" of customer support responses. An LLM judge reads the customer question, your chatbot's response, and evaluates using criteria like "Does it directly address the question?", "Is the tone empathetic?", "Are next steps clear?". It returns a score based on how well these criteria are met.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of LLM-as-judge like hiring a professional critic to review restaurant meals instead of just using a thermometer (heuristic scoring). The thermometer tells you if the steak is cooked to 135°F (objective fact), but the critic evaluates whether the flavor profile is balanced and the presentation is elegant (subjective quality).
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-database mr-2"></i>Datasets
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> Braintrust-managed collections of test cases consisting of three fields: input (what you pass to your task), expected (the correct or reference output), and metadata (key-value pairs for filtering and analysis). Datasets support three creation methods (programmatic via <code>initDataset()</code>, CSV/JSON upload in UI, one-click generation from production logs), automatic versioning (every change creates a new version), and reconciliation (philosophy of continuously updating datasets from production data rather than maintaining static golden sets).
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You create a "Medical Q&A" dataset with 100 test cases. You tag metadata like <code>{specialty: "cardiology", difficulty: "expert"}</code>. When you run evals, you filter to test only cardiology questions. After deploying to production, you identify 10 failing cases from logs and add them to the dataset with one click. The dataset now has version 1.1 with 110 cases.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of datasets like a test bank for student exams. You start with 100 questions (version 1.0). Students take the exam, and you identify 10 questions that confused everyone. You add those 10 to the bank (version 1.1) so future students practice on realistic, challenging questions. The test bank continuously improves based on real student performance (production logs).
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-project-diagram mr-2"></i>Tracing
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The process of capturing and organizing LLM application events into hierarchical structures where a trace represents a complete user interaction and spans are individual operations within that trace. Braintrust provides SDK wrappers (<code>wrapOpenAI()</code>, <code>wrapAnthropic()</code>, <code>wrapGemini()</code>) that automatically capture duration, time-to-first-token (TTFT), input/output tokens, and estimated cost for LLM calls. The <code>@traced</code> decorator creates custom spans for non-LLM operations, enabling full pipeline visibility.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> A user asks "What are Q4 earnings?" Your RAG system creates a trace with three spans: retrieval (320ms, found 3 docs), LLM call (1800ms, 450 input tokens, $0.008), post-processing (220ms). Each span shows inputs, outputs, duration, and parent-child relationships. You can see that 77% of latency comes from the LLM call.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of tracing like following a package through a shipping network. The trace is the complete journey from sender to recipient (order ID #12345). Spans are individual steps: picked up from sender (5 min), loaded on truck (2 min), sorted at facility (15 min), delivered to recipient (10 min). Each step has a timestamp, location, and parent-child relationship showing the sequence.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-file-code mr-2"></i>Prompt Management
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A system for creating, versioning, testing, and deploying prompts separately from code. Braintrust prompts are created via SDK (<code>project.prompts.create()</code>), support Mustache and Nunjucks templating for dynamic variables, are deployed via CLI (<code>npx braintrust push</code>), and can be environment-scoped (dev, staging, production) with version pinning. Runtime usage supports direct invocation by slug or loading and building with parameters. This enables non-technical team members to iterate prompts in the Playground without code changes.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You create a prompt "customer-support-v1" with template <code>"You are a helpful assistant. User question: {{question}}"</code>. You test it in the Playground against 50 test cases. After confirming quality, you deploy to staging with <code>npx braintrust push</code>. Your production code calls <code>project.prompts.invoke("customer-support-v1", {question: user_input})</code>. You can update the prompt without touching code.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of prompt management like a restaurant menu versioning system. Chefs create new dishes (prompts) in the test kitchen (Playground), test them with focus groups (dataset evaluation), then deploy to the weekend special menu (staging) before adding to the main menu (production). Customers always get the latest approved version without the chef rewriting recipes in the kitchen mid-service.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                    <i class="fas fa-network-wired mr-2"></i>AI Proxy
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> Braintrust's open-source (MIT license) OpenAI-compatible gateway that provides unified access to 100+ models from OpenAI, Anthropic, Google, AWS Bedrock, Mistral, Together, Groq, xAI, and more. Hosted at <code>api.braintrust.dev/v1/proxy</code> or self-hostable (Vercel, Cloudflare, Lambda, Express). Key features include edge caching with sub-100ms responses (three modes: auto, always, never), automatic logging via <code>x-bt-parent</code> header, load balancing across API keys, and native Anthropic + Gemini protocol support. Use the same OpenAI client code to access any model by changing the base URL.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You initialize <code>OpenAI(base_url="https://api.braintrust.dev/v1/proxy", api_key=BRAINTRUST_API_KEY)</code>. Now you can call GPT-4o with <code>model="gpt-4o"</code>, Claude with <code>model="claude-sonnet-4-5"</code>, or Gemini with <code>model="gemini-2.0-flash"</code> using the exact same client. The proxy handles protocol translation, caching, and logging automatically.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of the AI Proxy like a universal power adapter for international travel. Instead of carrying separate chargers for US, EU, and UK outlets (separate SDKs for OpenAI, Anthropic, Google), you have one adapter (AI Proxy) that plugs into any outlet (model provider) and delivers power (LLM responses) through the same interface. Plus it caches recent queries like a battery backup.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                Now, let's <strong>make the blueprint</strong> for mastering production-grade Braintrust features across scoring, datasets, tracing, prompts, and model access.
+            </p>
+
+            <h3><i class="fas fa-clipboard-list mr-2"></i>The Eight-Step Feature Mastery Blueprint</h3>
+
+            <div class="blueprint-box">
+                <p class="text-lg font-semibold text-cyan-300 mb-4">Overview: From Basic Evals to Production-Grade Infrastructure</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step One: Master the Scoring Taxonomy — Heuristic, LLM, and Custom Scorers</p>
+                        <p>
+                            Start by understanding all three scorer types and when to use each. Heuristic scorers (ExactMatch, Levenshtein, NumericDiff, JSONDiff) are deterministic, fast, and work when outputs have objective correct answers. LLM-based scorers (Factuality, ClosedQA, Battle, Humor, Security, Summarization) use GPT-4o as a judge for subjective quality criteria where correctness is nuanced. Custom scorers (inline functions or persistent via <code>project.scorers.create()</code>) measure domain-specific requirements like format validation or business rule compliance. Use multiple scorers simultaneously to capture different quality dimensions. Explore the complete autoevals library organized by category: heuristic (4 scorers), LLM-based (8 scorers), embedding (1), RAGAS (8 scorers), statistical (1). Choose scorers based on whether you have objective ground truth (heuristic), need semantic evaluation (LLM or embedding), or measure RAG-specific quality (RAGAS).
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Two: Write Custom Scorers — Inline Functions and Persistent Scorers</p>
+                        <p>
+                            When pre-built scorers do not cover your use case, write custom scoring logic. For quick prototypes, define inline functions that take <code>(input, output, expected)</code> and return <code>{name: "ScorerName", score: 0.0-1.0}</code>. For reusable scorers shared across projects, use <code>project.scorers.create()</code> to define persistent scorers that are deployed via <code>npx braintrust push</code> and callable by name in any evaluation. Custom scorers enable domain-specific validation like "output must be one of N categories", "response length between 50-200 words", or "JSON structure matches schema". Return <code>null</code> to skip scoring for specific test cases. Use <code>__pass_threshold</code> metadata to define minimum acceptable scores. A single scorer can return multiple score objects to measure different dimensions simultaneously.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Three: Create and Version Datasets — Programmatic, CSV Upload, and Production Logs</p>
+                        <p>
+                            Build datasets with three fields per test case: input (required, what you pass to task), expected (optional, reference output), metadata (optional, key-value pairs for filtering). Create datasets programmatically via <code>initDataset()</code> in Python/TypeScript, upload CSV/JSON files via the Braintrust UI with automatic schema detection, or generate datasets from production logs with one-click "Add to dataset" on failing traces. Every dataset modification creates a new version automatically. Reference specific versions in evals via <code>initDataset("dataset-name", {version: "v1.2"})</code> to ensure reproducibility. Use metadata tags like <code>{category: "medical", difficulty: "hard"}</code> to filter subsets during evaluation. Braintrust's dataset philosophy is reconciliation over static golden sets: continuously update datasets from production feedback rather than maintaining frozen test cases that diverge from reality.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Four: Implement Logging and Tracing — Wrap LLM Calls and Create Custom Spans</p>
+                        <p>
+                            Instrument your application with Braintrust tracing to capture production LLM calls and custom operations. Start with <code>logger = initLogger(projectName="YourApp")</code>. Wrap LLM clients with <code>wrapOpenAI(client)</code>, <code>wrapAnthropic(client)</code>, or <code>wrapGemini(client)</code> to automatically capture duration, TTFT, input/output tokens, and cost for every LLM call. For custom operations (retrieval, post-processing, external API calls), use the <code>@traced</code> decorator in Python or <code>wrapTraced()</code> in TypeScript to create child spans with custom metrics. Nest spans by calling <code>currentSpan()</code> to access the active span across function boundaries. For cross-process tracing, use <code>span.export()</code> to serialize span context and pass it to another service. Capture user feedback with <code>logFeedback()</code>. All logging is async and non-blocking by default; set <code>asyncFlush: false</code> for serverless environments where you need synchronous flush before function termination.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Five: Configure Prompt Management — Playground Testing and Environment Deployment</p>
+                        <p>
+                            Decouple prompts from code to enable rapid iteration and environment-based deployment. Create prompts via SDK with <code>project.prompts.create({slug: "prompt-name", prompt: {messages: [...]}})</code>. Use Mustache or Nunjucks templating for dynamic variables: <code>"Hello {{name}}"</code>. Test prompts in the Playground UI with side-by-side comparison of variants, run prompts against datasets to measure quality before deployment, and share Playground links with stakeholders for collaborative review. Deploy prompts with <code>npx braintrust push</code> after validation. In production code, invoke prompts by slug: <code>project.prompts.invoke("prompt-name", {name: "Alice"})</code> or load and build: <code>prompt = loadPrompt("prompt-name"); result = client.chat(prompt.build({name: "Alice"}))</code>. Use environment-based deployment to test in dev/staging before production. Version pin critical prompts: <code>project.prompts.invoke("prompt-name", version="v1.5")</code>. Prompts support tool/function calling and MCP attachment for agent workflows.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Six: Integrate the AI Proxy — Multi-Model Access with Caching and Logging</p>
+                        <p>
+                            Use Braintrust's AI Proxy to access 100+ models through a single OpenAI-compatible interface. Initialize your client with <code>base_url="https://api.braintrust.dev/v1/proxy"</code> and <code>api_key=BRAINTRUST_API_KEY</code>. Now call any model: <code>model="gpt-4o"</code> for OpenAI, <code>model="claude-sonnet-4-5"</code> for Anthropic, <code>model="gemini-2.0-flash"</code> for Google, <code>model="llama-3.3-70b"</code> for Meta via Together/Groq. Configure caching with <code>x-bt-use-cache</code> header: <code>auto</code> (caches when temperature=0 or seed set), <code>always</code> (cache everything), <code>never</code> (bypass cache). Cached responses return in sub-100ms with AES-GCM encryption. Set cache TTL with <code>x-bt-cache-ttl</code> in seconds. Enable logging to your Braintrust project with <code>x-bt-parent: project_name:YourProject</code> header. For load balancing, provide multiple API keys via environment variables. The proxy is self-hostable (Vercel, Cloudflare, Lambda, Express, Docker) for teams needing on-premise deployment. Native Anthropic and Gemini protocol support means you can use their official SDKs with the proxy as a drop-in replacement.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Seven: Add Framework Integrations — LangChain, LlamaIndex, CrewAI, and Agent SDKs</p>
+                        <p>
+                            Braintrust integrates with 15+ LLM frameworks and agent platforms. For direct SDK wrapping, use the 15 provider-specific wrappers (<code>wrapOpenAI</code>, <code>wrapAnthropic</code>, <code>wrapGemini</code>, etc.). For LangChain, add <code>BraintrustCallbackHandler</code> to capture all chains and LLM calls automatically. For LlamaIndex, configure OpenTelemetry with Braintrust as the OTLP endpoint to trace query engines and agents. For CrewAI, set up OpenTelemetry with <code>BraintrustSpanProcessor</code> to trace multi-agent workflows with per-agent cost attribution. For Vercel AI SDK, use <code>wrapAISDK</code> to trace streaming responses. Agent framework integrations include OpenAI Agents SDK, Claude Agent SDK, AutoGen, Google ADK, and more. Developer tool integrations via MCP server enable tracing from Claude Code, Cursor, and VS Code. Each integration preserves the full span hierarchy and automatic metrics (duration, tokens, cost) while requiring minimal code changes.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-cyan-400">Step Eight: Enable Online Scoring — Production Monitoring with Same Scorers</p>
+                        <p>
+                            Configure online scoring to automatically evaluate production traces using the same scorers from offline experiments. In the Braintrust UI, navigate to Online Scoring configuration for your project. Select which scorers to run (any combination of pre-built, custom, or LLM-as-judge). Set sampling rate (10% means score 1 in 10 traces to balance cost and coverage). Define SQL filters to target specific traces (e.g., <code>metadata->>'environment' = 'production'</code>). Target specific spans if you have nested traces. When a traced span ends in production, Braintrust automatically triggers the configured scorers, logs the results, and displays quality metrics in Monitor dashboards. View p50/p95/p99 latency, token usage over time, costs by model, and quality scores from online evaluation. Use Loop AI assistant to analyze patterns in logs with natural language queries. Set threshold-based alerts to notify when quality scores drop below acceptable levels. Online scoring enables continuous quality monitoring without separate offline evaluation cycles.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-project-diagram mr-2"></i>Visual Flow: The Complete Feature Pipeline</h3>
+
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-cyan-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-3">
+                        🔄 Production-Grade Braintrust Pipeline
+                    </h4>
+                    <p class="text-slate-400">
+                        From scoring taxonomy to production monitoring in eight steps
+                    </p>
+                </div>
+
+                <!-- Row 1: Scoring + Custom Scorers + Datasets -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-violet-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📊</span>
+                                </div>
+                                <span class="text-violet-300 font-semibold">Scoring Taxonomy</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Master 25+ scorers: heuristic, LLM, RAGAS</p>
+                        </div>
+                    </div>
+                    <div class="text-violet-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔧</span>
+                                </div>
+                                <span class="text-cyan-300 font-semibold">Custom Scorers</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Inline functions + persistent scorers</p>
+                        </div>
+                    </div>
+                    <div class="text-cyan-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-blue-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📋</span>
+                                </div>
+                                <span class="text-blue-300 font-semibold">Datasets</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Create, version, reconcile from logs</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-blue-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 2: Tracing + Prompt Management -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-indigo-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔍</span>
+                                </div>
+                                <span class="text-indigo-300 font-semibold">Logging & Tracing</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Wrap LLM calls, @traced decorator</p>
+                        </div>
+                    </div>
+                    <div class="text-indigo-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-fuchsia-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-fuchsia-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📝</span>
+                                </div>
+                                <span class="text-fuchsia-300 font-semibold">Prompt Management</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Playground → staging → production</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-fuchsia-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 3: AI Proxy + Framework Integration + Online Scoring -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-pink-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🌐</span>
+                                </div>
+                                <span class="text-pink-300 font-semibold">AI Proxy</span>
+                            </div>
+                            <p class="text-sm text-slate-400">100+ models, edge caching, MIT license</p>
+                        </div>
+                    </div>
+                    <div class="text-pink-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-rose-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-rose-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔗</span>
+                                </div>
+                                <span class="text-rose-300 font-semibold">Framework Integration</span>
+                            </div>
+                            <p class="text-sm text-slate-400">LangChain, LlamaIndex, CrewAI, agents</p>
+                        </div>
+                    </div>
+                    <div class="text-rose-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-green-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📡</span>
+                                </div>
+                                <span class="text-green-300 font-semibold">Online Scoring</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Production monitoring, same scorers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-green-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 4: Final -->
+                <div class="flex justify-center">
+                    <div class="max-w-2xl w-full">
+                        <div class="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-3 border-green-500 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-green-500/30 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">✅</span>
+                                </div>
+                                <span class="text-green-300 font-semibold text-lg">Production-Ready Evaluation Infrastructure</span>
+                            </div>
+                            <p class="text-slate-300">Complete feature mastery: scoring, datasets, tracing, prompts, multi-model access, continuous monitoring</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                This blueprint provides a systematic path from basic evaluations to production-grade infrastructure. Each step builds on the previous, and mastering all eight creates an evaluation platform that scales from prototype to enterprise deployment.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+            <p>
+                <strong>Let's carry out the blueprint plan.</strong> I will provide complete examples for each feature category: custom scorers with inline and persistent patterns, dataset creation programmatically and from production logs, logger setup with wrappers and custom spans, prompt deployment with environment-based versioning, and AI Proxy configuration for multi-model access with caching.
+            </p>
+
+            <h3><i class="fas fa-calculator mr-2"></i>Complete Autoevals Library Reference</h3>
+
+            <p>
+                The autoevals library provides 25+ pre-built scorers organized into five categories. Use this reference to choose appropriate scorers for your evaluation use case.
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Scorer Name</th>
+                        <th>What It Measures</th>
+                        <th>Requires Expected?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="4"><strong>Heuristic</strong></td>
+                        <td>ExactMatch</td>
+                        <td>Exact string equality (case-insensitive)</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>LevenshteinScorer</td>
+                        <td>String similarity via edit distance</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>NumericDiff</td>
+                        <td>Numerical value difference</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>JSONDiff</td>
+                        <td>JSON structure comparison</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="8"><strong>LLM-based</strong></td>
+                        <td>Factuality</td>
+                        <td>Factual correctness of output</td>
+                        <td>No (uses input as context)</td>
+                    </tr>
+                    <tr>
+                        <td>ClosedQA</td>
+                        <td>Whether output answers the question</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Battle</td>
+                        <td>Which of two outputs is better</td>
+                        <td>Comparison mode</td>
+                    </tr>
+                    <tr>
+                        <td>Humor</td>
+                        <td>How funny the output is</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Security</td>
+                        <td>Whether output contains security issues</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Summarization</td>
+                        <td>Quality of summary vs source</td>
+                        <td>Yes (source text)</td>
+                    </tr>
+                    <tr>
+                        <td>Translation</td>
+                        <td>Translation quality</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Moderation</td>
+                        <td>Content safety and appropriateness</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Embedding</strong></td>
+                        <td>EmbeddingSimilarity</td>
+                        <td>Semantic similarity via embeddings</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="8"><strong>RAGAS (RAG-specific)</strong></td>
+                        <td>Faithfulness</td>
+                        <td>Answer grounded in retrieved context</td>
+                        <td>Yes (context)</td>
+                    </tr>
+                    <tr>
+                        <td>AnswerRelevancy</td>
+                        <td>Answer relevance to query</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>ContextPrecision</td>
+                        <td>Retrieved context relevance to query</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>ContextRecall</td>
+                        <td>Context coverage of ground truth</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>AnswerCorrectness</td>
+                        <td>Factual + semantic correctness</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>ContextRelevancy</td>
+                        <td>Context relevance without redundancy</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>AnswerSimilarity</td>
+                        <td>Semantic similarity to expected answer</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td>AspectCritique</td>
+                        <td>Answer quality on specific aspect</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Statistical</strong></td>
+                        <td>BLEU</td>
+                        <td>N-gram overlap (translation quality)</td>
+                        <td>Yes</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3><i class="fas fa-code-branch mr-2"></i>Example 1: Custom Scorers (Inline and Persistent)</h3>
+
+            <p>
+                This example demonstrates both inline custom scorers (defined directly in eval code) and persistent scorers (deployed via SDK and reusable across projects).
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">from braintrust import Eval, init
+from autoevals import Factuality
+
+# Inline custom scorer: checks if output is a valid triage category
+def valid_category_scorer(input, output, expected):
+    """
+    Custom scorer that validates output format.
+    Returns 1.0 if output is one of four allowed categories, 0.0 otherwise.
+    """
+    valid_categories = {"EMERGENCY", "URGENT", "STANDARD", "LOW-PRIORITY"}
+    return {
+        "name": "ValidCategory",
+        "score": 1.0 if output.strip() in valid_categories else 0.0,
+    }
+
+# Inline custom scorer: checks response length
+def appropriate_length_scorer(input, output, expected):
+    """
+    Custom scorer that validates response length is between 50-200 words.
+    Returns score from 0.0-1.0 based on how close to ideal range.
+    """
+    word_count = len(output.split())
+
+    if 50 <= word_count <= 200:
+        score = 1.0
+    elif word_count < 50:
+        # Too short: score decreases as it gets shorter
+        score = max(0.0, word_count / 50)
+    else:
+        # Too long: score decreases as it gets longer
+        score = max(0.0, 1.0 - ((word_count - 200) / 200))
+
+    return {
+        "name": "AppropriateLength",
+        "score": score,
+    }
+
+# Using inline custom scorers in evaluation
+Eval(
+    "Healthcare Triage with Custom Scorers",
+    data=lambda: [
+        {
+            "input": "Severe chest pain, shortness of breath",
+            "expected": "EMERGENCY",
+        },
+        # ... more test cases
+    ],
+    task=your_task_function,
+    scores=[
+        Factuality,                   # Pre-built LLM-based scorer
+        valid_category_scorer,        # Custom inline scorer
+        appropriate_length_scorer,    # Custom inline scorer
+    ],
+)
+
+# -------------------------------------------------------------------
+# PERSISTENT SCORERS: Deployed via SDK and reusable across projects
+# -------------------------------------------------------------------
+
+# Initialize Braintrust client
+client = init(project="YourProject")
+project = client.get_project("YourProject")
+
+# Create a persistent custom scorer
+project.scorers.create(
+    name="ValidTriageCategory",
+    slug="valid-triage-category",
+    scorer={
+        "type": "code",
+        "code": """
+def scorer(input, output, expected):
+    valid_categories = {"EMERGENCY", "URGENT", "STANDARD", "LOW-PRIORITY"}
+    return {
+        "name": "ValidTriageCategory",
+        "score": 1.0 if output.strip() in valid_categories else 0.0,
+    }
+""",
+    },
+)
+
+# Deploy the scorer
+# Run: npx braintrust push
+
+# Use the persistent scorer in any evaluation by referencing its slug
+Eval(
+    "Using Persistent Scorer",
+    data=your_data,
+    task=your_task,
+    scores=[
+        "valid-triage-category",  # Reference persistent scorer by slug
+        Factuality,                # Mix with pre-built scorers
+    ],
+)
+
+# Custom scorer that returns multiple scores from a single function
+def comprehensive_quality_scorer(input, output, expected):
+    """
+    Single scorer that returns multiple quality dimensions.
+    Useful for evaluating several related criteria at once.
+    """
+    return [
+        {
+            "name": "Conciseness",
+            "score": 1.0 if len(output.split()) < 100 else 0.5,
+        },
+        {
+            "name": "Politeness",
+            "score": 1.0 if any(word in output.lower() for word in ["please", "thank", "appreciate"]) else 0.3,
+        },
+        {
+            "name": "Clarity",
+            "score": 0.9,  # Could use more sophisticated logic here
+        },
+    ]
+
+# Scorer that skips certain test cases by returning null
+def conditional_scorer(input, output, expected):
+    """
+    Returns null to skip scoring for test cases that don't meet criteria.
+    Useful when certain scorers only apply to subsets of your data.
+    """
+    # Only score outputs that are questions
+    if not output.strip().endswith("?"):
+        return None  # Skip this test case
+
+    return {
+        "name": "QuestionQuality",
+        "score": 1.0,
+    }
+
+# Scorer with __pass_threshold metadata to define minimum acceptable score
+def strict_accuracy_scorer(input, output, expected):
+    """
+    Uses __pass_threshold metadata to fail test cases below 0.9.
+    Useful for critical quality requirements.
+    """
+    score = 1.0 if output == expected else 0.0
+
+    return {
+        "name": "StrictAccuracy",
+        "score": score,
+        "__pass_threshold": 0.9,  # Mark test case as failed if score < 0.9
+    }</code></pre>
+            </div>
+
+            <p>
+                Custom scorers enable domain-specific validation that pre-built scorers cannot provide. Use inline scorers for quick prototypes and project-specific logic. Use persistent scorers for organization-wide quality standards that should be reusable across multiple projects and teams.
+            </p>
+
+            <h3><i class="fas fa-database mr-2"></i>Example 2: Dataset Creation and Versioning</h3>
+
+            <p>
+                This example shows three methods for creating datasets: programmatic via SDK, CSV upload, and one-click generation from production logs. All methods support automatic versioning.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">from braintrust import init, initDataset
+import pandas as pd
+
+# -------------------------------------------------------------------
+# METHOD 1: Programmatic Dataset Creation via SDK
+# -------------------------------------------------------------------
+
+# Initialize client
+client = init(project="Medical QA")
+
+# Create a dataset programmatically
+dataset = client.init_dataset(
+    name="cardiology-qa",
+    description="Cardiology domain questions for medical AI evaluation",
+)
+
+# Insert test cases with metadata
+test_cases = [
+    {
+        "input": "What are the symptoms of myocardial infarction?",
+        "expected": "Chest pain, shortness of breath, sweating, nausea, pain radiating to left arm or jaw",
+        "metadata": {
+            "specialty": "cardiology",
+            "difficulty": "beginner",
+            "question_type": "symptoms",
+        },
+    },
+    {
+        "input": "Explain the mechanism of action for beta blockers in heart failure.",
+        "expected": "Beta blockers reduce heart rate and contractility, decreasing myocardial oxygen demand...",
+        "metadata": {
+            "specialty": "cardiology",
+            "difficulty": "advanced",
+            "question_type": "mechanism",
+        },
+    },
+    {
+        "input": "What is the normal ejection fraction range?",
+        "expected": "Normal ejection fraction is 55-70%",
+        "metadata": {
+            "specialty": "cardiology",
+            "difficulty": "beginner",
+            "question_type": "normal_values",
+        },
+    },
+]
+
+# Insert all test cases
+for case in test_cases:
+    dataset.insert(**case)
+
+# Summary after insertion
+dataset.summarize()
+
+# -------------------------------------------------------------------
+# METHOD 2: Using initDataset in Evaluations with Version Pinning
+# -------------------------------------------------------------------
+
+from braintrust import Eval
+
+# Reference dataset in evaluation (uses latest version by default)
+Eval(
+    "Medical QA Evaluation",
+    data=initDataset("cardiology-qa"),  # Latest version
+    task=your_medical_qa_function,
+    scores=[Factuality, ClosedQA],
+)
+
+# Reference specific version for reproducibility
+Eval(
+    "Medical QA Evaluation - Reproduce v1.2",
+    data=initDataset("cardiology-qa", version="v1.2"),  # Pin to v1.2
+    task=your_medical_qa_function,
+    scores=[Factuality, ClosedQA],
+)
+
+# Filter dataset by metadata
+Eval(
+    "Beginner Questions Only",
+    data=initDataset("cardiology-qa").filter(
+        lambda case: case["metadata"]["difficulty"] == "beginner"
+    ),
+    task=your_medical_qa_function,
+    scores=[Factuality],
+)
+
+# -------------------------------------------------------------------
+# METHOD 3: CSV Upload via SDK (for bulk import)
+# -------------------------------------------------------------------
+
+# Create CSV with required columns: input, expected, metadata
+df = pd.DataFrame([
+    {
+        "input": "What is atrial fibrillation?",
+        "expected": "Irregular heart rhythm originating in the atria",
+        "specialty": "cardiology",
+        "difficulty": "beginner",
+    },
+    {
+        "input": "How does warfarin work?",
+        "expected": "Warfarin inhibits vitamin K-dependent clotting factors",
+        "specialty": "cardiology",
+        "difficulty": "intermediate",
+    },
+])
+
+# Save to CSV
+df.to_csv("cardiology_additional_cases.csv", index=False)
+
+# Upload via Braintrust UI:
+# 1. Navigate to Datasets tab
+# 2. Click "Upload CSV/JSON"
+# 3. Select cardiology_additional_cases.csv
+# 4. Braintrust auto-detects schema and imports
+# 5. New version created automatically
+
+# -------------------------------------------------------------------
+# DATASET RECONCILIATION: Adding Production Logs to Datasets
+# -------------------------------------------------------------------
+
+# In the Braintrust UI:
+# 1. Navigate to Logs/Traces
+# 2. Filter to failing cases: score < 0.5
+# 3. Select failing traces
+# 4. Click "Add to dataset"
+# 5. Choose dataset: "cardiology-qa"
+# 6. Braintrust creates new version (e.g., v1.3) with production cases added
+#
+# This creates a feedback loop: production failures → dataset → eval → improve
+
+# -------------------------------------------------------------------
+# DATASET VERSIONING: Viewing and Managing Versions
+# -------------------------------------------------------------------
+
+# List all versions of a dataset
+dataset = client.init_dataset("cardiology-qa")
+versions = dataset.fetch_versions()
+
+print("Dataset versions:")
+for version in versions:
+    print(f"  {version['version']}: {version['created_at']} - {version['num_records']} records")
+
+# Compare two versions to see what changed
+v1_cases = initDataset("cardiology-qa", version="v1.0").fetch()
+v2_cases = initDataset("cardiology-qa", version="v1.1").fetch()
+
+new_cases = [case for case in v2_cases if case not in v1_cases]
+print(f"Version v1.1 added {len(new_cases)} new test cases")
+
+# -------------------------------------------------------------------
+# BEST PRACTICES: Dataset Philosophy
+# -------------------------------------------------------------------
+
+# Braintrust's dataset philosophy is RECONCILIATION over static golden sets:
+#
+# ❌ Anti-pattern: Create dataset once, never update
+#    - Test cases diverge from production reality
+#    - Evals measure quality on outdated scenarios
+#    - Regressions occur in production that evals don't catch
+#
+# ✅ Best practice: Continuously update datasets from production
+#    - Filter production logs to failing cases
+#    - Add failures to datasets (automatic versioning)
+#    - Re-run evals against updated dataset
+#    - Dataset evolves to match real-world distribution
+#
+# This creates a virtuous cycle:
+# Production logs → Dataset v1.1 → Eval → Improve → Deploy → Production logs → Dataset v1.2 → ...</code></pre>
+            </div>
+
+            <p>
+                Dataset versioning is crucial for reproducibility. When you run an experiment against "cardiology-qa" today and it scores 85%, you need to be able to reproduce that exact result in three months. Version pinning ensures the same test cases are used. The reconciliation philosophy means your datasets continuously improve based on production reality rather than becoming stale.
+            </p>
+
+            <h3><i class="fas fa-network-wired mr-2"></i>AI Proxy Architecture and Multi-Model Access</h3>
+
+            <p>
+                The AI Proxy provides a unified interface to 100+ models from 8+ providers. This diagram shows the fan-out architecture with key features labeled.
+            </p>
+
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-cyan-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-3">
+                        🌐 AI Proxy Architecture
+                    </h4>
+                    <p class="text-slate-400">
+                        One client interface, 100+ models, edge caching, open-source MIT license
+                    </p>
+                </div>
+
+                <!-- Central Proxy -->
+                <div class="flex justify-center mb-8">
+                    <div class="max-w-md w-full">
+                        <div class="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-3 border-cyan-500 rounded-xl p-6 text-center">
+                            <div class="flex items-center justify-center gap-3 mb-3">
+                                <div class="w-16 h-16 bg-cyan-500/30 rounded-lg flex items-center justify-center">
+                                    <span class="text-3xl">🌐</span>
+                                </div>
+                                <div class="text-left">
+                                    <span class="text-cyan-300 font-semibold text-xl block">Braintrust AI Proxy</span>
+                                    <span class="text-slate-400 text-sm">api.braintrust.dev/v1/proxy</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 mt-4">
+                                <div class="bg-slate-700/50 rounded p-2">
+                                    <i class="fas fa-bolt text-cyan-400 mr-1"></i>
+                                    Edge caching
+                                </div>
+                                <div class="bg-slate-700/50 rounded p-2">
+                                    <i class="fas fa-balance-scale text-cyan-400 mr-1"></i>
+                                    Load balancing
+                                </div>
+                                <div class="bg-slate-700/50 rounded p-2">
+                                    <i class="fas fa-clipboard-list text-cyan-400 mr-1"></i>
+                                    Auto logging
+                                </div>
+                                <div class="bg-slate-700/50 rounded p-2">
+                                    <i class="fas fa-server text-cyan-400 mr-1"></i>
+                                    Self-hostable
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arrow down -->
+                <div class="flex justify-center mb-6">
+                    <div class="text-cyan-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Provider fan-out (2 rows of 4) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-slate-700/50 border border-cyan-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-brain text-cyan-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">OpenAI</p>
+                        <p class="text-xs text-slate-500">GPT-4o, o1</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-blue-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-robot text-blue-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">Anthropic</p>
+                        <p class="text-xs text-slate-500">Claude Sonnet, Opus</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-indigo-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-search text-indigo-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">Google</p>
+                        <p class="text-xs text-slate-500">Gemini Flash, Pro</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-violet-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-cloud text-violet-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">AWS Bedrock</p>
+                        <p class="text-xs text-slate-500">Llama, Mistral</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-fuchsia-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-wind text-fuchsia-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">Mistral</p>
+                        <p class="text-xs text-slate-500">Mistral Large</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-pink-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-network-wired text-pink-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">Together</p>
+                        <p class="text-xs text-slate-500">Llama 3.1, Qwen</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-rose-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-bolt text-rose-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">Groq</p>
+                        <p class="text-xs text-slate-500">Llama 3.3 70B</p>
+                    </div>
+                    <div class="bg-slate-700/50 border border-orange-500 rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                        <i class="fas fa-times text-orange-400 text-2xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-300">xAI</p>
+                        <p class="text-xs text-slate-500">Grok 2</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-plug mr-2"></i>Example 3: AI Proxy Setup and Multi-Model Access</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">from openai import OpenAI
+import os
+
+# -------------------------------------------------------------------
+# AI PROXY SETUP: Single client, multiple models
+# -------------------------------------------------------------------
+
+# Initialize OpenAI client pointing to Braintrust AI Proxy
+client = OpenAI(
+    base_url="https://api.braintrust.dev/v1/proxy",  # Proxy endpoint
+    api_key=os.getenv("BRAINTRUST_API_KEY"),         # Use Braintrust API key
+)
+
+# Now you can access 100+ models through the same client interface:
+
+# OpenAI models
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "What is quantum computing?"}],
+)
+print(f"GPT-4o: {response.choices[0].message.content}")
+
+# Anthropic Claude (via proxy)
+response = client.chat.completions.create(
+    model="claude-sonnet-4-5-20250929",
+    messages=[{"role": "user", "content": "What is quantum computing?"}],
+)
+print(f"Claude: {response.choices[0].message.content}")
+
+# Google Gemini (via proxy)
+response = client.chat.completions.create(
+    model="gemini-2.0-flash",
+    messages=[{"role": "user", "content": "What is quantum computing?"}],
+)
+print(f"Gemini: {response.choices[0].message.content}")
+
+# Meta Llama via Together (via proxy)
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    messages=[{"role": "user", "content": "What is quantum computing?"}],
+)
+print(f"Llama: {response.choices[0].message.content}")
+
+# -------------------------------------------------------------------
+# CACHING CONFIGURATION: Three modes for edge caching
+# -------------------------------------------------------------------
+
+# Mode 1: AUTO caching (caches when temperature=0 or seed is set)
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Explain Python decorators"}],
+    temperature=0,  # AUTO mode will cache this
+    extra_headers={
+        "x-bt-use-cache": "auto",  # Default mode
+    },
+)
+
+# Mode 2: ALWAYS cache (cache everything regardless of parameters)
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Explain Python decorators"}],
+    temperature=0.7,  # Normally wouldn't cache, but ALWAYS forces it
+    extra_headers={
+        "x-bt-use-cache": "always",
+        "x-bt-cache-ttl": 3600,  # Cache for 1 hour (in seconds)
+    },
+)
+
+# Mode 3: NEVER cache (bypass cache completely)
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "What's today's weather?"}],
+    extra_headers={
+        "x-bt-use-cache": "never",  # Skip cache for real-time data
+    },
+)
+
+# Cached responses return in sub-100ms with AES-GCM encryption
+# Cache hit indicated in response headers
+
+# -------------------------------------------------------------------
+# LOGGING TO BRAINTRUST PROJECT: Automatic trace capture
+# -------------------------------------------------------------------
+
+# Enable logging to your Braintrust project
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Explain neural networks"}],
+    extra_headers={
+        "x-bt-parent": "project_name:YourProject",  # Log to "YourProject"
+    },
+)
+
+# This LLM call now appears in your Braintrust project logs with:
+# - Full request/response
+# - Duration, TTFT, tokens, cost
+# - Model and provider
+# - Cache hit/miss status
+
+# -------------------------------------------------------------------
+# LOAD BALANCING: Multiple API keys for high availability
+# -------------------------------------------------------------------
+
+# Set environment variables with multiple keys:
+# OPENAI_API_KEY_1=sk-...
+# OPENAI_API_KEY_2=sk-...
+# OPENAI_API_KEY_3=sk-...
+#
+# AI Proxy automatically load balances across all keys
+# If one key hits rate limits, proxy routes to another
+
+# -------------------------------------------------------------------
+# SELF-HOSTING: Deploy AI Proxy in your infrastructure
+# -------------------------------------------------------------------
+
+# AI Proxy is open-source (MIT license) and self-hostable:
+#
+# Option 1: Vercel deployment
+# git clone https://github.com/braintrustdata/braintrust-proxy
+# vercel deploy
+#
+# Option 2: Cloudflare Workers
+# npm install
+# npx wrangler deploy
+#
+# Option 3: AWS Lambda
+# serverless deploy
+#
+# Option 4: Express/Node server
+# npm start
+#
+# Option 5: Docker
+# docker build -t braintrust-proxy .
+# docker run -p 3000:3000 braintrust-proxy
+#
+# All deployment options support the same features:
+# - Multi-provider access
+# - Edge caching
+# - Logging
+# - Load balancing
+
+# -------------------------------------------------------------------
+# FRAMEWORK INTEGRATION: Complete ecosystem reference
+# -------------------------------------------------------------------
+
+# The AI Proxy works with all major frameworks. Here's the complete list:
+
+# Direct SDK Wrapping (15+ providers):
+#   - OpenAI: wrapOpenAI(client)
+#   - Anthropic: wrapAnthropic(client)
+#   - Google Gemini: wrapGemini(client)
+#   - AWS Bedrock: wrapAWSClient(client)
+#   - Azure OpenAI: wrapOpenAI(client) with azure config
+#   - Mistral: wrapMistral(client)
+#   - Together: via OpenAI-compatible endpoint
+#   - Groq: via OpenAI-compatible endpoint
+#   - xAI: via OpenAI-compatible endpoint
+#   - Cohere: wrapCohere(client)
+#   - Replicate: wrapReplicate(client)
+#   - Hugging Face: wrapHuggingFace(client)
+#   - Vertex AI: wrapVertexAI(client)
+#   - Ollama: via OpenAI-compatible endpoint
+#   - LM Studio: via OpenAI-compatible endpoint
+
+# LangChain Integration:
+from langchain.callbacks import BraintrustCallbackHandler
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import LLMChain
+
+# Add callback handler to capture all LangChain operations
+handler = BraintrustCallbackHandler(project_name="YourProject")
+chain = LLMChain(llm=ChatOpenAI(), callbacks=[handler])
+
+# LlamaIndex Integration (via OpenTelemetry):
+from llama_index import ServiceContext
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry import trace
+
+# Configure OpenTelemetry to send to Braintrust
+tracer_provider = trace.TracerProvider()
+tracer_provider.add_span_processor(
+    OTLPSpanExporter(endpoint="https://api.braintrust.dev/v1/otel")
+)
+
+# CrewAI Integration (via OpenTelemetry):
+from braintrust.otel import BraintrustSpanProcessor
+from opentelemetry import trace
+
+tracer_provider = trace.TracerProvider()
+tracer_provider.add_span_processor(BraintrustSpanProcessor(project_name="YourProject"))
+
+# Vercel AI SDK:
+from braintrust import wrapAISDK
+wrapped_client = wrapAISDK(client)
+
+# This gives you tracing for:
+# - LangChain chains and agents
+# - LlamaIndex query engines
+# - CrewAI multi-agent workflows
+# - Vercel AI SDK streaming responses
+# - All with automatic span hierarchies and metrics</code></pre>
+            </div>
+
+            <h3><i class="fas fa-table mr-2"></i>Framework Integration Ecosystem Matrix</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Framework/Tool</th>
+                        <th>Integration Method</th>
+                        <th>What It Traces</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="6"><strong>AI Providers</strong></td>
+                        <td>OpenAI</td>
+                        <td>wrapOpenAI(client)</td>
+                        <td>Chat, embeddings, assistants</td>
+                    </tr>
+                    <tr>
+                        <td>Anthropic</td>
+                        <td>wrapAnthropic(client)</td>
+                        <td>Claude messages, streaming</td>
+                    </tr>
+                    <tr>
+                        <td>Google Gemini</td>
+                        <td>wrapGemini(client)</td>
+                        <td>Gemini chat, multimodal</td>
+                    </tr>
+                    <tr>
+                        <td>AWS Bedrock</td>
+                        <td>wrapAWSClient(client)</td>
+                        <td>Bedrock models (Claude, Llama, Mistral)</td>
+                    </tr>
+                    <tr>
+                        <td>Azure OpenAI</td>
+                        <td>wrapOpenAI(client) + azure config</td>
+                        <td>Azure-hosted models</td>
+                    </tr>
+                    <tr>
+                        <td>10+ others</td>
+                        <td>Provider-specific wrappers or AI Proxy</td>
+                        <td>Mistral, Together, Groq, xAI, Cohere, etc.</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="4"><strong>SDK Integrations</strong></td>
+                        <td>LangChain</td>
+                        <td>BraintrustCallbackHandler</td>
+                        <td>Chains, agents, tools, retrievers</td>
+                    </tr>
+                    <tr>
+                        <td>LlamaIndex</td>
+                        <td>OpenTelemetry (OTLP exporter)</td>
+                        <td>Query engines, agents, retrievers</td>
+                    </tr>
+                    <tr>
+                        <td>DSPy</td>
+                        <td>wrapDSPy()</td>
+                        <td>Modules, predictors, optimizers</td>
+                    </tr>
+                    <tr>
+                        <td>Vercel AI SDK</td>
+                        <td>wrapAISDK(client)</td>
+                        <td>Streaming responses, tool calls</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="5"><strong>Agent Frameworks</strong></td>
+                        <td>OpenAI Agents SDK</td>
+                        <td>Native integration</td>
+                        <td>Agent runs, tool calls, reasoning</td>
+                    </tr>
+                    <tr>
+                        <td>Claude Agent SDK</td>
+                        <td>Native integration</td>
+                        <td>Agent loops, tool use</td>
+                    </tr>
+                    <tr>
+                        <td>CrewAI</td>
+                        <td>OpenTelemetry + BraintrustSpanProcessor</td>
+                        <td>Multi-agent workflows, per-agent costs</td>
+                    </tr>
+                    <tr>
+                        <td>AutoGen</td>
+                        <td>OpenTelemetry</td>
+                        <td>Multi-agent conversations</td>
+                    </tr>
+                    <tr>
+                        <td>Google ADK</td>
+                        <td>Native integration</td>
+                        <td>ADK agents and tools</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong>Developer Tools</strong></td>
+                        <td>Claude Code</td>
+                        <td>MCP server</td>
+                        <td>AI coding assistant sessions</td>
+                    </tr>
+                    <tr>
+                        <td>Cursor</td>
+                        <td>MCP server</td>
+                        <td>AI coding sessions</td>
+                    </tr>
+                    <tr>
+                        <td>VS Code</td>
+                        <td>MCP server</td>
+                        <td>Copilot-style interactions</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-flag-checkered mr-3"></i>What's Next</h2>
+
+            <p>
+                You now have comprehensive knowledge of Braintrust's production feature set. You understand the complete scoring taxonomy with 25+ pre-built scorers and how to write custom ones for domain-specific requirements. You can create datasets programmatically, version them automatically, and generate them from production logs with the reconciliation philosophy. You know how to instrument applications with logging and tracing using SDK wrappers and custom spans. You can manage prompts through the Playground and deploy them with environment-based versioning. You have access to 100+ models through the AI Proxy with edge caching and load balancing. And you can integrate Braintrust with LangChain, LlamaIndex, CrewAI, and agent frameworks for comprehensive observability.
+            </p>
+
+            <p>
+                Part 3 of this series covers production use cases and best practices. We will explore RAG evaluation with RAGAS scorers for measuring faithfulness and answer relevancy, agent evaluation patterns for end-to-end versus step-by-step assessment, classification evaluation with precision/recall/F1 custom scorers, CI/CD integration with GitHub Actions for automated quality gates, A/B testing workflows with diff mode and statistical robustness, performance optimization and cost tracking with automatic metrics, security and access control with role-based permissions and SOC 2/HIPAA compliance, debugging production regressions with the trace-to-dataset feedback loop, and a comprehensive comparison of Braintrust versus LangSmith, Langfuse, and Helicone showing why evaluation-first architecture matters.
+            </p>
+
+            <p>
+                The feature knowledge from this article is the foundation. Part 3 shows you how to apply these features to real-world production scenarios where evaluation infrastructure becomes the competitive advantage that separates teams shipping on vibes from teams shipping on systematic quality measurement.
+            </p>
+
+            <div class="github-card">
+                <div class="flex items-start gap-4">
+                    <i class="fab fa-github text-5xl text-cyan-400"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <i class="fas fa-code-branch mr-2"></i>Complete Feature Examples
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            All code from this article including custom scorers, dataset creation, logger setup, prompt deployment, and AI Proxy configuration is available in the braintrust-evaluation-examples repository under the <code>part-2-features/</code> directory.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/braintrust-evaluation-examples" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">© 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-cyan-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

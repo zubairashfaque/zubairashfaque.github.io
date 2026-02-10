@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started with Braintrust — Evals-First AI Development | Zubair Ashfaque</title>
+    <meta name="description" content="Transform from 'shipping on vibes' to systematic AI evaluation. Learn Braintrust's evaluation-first architecture with the Data/Task/Scores model and run your first experiment in 5 minutes.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="assets/blog-styles.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            margin: 3rem 0;
+        }
+
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #a855f7;
+        }
+
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        article li {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .breadcrumb a {
+            color: #8b5cf6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #a855f7;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #475569;
+        }
+
+        @media (max-width: 768px) {
+            .blog-container {
+                padding: 1rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+            }
+
+            article p, article ul, article ol {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-violet-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>Getting Started with Braintrust</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Getting Started with Braintrust — Evals-First AI Development
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                Stop shipping AI on vibes. Learn to systematically measure, compare, and improve every change with Braintrust's evaluation-first architecture.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>February 10, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>18 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Braintrust</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">AI Evaluation</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">LLM Testing</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">OpenAI</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Scorers</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Most teams building with GPT-4, Claude, or Gemini are shipping on vibes. They make a prompt change, check a few examples by eye, and push to production while hoping for the best. There is no systematic measurement. No reliable way to know whether that model swap, parameter tweak, or prompt refinement actually made things better or worse. This is not a workflow problem. This is an architecture problem.
+            </p>
+
+            <p>
+                Traditional software has unit tests, integration tests, and CI/CD pipelines that catch regressions before they reach production. When a function returns the wrong value, a test fails, the build breaks, and someone fixes it before merging. This feedback loop is fast, deterministic, and well understood. AI development breaks every assumption in that workflow. LLM outputs are non-deterministic. Quality is subjective. There are no binary pass-fail assertions for "was this answer good enough?" And when you change a prompt or swap a model, you have no systematic way to measure the impact across your test cases.
+            </p>
+
+            <p>
+                The industry calls this <strong>"shipping on vibes"</strong>, and the consequences are concrete. A healthcare AI assistant might start returning longer, less focused answers after a prompt tweak, but no one notices until patients complain. A customer support chatbot's factuality might degrade by 15% when you switch from GPT-4o to a cheaper model, but without systematic measurement, the regression is invisible. A RAG pipeline might silently lose context relevancy after an embedding model change, with no alert or metric to catch it. Notion reported going from fixing 3 issues per day to 30 after adopting systematic evaluation. The questions this article answers are:
+            </p>
+
+            <ul class="list-disc">
+                <li>"How do I systematically measure whether a prompt change improved or degraded my AI system?"</li>
+                <li>"What is the Data/Task/Scores model and why does it work for both development and production?"</li>
+                <li>"How do I run my first evaluation and interpret the results in under 5 minutes?"</li>
+                <li>"What makes Braintrust's evaluation-first architecture different from observability-first competitors?"</li>
+            </ul>
+
+            <p>
+                This guide provides a systematic blueprint for evaluation-first AI development. You will learn Braintrust's core architecture, run your first experiment comparing model outputs, and understand how the same scoring framework works identically in development experiments and production monitoring. No hand-waving about "tune your parameters." Instead, you get working code, complete examples, and a clear mental model for building AI systems that ship on data instead of vibes.
+            </p>
+
+            <div class="highlight-box" style="background: rgba(139, 92, 246, 0.1); border-left: 4px solid #8b5cf6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem;">
+                <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+                Braintrust's evaluation-first architecture means the same scoring framework works identically in development and production. The <code>Factuality</code> scorer you use in offline experiments runs automatically on production traces. This design creates a tight feedback loop that gets tighter with use.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is that traditional testing frameworks fail completely for non-deterministic LLM outputs, leaving teams with no reliable way to catch regressions before they reach users.
+            </p>
+
+            <p>
+                You cannot write unit tests that assert an LLM should return exactly "The capital of France is Paris" because the model might validly return "Paris is the capital of France" or "France's capital city is Paris." You cannot use code coverage metrics because prompt changes do not map to lines of code. You cannot rely on error rates because an LLM can produce grammatically correct, contextually plausible, factually wrong answers that pass all traditional quality gates.
+            </p>
+
+            <p>
+                This creates a testing gap that manifests in three painful ways. First, prompt engineering becomes a black box where changes are evaluated by spot-checking a few examples rather than systematically measuring impact across test cases. Second, model comparisons happen based on vibes rather than quantified metrics, making it impossible to justify choosing Claude over GPT-4 or vice versa. Third, production regressions are discovered only when users complain, by which time thousands of requests have already been affected.
+            </p>
+
+            <p>
+                What is needed is evaluation purpose-built for AI: the ability to define datasets of test cases, run your AI function against them, score outputs with both heuristic and LLM-based judges, and compare results across experiments, all integrated into your development workflow just like unit tests. <strong>Braintrust was designed specifically to be this evaluation backbone.</strong>
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let's <strong>lucify</strong> this concept using an analogy from everyday life that captures the essence of the evaluation challenge.
+            </p>
+
+            <p>
+                Imagine you are managing a customer service team and want to improve response quality. Under the traditional approach, you might listen to a few random calls, make some coaching suggestions, and hope service improves. You have no systematic measurement. No way to know whether your coaching actually worked. No data proving that response times decreased or customer satisfaction increased.
+            </p>
+
+            <p>
+                Now imagine a different approach. You record representative customer calls (your test dataset), define what "good service" means using specific criteria like response time under 2 minutes, accurate information provided, and empathetic tone (your scorers), then systematically evaluate every agent against those criteria. When you implement coaching, you re-evaluate the same test calls and quantify exactly how much quality improved. You can see that Agent A improved factual accuracy by 18% while Agent B improved empathy scores by 25%. You know what worked because you measured it.
+            </p>
+
+            <p>
+                This customer service scenario maps directly to AI evaluation. Your LLM is the agent. Your test queries are the recorded calls. Your scoring criteria are the quality metrics. Braintrust provides the evaluation infrastructure that lets you systematically measure "before coaching" versus "after coaching" for every change you make to prompts, models, or parameters.
+            </p>
+
+            <p>
+                The analogy breaks down in one important way: you can evaluate thousands of LLM responses in minutes, whereas evaluating customer service agents takes weeks. This computational speed is precisely why systematic evaluation is so powerful for AI systems. You have the capability to measure every change instantly, but without proper infrastructure, that capability goes unused.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                To solve this, we first need to <strong>lucify</strong> the key technical terms that form Braintrust's evaluation architecture. Understanding these terms clearly will make the blueprint implementation much easier to follow.
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-flask mr-2"></i>Eval()
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The core Braintrust function that runs an evaluation experiment by combining three required components: data (test cases), task (your AI function), and scores (quality metrics). When you call <code>Eval()</code>, Braintrust executes your task function on every test case, computes all specified scores, uploads results to the dashboard, and automatically compares against previous experiments.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You have a chatbot that identifies movies from plot descriptions. You call <code>Eval("Movie Matcher", data=test_cases, task=identify_movie, scores=[ExactMatch])</code>. Braintrust runs <code>identify_movie()</code> on each test case, scores the outputs, and shows you which test cases improved or regressed compared to your last run.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of <code>Eval()</code> like running a standardized test. The test questions (data) stay the same, the student (task function) answers them, and the grading rubric (scores) measures performance. You can test different students (models) or give the same student coaching (prompt changes) and systematically compare results.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-database mr-2"></i>Data / Task / Scores
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The three-component model that defines every Braintrust evaluation. <strong>Data</strong> is an array of test cases with <code>{input, expected}</code> pairs. <strong>Task</strong> is your AI function that takes an input and returns an output. <strong>Scores</strong> are functions that measure output quality by comparing against expected values or using LLM judges. Every evaluation requires all three.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> For a sentiment classifier, Data might be <code>[{input: "I love this!", expected: "positive"}]</code>. Task is your classification function. Scores includes <code>ExactMatch</code> to check if output equals expected. Braintrust runs Task on each Data input, then applies Scores to measure quality.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of this like a cooking competition. Data is the list of dishes contestants must prepare (recipes with ingredients). Task is each chef's cooking process. Scores are the judges' criteria (taste, presentation, creativity). You need all three components to run a fair competition that produces comparable results.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-chart-line mr-2"></i>Scorer
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A function that measures output quality by returning a score between 0.0 and 1.0, where 1.0 represents perfect quality and 0.0 represents complete failure. Scorers come in three types: heuristic (like <code>ExactMatch</code> or <code>Levenshtein</code>), LLM-as-judge (like <code>Factuality</code>), and custom code you write. The same scorers work in offline experiments and online production monitoring.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> <code>ExactMatch</code> returns 1.0 if your output exactly equals the expected value ("Paris" == "Paris") and 0.0 otherwise. <code>Factuality</code> uses an LLM judge to check if your output is factually consistent with reference context, returning scores like 0.85 for mostly accurate or 0.3 for mostly wrong.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of scorers like different grading rubrics for essays. An exact match scorer is like checking if a student wrote the exact phrase from the answer key (strict but limited). A factuality scorer is like a teacher reading the essay to verify the information is accurate even if phrased differently (flexible but comprehensive).
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-vial mr-2"></i>Experiment
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A single run of an evaluation that produces results viewable in the Braintrust dashboard. Each experiment captures the specific combination of data, task implementation, scores, and metadata (like model name or temperature) used for that run. Braintrust automatically matches experiments by input to enable side-by-side comparison showing which test cases improved or regressed.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You run <code>Eval("Healthcare Triage")</code> with GPT-4o, then change the model to Claude and run again. Braintrust creates two experiments. The dashboard shows that GPT-4o scored 92% on average while Claude scored 96%, with specific test cases highlighted as improvements (green) or regressions (red).
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of experiments like A/B tests in marketing. You show version A to some users and version B to others, then compare conversion rates. Braintrust experiments compare different AI configurations (version A uses GPT-4, version B uses Claude) against the same test cases to quantify which performs better.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-project-diagram mr-2"></i>Span / Trace
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The hierarchy Braintrust uses to organize logged events. A <strong>trace</strong> is the top-level record representing a complete user interaction or API call. <strong>Spans</strong> are the individual operations within that trace, such as LLM calls, retrieval steps, or custom functions. Each span captures inputs, outputs, duration, tokens, cost, and can have child spans, creating a nested tree structure.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> A user asks "What are Q4 earnings?" Your RAG system creates a trace. Within that trace, you have spans for: retrieval (320ms, found 3 docs), LLM call (1800ms, 450 input tokens, $0.008), and post-processing (220ms). Each span shows what happened, how long it took, and what it cost.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of a trace like a recipe execution log. The trace is "making chocolate chip cookies" (the whole process). Spans are individual steps: "mix dry ingredients" (2 min), "cream butter and sugar" (5 min), "bake" (12 min). Each step has duration, inputs, and outputs. Nested spans would be sub-steps like "preheat oven" within "bake."
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-table mr-2"></i>Braintrust Dashboard
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> The web interface where you view experiment results, compare runs, analyze traces, and track metrics. The dashboard provides three layouts (List, Grid, Summary), diff mode for comparing experiments, BTQL filtering, and detailed trace views with span hierarchies. Pre-built views include "Errors," "Unreviewed," and "Assigned to me."
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> After running an evaluation, you click the experiment link. The dashboard shows a table with one row per test case, displaying input, output, expected value, scores (color-coded), duration, and cost. You enable diff mode to compare against your previous run, seeing 3 improvements (green) and 1 regression (red).
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of the dashboard like a fitness tracking app. Each workout (experiment) is logged with details (duration, calories, heart rate). You can compare today's run to last week's, see which exercises improved or got worse, filter to show only cardio workouts, and drill into specific exercises for detailed analysis.
+                </p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold text-violet-400 mb-3">
+                    <i class="fas fa-equals mr-2"></i>ExactMatch
+                </h4>
+                <p class="text-gray-300 mb-2">
+                    <strong>Definition:</strong> A heuristic scorer that returns 1.0 if the output exactly equals the expected value (case-insensitive by default) and 0.0 otherwise. This is the simplest scorer and works well for classification tasks or scenarios where there is a single correct answer. It is part of the Braintrust autoevals library.
+                </p>
+                <p class="text-gray-400 text-sm mb-2">
+                    <strong>Simple Example:</strong> You have a movie identification task with expected value "Inception." If your LLM returns "Inception", ExactMatch scores 1.0. If it returns "The movie Inception" or "inception (2010)", ExactMatch scores 0.0 because the strings do not match exactly, even though a human would consider them correct.
+                </p>
+                <p class="text-gray-400 text-sm">
+                    <strong>Analogy:</strong> Think of ExactMatch like a multiple-choice test that is graded by a machine. You either filled in exactly the right bubble (1.0 score) or you did not (0.0 score). There is no partial credit for being close or phrasing things differently. This makes grading fast and deterministic but can miss semantically correct answers.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                Now, let's <strong>make the blueprint</strong> for running your first Braintrust evaluation from installation to interpreting results in the dashboard.
+            </p>
+
+            <h3><i class="fas fa-clipboard-list mr-2"></i>The Seven-Step Evaluation Blueprint</h3>
+
+            <div class="blueprint-box">
+                <p class="text-lg font-semibold text-violet-300 mb-4">Overview: From Zero to Production-Ready Evaluation</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="font-semibold text-violet-400">Step One: Setup — Install SDK and Configure API Keys</p>
+                        <p>
+                            Before running evaluations, install the Braintrust SDK and autoevals library, generate your API key from braintrust.dev settings, and configure environment variables. For Python, install with <code>pip install braintrust autoevals</code>. For TypeScript, install with <code>npm install braintrust openai autoevals</code>. Export your Braintrust API key and any LLM provider keys (OpenAI, Anthropic, etc.) as environment variables. The SDK auto-loads from <code>.env</code> files. Optional: install <code>orjson</code> for 3-5× faster JSON serialization.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-violet-400">Step Two: Create Data — Define Test Cases with Input/Expected Pairs</p>
+                        <p>
+                            Build your dataset as an array of test cases, each containing an <code>input</code> (what you pass to your AI function) and an <code>expected</code> output (the correct answer or reference value). Start with 5-10 test cases representing core functionality. Include edge cases: queries that should return specific answers, ambiguous queries where multiple answers are valid, and queries that test error handling. Store test cases as inline arrays, lambda functions, or reference Braintrust-managed datasets via <code>initDataset()</code>. Quality of your test data determines quality of your evaluation.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-violet-400">Step Three: Define Task — Write Your AI Function</p>
+                        <p>
+                            Create the function you want to evaluate. This is your "task" function that takes an input and returns an output. For LLM applications, this typically means calling OpenAI, Anthropic, or another provider API. The function signature is simple: <code>def task(input) -> output</code>. Keep the function focused on core logic without worrying about evaluation infrastructure. Braintrust handles running it against all test cases, capturing results, and logging metadata. Use low temperature (0-0.1) for deterministic evaluation or higher temperature if testing creative outputs.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-violet-400">Step Four: Configure Scores — Choose Metrics That Measure Quality</p>
+                        <p>
+                            Select scorers that measure the quality dimensions you care about. Start with simple heuristic scorers like <code>ExactMatch</code> (for classification) or <code>LevenshteinScorer</code> (for string similarity). Add LLM-based scorers like <code>Factuality</code> (is the output factually correct?) or <code>ClosedQA</code> (does it answer the question?). You can use multiple scorers simultaneously to capture different quality dimensions. All scorers return values between 0.0 and 1.0, making them comparable. The autoevals library provides 25+ pre-built scorers covering common use cases.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-violet-400">Step Five: Run Eval — Execute the Evaluation and Upload Results</p>
+                        <p>
+                            Call <code>Eval(project_name, data=your_data, task=your_function, scores=your_scorers)</code> and run via the CLI with <code>braintrust eval your_file.py</code>. Braintrust executes your task function on every test case (default: 10 concurrent executions), computes all scores, captures duration and cost metadata, uploads results to the cloud, and prints a summary with aggregate scores. A link to the experiment dashboard is printed in your terminal. File naming conventions: <code>eval_*.py</code> for Python, <code>*.eval.ts</code> for TypeScript.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-violet-400">Step Six: Interpret Results — Analyze Dashboard and Identify Issues</p>
+                        <p>
+                            Open the experiment link in your browser to see the Braintrust dashboard. The main table shows one row per test case with columns for input, output, expected, scores (color-coded: green for high, red for low), duration, and cost. Click any row to expand a detailed trace view. Use the filter bar with BTQL to focus on specific subsets (e.g., <code>score &lt; 0.5</code> to see failures). Pre-built views like "Errors" and "Non-errors" help you quickly identify problem areas. Export results to CSV/JSON for offline analysis if needed.
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-violet-400">Step Seven: Iterate — Make Changes and Compare Experiments</p>
+                        <p>
+                            Based on dashboard insights, improve your prompt, adjust temperature, or try a different model. Run <code>Eval()</code> again with the same data but modified task function. Braintrust automatically matches test cases by input and shows a diff: which cases improved (green arrows), which regressed (red arrows), and aggregate score changes (e.g., "75% → 88%, +13%"). This diff mode is the core feedback loop. Keep iterating: each run builds on the previous one, creating a history of experiments you can compare to understand what changes actually improved quality.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-project-diagram mr-2"></i>Visual Flow: The Evaluation Feedback Loop</h3>
+
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-violet-500/50 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400 mb-3">
+                        🔄 Braintrust Evaluation Pipeline
+                    </h4>
+                    <p class="text-slate-400">
+                        From test data to systematic improvement in seven steps
+                    </p>
+                </div>
+
+                <!-- Row 1: Setup + Create Data -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-violet-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">⚙️</span>
+                                </div>
+                                <span class="text-violet-300 font-semibold">Setup</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Install SDK, configure API keys</p>
+                        </div>
+                    </div>
+                    <div class="text-violet-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📋</span>
+                                </div>
+                                <span class="text-cyan-300 font-semibold">Create Data</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Build {input, expected} test cases</p>
+                        </div>
+                    </div>
+                    <div class="text-cyan-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-blue-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🤖</span>
+                                </div>
+                                <span class="text-blue-300 font-semibold">Define Task</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Your AI function (input → output)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-blue-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 2: Configure Scores + Run Eval -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-indigo-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">📊</span>
+                                </div>
+                                <span class="text-indigo-300 font-semibold">Configure Scores</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Choose metrics (ExactMatch, Factuality...)</p>
+                        </div>
+                    </div>
+                    <div class="text-indigo-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-fuchsia-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-fuchsia-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">▶️</span>
+                                </div>
+                                <span class="text-fuchsia-300 font-semibold">Run Eval</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Execute with braintrust eval</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-fuchsia-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 3: Interpret + Iterate -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-pink-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔍</span>
+                                </div>
+                                <span class="text-pink-300 font-semibold">Interpret Results</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Analyze dashboard, identify issues</p>
+                        </div>
+                    </div>
+                    <div class="text-pink-400 text-2xl">→</div>
+                    <div class="flex-1 max-w-xs">
+                        <div class="bg-slate-700/50 border-2 border-rose-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-12 h-12 bg-rose-500/20 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔁</span>
+                                </div>
+                                <span class="text-rose-300 font-semibold">Iterate</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Improve prompt, compare experiments</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="text-rose-400 text-3xl">↓</div>
+                </div>
+
+                <!-- Row 4: Final -->
+                <div class="flex justify-center">
+                    <div class="max-w-2xl w-full">
+                        <div class="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-3 border-green-500 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-green-500/30 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">✅</span>
+                                </div>
+                                <span class="text-green-300 font-semibold text-lg">Systematic Quality Improvement</span>
+                            </div>
+                            <p class="text-slate-300">Ship on data, not vibes. Every change measured and compared.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                This blueprint provides a clear roadmap for evaluation-first development. Each step builds on the previous one, and following this sequence ensures you do not miss critical setup or misinterpret results. The feedback loop from Step Seven back to Step Three is the heart of the system: you improve based on data, re-evaluate, and compare quantitatively.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+            <p>
+                <strong>Let's carry out the blueprint plan.</strong> I will walk through complete code examples for three scenarios: a minimal "Say Hi Bot" demonstrating the mechanics, a "Movie Matcher" with real OpenAI calls, and a "Healthcare Triage" system with multiple scorers. All code is available in the GitHub repository at <a href="https://github.com/zubairashfaque/braintrust-evaluation-examples" class="text-violet-400 hover:text-violet-300 underline">github.com/zubairashfaque/braintrust-evaluation-examples</a>.
+            </p>
+
+            <h3><i class="fas fa-play mr-2"></i>Example 1: Say Hi Bot (Minimal Setup)</h3>
+
+            <p>
+                This minimal example demonstrates the three-component model without external dependencies. It shows the core evaluation loop and how Braintrust compares experiments.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">from braintrust import Eval
+from autoevals import LevenshteinScorer
+
+# Every evaluation has exactly three components:
+# 1. Data: test cases with input and expected output
+# 2. Task: your AI function (here, a simple string concatenation)
+# 3. Scores: metrics that measure output quality
+
+Eval(
+    "Say Hi Bot",                              # Project name
+    data=lambda: [                             # DATA: test cases
+        {"input": "Foo", "expected": "Hi Foo"},
+        {"input": "Bar", "expected": "Hello Bar"},
+    ],
+    task=lambda input: "Hi " + input,          # TASK: your function
+    scores=[LevenshteinScorer],                # SCORES: quality metrics
+)
+
+# Run with: braintrust eval eval_say_hi.py
+# First run output:
+#   50.00% 'LevenshteinScorer' score
+#   (Scores 1.0 for "Hi Foo" match, 0.0 for "Hi Bar" vs "Hello Bar")
+#
+# Modify task to: lambda input: "Hello " + input
+# Second run output:
+#   100.00% (+50.00%) 'LevenshteinScorer' score (1 improvement, 0 regressions)
+#
+# Braintrust automatically compares against previous run and highlights improvements</code></pre>
+            </div>
+
+            <p>
+                This demonstrates the core feedback loop. When you change the task function from <code>"Hi " + input</code> to <code>"Hello " + input</code>, the second test case now matches its expected value, and Braintrust quantifies exactly what improved. This same pattern scales to complex LLM applications.
+            </p>
+
+            <h3><i class="fas fa-film mr-2"></i>Example 2: Movie Matcher (OpenAI Integration)</h3>
+
+            <p>
+                This example shows a realistic evaluation with actual OpenAI API calls, demonstrating how to capture metadata and interpret 0% scores when using strict scorers like ExactMatch.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">from braintrust import Eval
+from autoevals import ExactMatch
+from openai import OpenAI
+import os
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def identify_movie(input: str) -> str:
+    """
+    Task function: Given a plot description, identify the movie.
+    Uses GPT-4o-mini with low temperature for consistent evaluation.
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Identify the movie from the description. "
+                    "Return only the movie title, with no additional text. "
+                    "Always use the US-based title."
+                ),
+            },
+            {"role": "user", "content": input},
+        ],
+        max_tokens=50,
+        temperature=0,  # Deterministic outputs for fair evaluation
+    )
+    return response.choices[0].message.content.strip()
+
+# Run the evaluation with real LLM calls
+Eval(
+    "Movie Matcher",
+    data=lambda: [
+        {
+            "input": "A thief steals corporate secrets through dream-sharing technology.",
+            "expected": "Inception",
+        },
+        {
+            "input": "A computer hacker learns the true nature of his reality.",
+            "expected": "The Matrix",
+        },
+        {
+            "input": "A cowboy doll is threatened when a spaceman toy arrives.",
+            "expected": "Toy Story",
+        },
+        {
+            "input": "An orphaned boy discovers he's a wizard on his 11th birthday.",
+            "expected": "Harry Potter and the Sorcerer's Stone",
+        },
+    ],
+    task=identify_movie,
+    scores=[ExactMatch],         # Returns 1.0 only if output == expected exactly
+    metadata={                    # Track experiment configuration for comparison
+        "model": "gpt-4o-mini",
+        "temperature": 0,
+        "prompt_version": "v1",
+    },
+)
+
+# What happens when you run this:
+# 1. Braintrust loads all 4 test cases from the data function
+# 2. For each test case, it calls identify_movie(input) (real OpenAI API call)
+# 3. ExactMatch scorer compares each output to expected value
+# 4. Results uploaded to dashboard with full context: input, output, expected,
+#    score, duration, token count, cost
+# 5. Terminal prints link to experiment dashboard
+#
+# Expected results: ~75% score (3/4 matches)
+# If model returns "The movie is Inception" instead of "Inception",
+# ExactMatch scores 0.0. This shows why prompt engineering matters!</code></pre>
+            </div>
+
+            <p>
+                This example shows the importance of scorer selection. ExactMatch is strict: even semantically correct answers like "The movie is Inception" score 0.0 because they do not match the expected string exactly. In the dashboard, you can see which test cases failed and iterate on your prompt to produce cleaner outputs. This is evaluation-driven development: let the data guide your improvements.
+            </p>
+
+            <h3><i class="fas fa-heartbeat mr-2"></i>Example 3: Healthcare Triage (Multi-Scorer Evaluation)</h3>
+
+            <p>
+                This production-grade example demonstrates using multiple scorers simultaneously to capture different quality dimensions, plus metadata for model comparison.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-python">from braintrust import Eval
+from autoevals import Factuality, LevenshteinScorer
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Define triage categories and system prompt
+TRIAGE_PROMPT = """You are a medical triage assistant. Given patient symptoms,
+classify urgency as exactly one of: EMERGENCY, URGENT, STANDARD, LOW-PRIORITY.
+Return ONLY the classification label, nothing else."""
+
+def triage_patient(input: str) -> str:
+    """
+    Task function: classify patient symptom urgency.
+    Returns one of four predefined triage categories.
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": TRIAGE_PROMPT},
+            {"role": "user", "content": f"Patient symptoms: {input}"},
+        ],
+        max_tokens=20,
+        temperature=0.1,  # Low temperature for consistent classifications
+    )
+    return response.choices[0].message.content.strip()
+
+# Custom scorer: checks if output is a valid triage category
+def valid_category(input, output, expected):
+    """
+    Custom scorer that returns 1.0 if output is a valid category, 0.0 otherwise.
+    This catches cases where the LLM returns invalid responses.
+    """
+    valid = {"EMERGENCY", "URGENT", "STANDARD", "LOW-PRIORITY"}
+    return {
+        "name": "ValidCategory",
+        "score": 1.0 if output in valid else 0.0,
+    }
+
+# Run comprehensive evaluation with multiple scorers
+Eval(
+    "Healthcare Triage",
+    data=lambda: [
+        {
+            "input": "Severe chest pain, shortness of breath, sweating, radiating to left arm",
+            "expected": "EMERGENCY",
+            "metadata": {"department": "cardiology"},
+        },
+        {
+            "input": "Persistent cough for 3 weeks, mild fever, fatigue",
+            "expected": "URGENT",
+            "metadata": {"department": "pulmonology"},
+        },
+        {
+            "input": "Annual checkup, no complaints, requesting routine blood work",
+            "expected": "LOW-PRIORITY",
+            "metadata": {"department": "general"},
+        },
+        {
+            "input": "Sprained ankle while playing basketball, can bear weight",
+            "expected": "STANDARD",
+            "metadata": {"department": "orthopedics"},
+        },
+        {
+            "input": "Sudden severe headache, confusion, difficulty speaking",
+            "expected": "EMERGENCY",
+            "metadata": {"department": "neurology"},
+        },
+    ],
+    task=triage_patient,
+    scores=[
+        LevenshteinScorer,   # How close is output string to expected?
+        Factuality,          # LLM-as-judge: is classification factually appropriate?
+        valid_category,      # Custom: is output a valid triage category?
+    ],
+    metadata={
+        "model": "gpt-4o-mini",
+        "temperature": 0.1,
+        "prompt_version": "triage-v1",
+    },
+)
+
+# Dashboard shows 5 test cases, each scored across 3 dimensions:
+# - LevenshteinScorer: string similarity (detects typos/variations)
+# - Factuality: semantic correctness (LLM judge checks if classification makes sense)
+# - ValidCategory: format validity (ensures output is one of 4 allowed values)
+#
+# To compare models:
+# 1. Change model to "claude-sonnet-4-5-20250929" (via Anthropic SDK or Braintrust AI Proxy)
+# 2. Update metadata: {"model": "claude-sonnet", "prompt_version": "triage-v1"}
+# 3. Run again
+# 4. Dashboard shows side-by-side diff: which test cases improved/regressed
+#
+# This is how teams systematically compare models based on data, not vibes.</code></pre>
+            </div>
+
+            <p>
+                This healthcare example demonstrates the power of multi-scorer evaluation. LevenshteinScorer catches typos or slight variations in output format. Factuality uses an LLM judge to verify the classification makes semantic sense given the symptoms. ValidCategory ensures the output is actually one of the four allowed values. Together, these three scorers provide comprehensive quality measurement across different dimensions.
+            </p>
+
+            <p>
+                The metadata tracking is crucial for model comparison. When you change from GPT-4o-mini to Claude Sonnet and re-run the evaluation, Braintrust automatically matches test cases by input and shows you the exact differences. You can quantify that Claude improved cardiology cases by 8% but regressed on neurology cases by 3%, giving you data-driven insights for model selection.
+            </p>
+
+            <h3><i class="fas fa-terminal mr-2"></i>Running Evaluations via CLI</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="far fa-copy mr-1"></i>Copy
+                </button>
+                <pre><code class="language-bash"># Python evaluations
+braintrust eval eval_say_hi.py
+braintrust eval eval_movie_matcher.py
+braintrust eval eval_healthcare_triage.py
+
+# TypeScript evaluations
+npx braintrust eval say-hi.eval.ts
+npx braintrust eval movie-matcher.eval.ts
+
+# Watch mode: re-run on file changes
+npx braintrust eval --watch movie-matcher.eval.ts
+
+# Local-only mode: no logs sent to Braintrust (for testing)
+npx braintrust eval --no-send-logs movie-matcher.eval.ts
+
+# Verbose mode: show full stack traces for debugging
+npx braintrust eval --verbose movie-matcher.eval.ts
+
+# Run all evals in a directory
+braintrust eval evaluations/
+
+# File naming conventions:
+# Python: eval_*.py (e.g., eval_healthcare.py)
+# TypeScript: *.eval.ts (e.g., healthcare.eval.ts)</code></pre>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h2><i class="fas fa-flag-checkered mr-3"></i>What's Next</h2>
+
+            <p>
+                You now have the foundation for evaluation-first AI development. You understand the Data/Task/Scores model that defines every evaluation. You can run experiments, interpret results in the dashboard, and use diff mode to compare changes systematically. You have seen how the same scoring framework works for simple string matching and sophisticated LLM judges.
+            </p>
+
+            <p>
+                Part 2 of this series dives deep into the features that transform Braintrust from a testing tool into a complete AI development platform. We will cover the full scoring taxonomy (25+ pre-built scorers from the autoevals library, custom code scorers, and LLM-as-a-judge configurations), datasets for building and versioning golden test sets, logging and tracing for production observability with <code>wrapOpenAI()</code>, the Prompt Playground for no-code experimentation, the AI Proxy for cached multi-provider access to 100+ models, and framework integrations with LangChain, LlamaIndex, CrewAI, and more.
+            </p>
+
+            <p>
+                Every feature connects back to the evaluation loop because in Braintrust, evaluation is not a feature. It is the architecture. The same scorers you write for offline experiments run automatically on production traces. The datasets you build from production logs feed directly into new experiments. This design creates a tight feedback loop that gets tighter with use, transforming how teams build AI systems.
+            </p>
+
+            <div class="github-card">
+                <div class="flex items-start gap-4">
+                    <i class="fab fa-github text-5xl text-violet-400"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <i class="fas fa-code-branch mr-2"></i>Complete Code Examples
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            All code from this series is available in the braintrust-evaluation-examples repository. Includes the Say Hi Bot, Movie Matcher, Healthcare Triage system, and additional examples for RAG evaluation, agent workflows, and CI/CD integration.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/braintrust-evaluation-examples" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">© 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Use Cases and Best Practices with Braintrust | Zubair Ashfaque</title>
+    <meta name="description" content="Production-grade patterns for RAG evaluation, agent testing, CI/CD integration, A/B testing, cost optimization, and regression debugging. Complete guide from development to enterprise scale.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="assets/blog-styles.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: #d946ef;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(217, 70, 239, 0.2);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, #d946ef, transparent);
+            margin: 3rem 0;
+        }
+
+        .highlight-box {
+            background: rgba(217, 70, 239, 0.1);
+            border-left: 4px solid #d946ef;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #d946ef;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .github-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(217, 70, 239, 0.3);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(217, 70, 239, 0.1);
+        }
+
+        .comparison-table .highlight-col {
+            background: rgba(217, 70, 239, 0.15);
+            font-weight: 500;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.5rem;
+            border-left: 3px solid #d946ef;
+        }
+
+        .checklist-item:hover {
+            background: rgba(217, 70, 239, 0.1);
+        }
+
+        .checklist-icon {
+            color: #d946ef;
+            font-size: 1.25rem;
+            margin-top: 0.25rem;
+        }
+
+        pre code {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(217, 70, 239, 0.2);
+            color: #d946ef;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .architecture-diagram {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .diagram-step {
+            background: rgba(217, 70, 239, 0.1);
+            border: 2px solid #d946ef;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+        }
+
+        .arrow-down {
+            color: #d946ef;
+            font-size: 2rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="blog-container">
+        <!-- Header -->
+        <header class="mb-12">
+            <a href="../index.html" class="inline-flex items-center text-fuchsia-400 hover:text-fuchsia-300 mb-6 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Portfolio
+            </a>
+
+            <div class="flex items-center gap-3 mb-4">
+                <i class="fas fa-shield-alt text-5xl text-fuchsia-400"></i>
+                <h1 class="text-4xl md:text-5xl font-bold hero-gradient">
+                    Production Use Cases and Best Practices with Braintrust
+                </h1>
+            </div>
+
+            <p class="text-xl text-gray-400 mb-6">
+                Production-grade patterns for RAG evaluation, agent testing, CI/CD integration, A/B testing, cost optimization, and regression debugging. Complete guide from development to enterprise scale.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                <span><i class="far fa-calendar mr-2"></i>February 10, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>19 min read</span>
+                <span><i class="fas fa-layer-group mr-2"></i>Part 3 of 3</span>
+            </div>
+
+            <div class="mt-4">
+                <span class="tag">Braintrust</span>
+                <span class="tag">Production AI</span>
+                <span class="tag">RAG</span>
+                <span class="tag">CI/CD</span>
+                <span class="tag">LLM Security</span>
+                <span class="tag">Cost Optimization</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- The Motivation -->
+        <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+        <p>
+            You have built an impressive AI prototype. Your RAG system answers questions accurately in development. Your agent completes tasks successfully on your laptop. Your model performs well on the test set you created last week. Everything works. Now comes the hard part: deploying to production where real users, real data, and real scale will stress every assumption you made during development.
+        </p>
+
+        <p>
+            The uncomfortable truth is that most AI systems degrade silently in production. A prompt that worked perfectly with GPT-4o in November might perform worse after a model update in December. A retrieval strategy optimized for your initial 10,000 documents might break down at 100,000 documents. An agent that cost $0.02 per interaction in testing might cost $0.50 in production due to unexpected tool call loops. Without systematic measurement, you discover these issues only when users complain or when your AWS bill triples.
+        </p>
+
+        <p>
+            The gap between prototype and production is not just about scale or infrastructure. It is about having a systematic feedback loop that catches regressions before they reach users, optimizes costs without sacrificing quality, ensures security and access control across teams, and continuously improves your AI based on real production data. The questions this article answers are:
+        </p>
+
+        <ul class="list-disc list-inside text-gray-300 mb-6 space-y-2">
+            <li>"How do I evaluate complex RAG pipelines and multi-agent systems in production?"</li>
+            <li>"How do I integrate LLM evaluations into my CI/CD pipeline to catch regressions before deployment?"</li>
+            <li>"How do I run A/B tests to compare prompts, models, or architectures systematically?"</li>
+            <li>"How do I track and optimize costs without manually analyzing every trace?"</li>
+            <li>"How do I debug production regressions and turn failures into test cases?"</li>
+            <li>"How does Braintrust compare to LangSmith, Langfuse, and Helicone for production use?"</li>
+        </ul>
+
+        <p>
+            This is the final installment of our three-part Braintrust series. Part 1 covered the evaluation fundamentals and the three-component model (data, task, scores). Part 2 explored the complete feature set including scorers, datasets, logging, prompts, and the AI Proxy. This part focuses on production deployment patterns that teams at Notion, Stripe, and Zapier use to ship AI systems confidently. We will cover RAG and agent evaluation, CI/CD integration, A/B testing workflows, cost optimization, security controls, regression debugging, and a direct comparison with competing platforms.
+        </p>
+
+        <div class="highlight-box">
+            <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+            Braintrust's production advantage comes from its evals-first architecture where the same scoring framework works identically in development experiments and production monitoring, creating a continuous feedback loop that gets tighter with every iteration.
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- The Challenge -->
+        <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+        <p>
+            The <strong>Challenge</strong> is that traditional software deployment patterns do not transfer cleanly to AI systems. In traditional software, you write tests that verify deterministic behavior: given input X, function Y returns output Z. If the test passes, you deploy. If it fails, you fix the bug. The feedback is immediate and binary.
+        </p>
+
+        <p>
+            AI systems break every assumption in that workflow. Outputs are non-deterministic. Quality is subjective and context-dependent. There are multiple dimensions to optimize simultaneously: accuracy, latency, cost, safety, and user satisfaction. A single prompt change can improve performance on some inputs while degrading it on others. A model swap might reduce cost by 70% but also reduce quality by 15%, and without systematic measurement, you will not know which happened.
+        </p>
+
+        <p>
+            The production challenges multiply across dimensions. <strong>Regression detection</strong>: How do you know if the new prompt is actually better than the old one across your full input distribution, not just the three examples you tested? <strong>Cost explosion</strong>: How do you prevent a subtle bug from causing an agent to enter an infinite tool-calling loop that costs thousands of dollars overnight? <strong>Quality degradation</strong>: How do you catch when your RAG system starts returning less relevant context after you updated your embedding model? <strong>Security and access</strong>: How do you give your product team access to experiment results without exposing API keys or production data?
+        </p>
+
+        <p>
+            These challenges are interconnected. You need evaluation to catch regressions, monitoring to track costs, access controls to enable safe collaboration, and debugging tools to turn production failures into test cases. This is not a single feature problem. This is an architecture problem that requires purpose-built infrastructure.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Problem -->
+        <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+        <p>
+            Let's <strong>lucify</strong> this concept with an analogy from manufacturing quality control. Imagine you run a factory producing custom furniture. During prototyping, you build one chair, check it carefully by hand, verify every joint, test the weight capacity, and adjust your design. This works perfectly for building five chairs.
+        </p>
+
+        <p>
+            Now scale to producing one thousand chairs per day. You cannot manually inspect every chair. You need systematic quality control: automated measurements at each production stage, statistical sampling to catch defects early, comparison of current output against known-good baselines, real-time monitoring of production metrics (reject rate, material waste, cycle time), and a feedback loop that routes defects back to engineering for root cause analysis.
+        </p>
+
+        <p>
+            Production AI deployment requires the same systematic approach. Your development environment is the prototype workshop where you build and test carefully by hand. Production is the factory floor where scale makes manual verification impossible. You need automated evaluation (the quality control checkpoints), statistical comparison across experiments (baseline comparison), real-time monitoring (production dashboards), and a feedback loop that turns production failures into test cases that prevent future regressions.
+        </p>
+
+        <p>
+            The limitation of this analogy is that AI quality is more nuanced than furniture quality. A chair either holds weight or it does not. An AI response might be technically correct but unhelpful, accurate but too verbose, or factual but poorly structured. This makes the measurement challenge harder, which is exactly why you need sophisticated scoring frameworks rather than simple pass/fail tests.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Lucifying the Tech Terms -->
+        <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+        <p>
+            To solve this, we first need to <strong>lucify</strong> the key technical terms you will encounter when deploying AI systems to production with Braintrust.
+        </p>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-search-plus mr-2"></i>RAG Evaluation
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> The process of systematically measuring Retrieval-Augmented Generation systems across multiple quality dimensions: whether retrieved context is relevant to the query (ContextPrecision), whether the final answer is grounded in the retrieved context (Faithfulness), whether the answer addresses the original question (AnswerRelevancy), and whether it matches expected output (AnswerCorrectness). RAG evaluation requires specialized scorers that understand the relationships between query, context, and response.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You build a customer support RAG system that retrieves product documentation to answer questions. RAG evaluation checks: Did you retrieve the right documentation pages? (ContextPrecision). Is your answer based on those pages rather than hallucinated? (Faithfulness). Does your answer actually address what the customer asked? (AnswerRelevancy). Is it correct compared to known-good answers? (AnswerCorrectness).
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of RAG evaluation like grading a research paper. You check whether the student cited relevant sources (ContextPrecision), whether their arguments are supported by those sources rather than made up (Faithfulness), whether they answered the assignment question (AnswerRelevancy), and whether their conclusions are correct (AnswerCorrectness). All four dimensions matter for quality.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-robot mr-2"></i>Agent Evaluation
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> Measuring autonomous AI agents that use tools, make multi-step decisions, and execute complex workflows. Agent evaluation includes both end-to-end measurement (did the agent accomplish the final goal?) and step-by-step evaluation (was each intermediate decision correct?). This requires tracing tool calls, measuring per-agent costs in multi-agent systems, and scoring individual reasoning steps in addition to final outcomes.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You build a research agent that searches the web, reads documents, synthesizes findings, and writes a report. End-to-end evaluation checks if the final report is accurate and complete. Step-by-step evaluation checks whether each web search was relevant, whether document selection was appropriate, whether synthesis preserved factual accuracy, and whether each tool call was necessary.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of agent evaluation like reviewing a detective's investigation. The end-to-end evaluation checks whether they solved the case correctly (final outcome). Step-by-step evaluation reviews each decision: Did they interview the right witnesses? Did they follow relevant leads? Did they interpret evidence correctly? Both perspectives matter for understanding quality and identifying where processes broke down.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-code-branch mr-2"></i>CI/CD Integration
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> Continuous Integration and Continuous Deployment for AI systems, where every code change triggers automated evaluations against test datasets before deployment. For AI, this means running experiments on pull requests, comparing new prompts or models against established baselines, blocking merges if quality scores drop below thresholds, and posting eval results as PR comments for team visibility. Braintrust provides a native GitHub Action specifically for this workflow.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> A developer updates your customer service chatbot prompt. Before merging to main, GitHub Actions automatically runs your eval suite with 100 test conversations, compares scores against the current production prompt, and posts results showing that factuality improved 5% but response time increased 12%. The team reviews these tradeoffs before approving the merge.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of CI/CD for AI like mandatory safety testing for new car designs. Before a design change goes into production vehicles, it must pass crash tests, emissions tests, and performance tests. Results are compared against the current model. If safety scores drop, the change is blocked. AI CI/CD applies the same gate-keeping to prompt changes, model swaps, and architecture updates.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-flask mr-2"></i>A/B Testing
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> Systematic comparison of two or more variants (prompts, models, parameters, architectures) by running them against the same inputs and analyzing which performs better across your scoring dimensions. Braintrust automatically matches test cases by input field, highlights improvements and regressions per case, supports statistical robustness through trial counts, and enables hill-climbing optimization where each experiment compares against the previous best.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You want to compare GPT-4o versus Claude Sonnet 4.5 for your summarization task. You run both models on the same 50 articles, score outputs with Factuality and Conciseness scorers, and Braintrust shows you a diff table: Claude won 32 cases, GPT-4o won 15, 3 tied. Average factuality: Claude 0.94, GPT-4o 0.91. Average conciseness: Claude 0.88, GPT-4o 0.92. You can make an informed decision based on which dimension matters more.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of A/B testing like comparing two recipes for chocolate chip cookies. You bake both versions, give samples to the same group of tasters, and collect scores on taste, texture, and appearance. Recipe A might win on taste but lose on texture. The systematic comparison helps you decide which recipe to use or how to combine their strengths.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-broadcast-tower mr-2"></i>Online Scoring
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> Automatic evaluation of production traffic using the same scoring functions you developed for offline experiments. You configure which scorers to run, at what sampling rate, filtered by metadata or SQL conditions, and Braintrust automatically scores traces as they complete in production. This creates real-time quality monitoring without manual review, using identical logic to your development evals.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> You deploy your customer support chatbot and configure Braintrust to run Factuality scoring on 10% of production conversations (to control costs). Every time a sampled conversation completes, Braintrust automatically scores it and logs the result. Your Monitor dashboard shows factuality trending at 0.89 this week, down from 0.92 last week, triggering an investigation.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of online scoring like quality control sampling in food production. Rather than testing every single product (too expensive), you automatically test every 10th item on the production line using the same quality tests you used during recipe development. Statistical sampling gives you real-time quality trends without 100% overhead.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-user-shield mr-2"></i>RBAC (Role-Based Access Control)
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> Permission system that controls what actions different team members can perform based on their role. Braintrust provides three built-in roles (Owners can manage everything, Engineers can run experiments and view results, Viewers can only view results) plus custom permission groups for fine-grained control. This enables safe collaboration where PMs can review results without accessing API keys, and contractors can run specific experiments without organization-wide access.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> Your organization has engineers who build prompts, product managers who review experiment results, and data scientists who create datasets. Engineers get the "Engineer" role (can create experiments and edit prompts), PMs get "Viewer" (can see all results but not modify), data scientists get a custom role that can manage datasets but not production prompts. Everyone sees what they need without excess access.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of RBAC like access levels in a hospital. Doctors can read and write patient records. Nurses can read records and add notes. Billing staff can see financial information but not medical details. Visitors can see limited directory information. Everyone has exactly the access they need to do their job, no more, no less.
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3">
+                <i class="fas fa-bug mr-2"></i>Regression Debugging
+            </h4>
+            <p class="text-gray-300 mb-2">
+                <strong>Definition:</strong> The workflow of identifying production failures, understanding their root cause, and preventing recurrence through test case creation. In Braintrust, this means filtering logs to find low-scoring traces, examining the full span hierarchy to see where quality degraded, comparing against previous behavior in diff mode, adding failing cases to datasets, and running offline experiments to validate fixes before redeployment.
+            </p>
+            <p class="text-gray-400 text-sm mb-2">
+                <strong>Simple Example:</strong> Users report that your chatbot started giving unhelpful answers about a specific product category. You filter Braintrust logs to conversations about that category with low AnswerRelevancy scores, identify 15 failing examples, examine their traces to discover the retrieval step is returning outdated documentation, add these 15 examples to your test dataset, update the retrieval logic, run an offline experiment confirming the fix improves scores from 0.6 to 0.92, then deploy.
+            </p>
+            <p class="text-gray-400 text-sm">
+                <strong>Analogy:</strong> Think of regression debugging like diagnosing and fixing a car problem. The check engine light comes on (low production scores), you run diagnostics to identify which component is failing (trace analysis), you understand why it failed (diff mode against previous behavior), you fix the component and test it on a bench (offline experiment), then reinstall and verify it works (deployment with monitoring). Each failure teaches you something to prevent in the future.
+            </p>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Making the Blueprint -->
+        <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+        <p>
+            Now, let's <strong>make the blueprint</strong> for deploying production-grade AI systems with Braintrust. This ten-step plan takes you from development experiments to enterprise-scale deployment with continuous quality improvement.
+        </p>
+
+        <!-- Flow Diagram -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 my-8 border-4 border-fuchsia-500/50 shadow-2xl">
+            <div class="text-center mb-8">
+                <h4 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-pink-400 mb-3">
+                    🔄 Production AI Deployment Blueprint
+                </h4>
+                <p class="text-slate-400">
+                    From development to enterprise-scale with continuous quality improvement
+                </p>
+            </div>
+
+            <!-- Row 1: Evaluate RAG & Agents -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-violet-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🔍</span>
+                            </div>
+                            <span class="text-violet-300 font-semibold">1. Evaluate RAG</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Score retrieval quality with RAGAS: Faithfulness, AnswerRelevancy, ContextPrecision, AnswerCorrectness</p>
+                    </div>
+                </div>
+
+                <div class="text-violet-400 text-2xl">→</div>
+
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-cyan-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🤖</span>
+                            </div>
+                            <span class="text-cyan-300 font-semibold">2. Evaluate Agents</span>
+                        </div>
+                        <p class="text-sm text-slate-400">End-to-end + step-by-step scoring, trace tool calls, measure per-agent costs in multi-agent systems</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                <div class="text-cyan-400 text-3xl">↓</div>
+            </div>
+
+            <!-- Row 2: CI/CD & A/B Testing -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-blue-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">⚙️</span>
+                            </div>
+                            <span class="text-blue-300 font-semibold">3. CI/CD Setup</span>
+                        </div>
+                        <p class="text-sm text-slate-400">GitHub Actions integration, quality gates, automated PR comments with score breakdowns</p>
+                    </div>
+                </div>
+
+                <div class="text-blue-400 text-2xl">→</div>
+
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-indigo-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🧪</span>
+                            </div>
+                            <span class="text-indigo-300 font-semibold">4. A/B Testing</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Compare prompts/models systematically, diff mode shows per-case improvements and regressions</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                <div class="text-indigo-400 text-3xl">↓</div>
+            </div>
+
+            <!-- Row 3: Cost & Security -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-fuchsia-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-fuchsia-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">💰</span>
+                            </div>
+                            <span class="text-fuchsia-300 font-semibold">5. Cost Optimization</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Track tokens/costs automatically, use AI Proxy caching, identify expensive prompts via dashboard</p>
+                    </div>
+                </div>
+
+                <div class="text-fuchsia-400 text-2xl">→</div>
+
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-pink-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🔒</span>
+                            </div>
+                            <span class="text-pink-300 font-semibold">6. Secure Access</span>
+                        </div>
+                        <p class="text-sm text-slate-400">RBAC with three built-in roles, custom permissions, SOC 2 + HIPAA compliance, service accounts</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                <div class="text-pink-400 text-3xl">↓</div>
+            </div>
+
+            <!-- Row 4: Debug & Monitor -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-rose-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-rose-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🐛</span>
+                            </div>
+                            <span class="text-rose-300 font-semibold">7. Debug Regressions</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Filter logs, trace hierarchy, diff mode, add failures to datasets, offline eval to validate fixes</p>
+                    </div>
+                </div>
+
+                <div class="text-rose-400 text-2xl">→</div>
+
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-green-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">📊</span>
+                            </div>
+                            <span class="text-green-300 font-semibold">8. Monitor Quality</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Online scoring at 10%+ sampling, Monitor dashboards for latency/cost/quality trends, alerts</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                <div class="text-green-400 text-3xl">↓</div>
+            </div>
+
+            <!-- Row 5: Scale & Compare -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-teal-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">🚀</span>
+                            </div>
+                            <span class="text-teal-300 font-semibold">9. Handle Scale</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Hybrid or self-hosted deployment, enterprise SSO/SAML, custom compliance requirements</p>
+                    </div>
+                </div>
+
+                <div class="text-teal-400 text-2xl">→</div>
+
+                <div class="flex-1 max-w-xs">
+                    <div class="bg-slate-700/50 border-2 border-amber-500 rounded-xl p-4 hover:scale-105 transition-transform">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">⚖️</span>
+                            </div>
+                            <span class="text-amber-300 font-semibold">10. Compare Alternatives</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Evaluate vs. LangSmith/Langfuse/Helicone for evals-first philosophy, framework neutrality</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-6">
+            Each step builds on the previous ones, creating a production deployment workflow that catches regressions early, optimizes costs continuously, maintains security compliance, and improves quality based on real user data. Let's execute this blueprint with complete code examples and production patterns.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Executing the Blueprint -->
+        <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+        <p>
+            <strong>Let's carry out the blueprint plan.</strong> This section provides complete, production-ready examples for each step, drawn from patterns used by teams at Notion, Stripe, and Zapier.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-search-plus mr-2"></i>Step 1: RAG Evaluation with RAGAS Scorers
+        </h3>
+
+        <p>
+            RAG systems require multi-dimensional evaluation because quality depends on both retrieval accuracy and generation quality. Braintrust's autoevals library includes the complete RAGAS (Retrieval-Augmented Generation Assessment) scorer suite designed specifically for this use case.
+        </p>
+
+        <!-- RAG Architecture Diagram -->
+        <div class="architecture-diagram">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-4">RAG Evaluation Pipeline</h4>
+
+            <div class="diagram-step">
+                <strong>User Query</strong><br>
+                <span class="text-sm text-gray-400">"What is Braintrust's pricing model?"</span>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="diagram-step">
+                <strong>Retriever (Vector DB Search)</strong><br>
+                <span class="text-sm text-gray-400">Embedding similarity → Top-K documents</span>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="diagram-step">
+                <strong>Retrieved Context</strong><br>
+                <span class="text-sm text-gray-400">Documentation chunks about pricing</span>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="diagram-step">
+                <strong>LLM (Context + Query → Response)</strong><br>
+                <span class="text-sm text-gray-400">GPT-4o generates answer using context</span>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="diagram-step">
+                <strong>Response</strong><br>
+                <span class="text-sm text-gray-400">"Braintrust offers a free tier with..."</span>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="diagram-step bg-fuchsia-500/20 border-fuchsia-500">
+                <strong>RAGAS Scorers</strong><br>
+                <div class="grid grid-cols-2 gap-2 mt-2 text-sm text-gray-300">
+                    <div>✓ Faithfulness (0.95)</div>
+                    <div>✓ AnswerRelevancy (0.92)</div>
+                    <div>✓ ContextPrecision (0.88)</div>
+                    <div>✓ AnswerCorrectness (0.90)</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-6">
+            Here is a complete RAG evaluation comparing a baseline (no retrieval) against a RAG-enhanced system:
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-python">from braintrust import Eval
+from autoevals import Faithfulness, AnswerRelevancy, ContextPrecision, AnswerCorrectness
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Simulated vector database retrieval function
+def retrieve_context(query: str, top_k: int = 3) -> list[str]:
+    """
+    In production, this would call your vector database (Pinecone, Chroma, etc.)
+    For this example, we simulate retrieval with a knowledge base dict
+    """
+    knowledge_base = {
+        "pricing": [
+            "Braintrust offers a free tier with 1M spans and 10K scores per month.",
+            "Paid plans start at $249/month for teams with unlimited users.",
+            "Enterprise plans include SOC 2 compliance, HIPAA support, and hybrid deployment."
+        ],
+        "features": [
+            "Braintrust provides 25+ pre-built scorers including RAGAS suite.",
+            "The AI Proxy supports 100+ models with OpenAI-compatible API.",
+            "Native GitHub Actions integration for CI/CD evaluation pipelines."
+        ]
+    }
+
+    # Simple keyword matching for demo (use real embeddings in production)
+    if "pricing" in query.lower() or "cost" in query.lower():
+        return knowledge_base["pricing"][:top_k]
+    elif "feature" in query.lower() or "capability" in query.lower():
+        return knowledge_base["features"][:top_k]
+    else:
+        return []
+
+def rag_pipeline(query: str) -> dict:
+    """
+    Complete RAG pipeline: retrieve context, generate answer with LLM
+    Returns dict with context and answer for RAGAS scoring
+    """
+    # Step 1: Retrieve relevant context
+    context_chunks = retrieve_context(query, top_k=3)
+    context = "\n".join(context_chunks)
+
+    # Step 2: Generate answer using retrieved context
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant. Answer the user's question "
+                    "based ONLY on the provided context. If the context does not "
+                    "contain enough information, say so explicitly."
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Context:\n{context}\n\nQuestion: {query}"
+            }
+        ],
+        temperature=0.1,
+    )
+
+    answer = response.choices[0].message.content.strip()
+
+    # Return both context and answer (needed for RAGAS scorers)
+    return {
+        "output": answer,
+        "context": context,
+    }
+
+def baseline_pipeline(query: str) -> str:
+    """
+    Baseline: LLM answers without retrieval (may hallucinate)
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful assistant. Answer the user's question."
+            },
+            {
+                "role": "user",
+                "content": query
+            }
+        ],
+        temperature=0.1,
+    )
+    return response.choices[0].message.content.strip()
+
+# Evaluation dataset
+test_cases = [
+    {
+        "input": "What is Braintrust's pricing model?",
+        "expected": "Braintrust offers a free tier with 1M spans and 10K scores per month, with paid plans starting at $249/month for unlimited users.",
+        "metadata": {"category": "pricing"}
+    },
+    {
+        "input": "Does Braintrust support enterprise compliance?",
+        "expected": "Yes, enterprise plans include SOC 2 Type II compliance, HIPAA support, and hybrid deployment options.",
+        "metadata": {"category": "pricing"}
+    },
+    {
+        "input": "What scorers does Braintrust provide?",
+        "expected": "Braintrust provides 25+ pre-built scorers including the RAGAS suite for RAG evaluation.",
+        "metadata": {"category": "features"}
+    },
+]
+
+# Experiment 1: Baseline (no RAG)
+Eval(
+    "RAG Comparison - Baseline",
+    data=lambda: test_cases,
+    task=lambda input: baseline_pipeline(input),
+    scores=[
+        # Only AnswerCorrectness works without context
+        AnswerCorrectness,
+    ],
+    metadata={
+        "model": "gpt-4o-mini",
+        "pipeline": "baseline",
+        "temperature": 0.1,
+    }
+)
+
+# Experiment 2: RAG-Enhanced
+Eval(
+    "RAG Comparison - RAG Enhanced",
+    data=lambda: test_cases,
+    task=lambda input: rag_pipeline(input),
+    scores=[
+        # All RAGAS scorers require 'context' in task output
+        Faithfulness,          # Is answer grounded in retrieved context?
+        AnswerRelevancy,       # Does answer address the query?
+        ContextPrecision,      # Is retrieved context relevant to query?
+        AnswerCorrectness,     # Does answer match expected output?
+    ],
+    metadata={
+        "model": "gpt-4o-mini",
+        "pipeline": "rag",
+        "temperature": 0.1,
+        "top_k": 3,
+    }
+)
+
+# Results interpretation:
+# - Baseline typically scores 0.6-0.7 on AnswerCorrectness (hallucinations)
+# - RAG should score 0.85-0.95 across all dimensions (grounded in facts)
+# - Use Braintrust diff mode to see per-case improvements</code></pre>
+        </div>
+
+        <p class="mt-4">
+            The RAGAS scorers evaluate different quality dimensions. <strong>Faithfulness</strong> checks that the answer does not hallucinate facts beyond what the context supports. <strong>AnswerRelevancy</strong> ensures the answer addresses the actual question asked. <strong>ContextPrecision</strong> measures whether the retrieval step found relevant documents. <strong>AnswerCorrectness</strong> compares against your expected output (if you have golden answers).
+        </p>
+
+        <p>
+            After running both experiments, open the Braintrust dashboard and use diff mode to compare "RAG Comparison - Baseline" versus "RAG Comparison - RAG Enhanced". You will see per-test-case score improvements, with RAG typically improving factuality by 20-30% because answers are grounded in retrieved documentation rather than model knowledge.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-robot mr-2"></i>Step 2: Agent Evaluation Patterns
+        </h3>
+
+        <p>
+            Agent evaluation requires both end-to-end measurement (did the agent accomplish the goal?) and step-by-step evaluation (was each decision correct?). Braintrust's tracing automatically captures agent tool calls, making it possible to score individual steps.
+        </p>
+
+        <!-- Agent Evaluation Diagram -->
+        <div class="architecture-diagram">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-4">Agent Evaluation Strategy</h4>
+
+            <div class="diagram-step bg-green-500/20 border-green-500">
+                <strong>End-to-End Evaluation</strong><br>
+                <span class="text-sm text-gray-400">Score final agent output against expected result</span><br>
+                <span class="text-xs text-green-300">✓ Simple to implement, captures overall success</span>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="text-center text-gray-400 mb-4">As complexity grows, add step-by-step evaluation:</div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                <div class="diagram-step bg-cyan-500/20 border-cyan-500">
+                    <strong>Planner Agent</strong><br>
+                    <span class="text-sm text-gray-400">Eval: Plan quality scorer</span>
+                </div>
+
+                <div class="diagram-step bg-blue-500/20 border-blue-500">
+                    <strong>Researcher Agent</strong><br>
+                    <span class="text-sm text-gray-400">Eval: Retrieval relevance</span>
+                </div>
+
+                <div class="diagram-step bg-indigo-500/20 border-indigo-500">
+                    <strong>Writer Agent</strong><br>
+                    <span class="text-sm text-gray-400">Eval: Writing quality</span>
+                </div>
+
+                <div class="diagram-step bg-fuchsia-500/20 border-fuchsia-500">
+                    <strong>Reviewer Agent</strong><br>
+                    <span class="text-sm text-gray-400">Eval: Factuality check</span>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-400 mt-4">
+                Braintrust tracing connects all steps in a single trace hierarchy
+            </p>
+        </div>
+
+        <p class="mt-6">
+            Here is a complete agent evaluation example with CrewAI and OpenTelemetry integration:
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-python">from braintrust import Eval, init_logger, traced
+from autoevals import Factuality, ClosedQA
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Initialize Braintrust logger for production tracing
+logger = init_logger(project="Agent Evaluation")
+
+@traced  # Automatically trace this function as a span
+def research_step(query: str) -> str:
+    """
+    Agent step 1: Research the topic
+    This span will appear in the trace hierarchy
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a research assistant. Find key facts about the topic."
+            },
+            {"role": "user", "content": f"Research: {query}"}
+        ],
+        temperature=0.3,
+    )
+    return response.choices[0].message.content.strip()
+
+@traced
+def writing_step(research: str, query: str) -> str:
+    """
+    Agent step 2: Write a response based on research
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a writing assistant. Create a clear, concise answer."
+            },
+            {
+                "role": "user",
+                "content": f"Research:\n{research}\n\nWrite an answer to: {query}"
+            }
+        ],
+        temperature=0.5,
+    )
+    return response.choices[0].message.content.strip()
+
+@traced
+def review_step(draft: str) -> str:
+    """
+    Agent step 3: Review and refine the draft
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an editor. Improve clarity and correctness."
+            },
+            {"role": "user", "content": f"Edit this draft:\n{draft}"}
+        ],
+        temperature=0.2,
+    )
+    return response.choices[0].message.content.strip()
+
+@traced
+def multi_agent_pipeline(query: str) -> str:
+    """
+    Complete multi-agent workflow with three sequential agents
+    Each agent is traced as a separate span in the hierarchy
+    """
+    # Agent 1: Research
+    research = research_step(query)
+
+    # Agent 2: Write
+    draft = writing_step(research, query)
+
+    # Agent 3: Review
+    final_answer = review_step(draft)
+
+    return final_answer
+
+# Agent evaluation dataset
+agent_test_cases = [
+    {
+        "input": "Explain how Braintrust's AI Proxy works",
+        "expected": "The Braintrust AI Proxy is an OpenAI-compatible gateway that provides access to 100+ models through a single API. It supports caching for sub-100ms responses, automatic logging, and load balancing across providers.",
+        "metadata": {"complexity": "medium"}
+    },
+    {
+        "input": "What is the difference between online and offline scoring in Braintrust?",
+        "expected": "Offline scoring runs during development experiments on test datasets. Online scoring runs automatically on production traffic at a configurable sampling rate. Both use the same scoring functions, creating consistency between development and production quality measurement.",
+        "metadata": {"complexity": "high"}
+    },
+]
+
+# Run agent evaluation
+Eval(
+    "Multi-Agent Evaluation",
+    data=lambda: agent_test_cases,
+    task=lambda input: multi_agent_pipeline(input),
+    scores=[
+        Factuality,     # LLM-as-judge: is the answer factually accurate?
+        ClosedQA,       # Does the answer correctly address the question?
+    ],
+    metadata={
+        "model": "gpt-4o-mini",
+        "agent_architecture": "research-write-review",
+        "num_agents": 3,
+    }
+)
+
+# To see per-agent costs in the Braintrust dashboard:
+# 1. Click any experiment row to open trace view
+# 2. Expand the span hierarchy
+# 3. Each agent step shows individual token counts and costs
+# 4. Sum across agents to see total cost per interaction
+
+# For multi-agent frameworks like CrewAI, use OpenTelemetry integration:
+# from braintrust import BraintrustSpanProcessor
+# from opentelemetry import trace
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+#
+# tracer_provider = TracerProvider()
+# tracer_provider.add_span_processor(BraintrustSpanProcessor())
+# trace.set_tracer_provider(tracer_provider)
+#
+# Now all CrewAI agent steps are automatically traced in Braintrust</code></pre>
+        </div>
+
+        <p class="mt-4">
+            The <code>@traced</code> decorator automatically creates spans for each agent step, building a complete hierarchy in the Braintrust trace viewer. This lets you see exactly which agent consumed the most tokens, where latency bottlenecks occurred, and which step caused quality issues if scores are low.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-code-branch mr-2"></i>Step 3: CI/CD Integration with GitHub Actions
+        </h3>
+
+        <p>
+            Braintrust provides a native GitHub Action (<code>braintrustdata/eval-action@v1</code>) that runs evaluations on every pull request and posts results as PR comments. This creates a quality gate where changes cannot merge without team visibility into their impact on scores.
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-yaml"># .github/workflows/braintrust-eval.yml
+name: Braintrust Evaluation
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install braintrust autoevals openai
+
+      - name: Run Braintrust evaluations
+        uses: braintrustdata/eval-action@v1
+        with:
+          # Braintrust API key (store in GitHub Secrets)
+          braintrust-api-key: ${{ secrets.BRAINTRUST_API_KEY }}
+
+          # OpenAI API key for LLM calls in evals
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+
+          # Path to your eval files (supports globs)
+          eval-path: 'evals/**/*.py'
+
+          # Automatically compare against the base branch experiment
+          compare: true
+
+          # Post results as PR comment
+          comment: true
+
+          # Fail the workflow if scores drop below threshold
+          # Format: scorer_name=threshold (0.0 to 1.0)
+          score-thresholds: |
+            Factuality=0.85
+            AnswerRelevancy=0.80
+            ExactMatch=0.90
+
+# Example eval file: evals/test_chatbot.py
+# from braintrust import Eval
+# from autoevals import Factuality, ExactMatch
+#
+# Eval(
+#     "Chatbot Quality",
+#     data=lambda: [
+#         {"input": "What is Braintrust?", "expected": "Braintrust is an AI evaluation platform..."},
+#         # ... more test cases
+#     ],
+#     task=lambda input: chatbot_function(input),
+#     scores=[Factuality, ExactMatch],
+#     metadata={"commit_sha": os.getenv("GITHUB_SHA")},
+# )
+
+# The GitHub Action will:
+# 1. Run all eval files matching the glob pattern
+# 2. Upload experiment results to Braintrust
+# 3. Compare against the baseline from the base branch (main/develop)
+# 4. Post a PR comment showing:
+#    - Overall score changes (e.g., "Factuality: 0.89 → 0.92 (+3%)")
+#    - Number of improvements and regressions
+#    - Link to full experiment comparison in Braintrust dashboard
+# 5. Fail the workflow if any score drops below the defined threshold</code></pre>
+        </div>
+
+        <p class="mt-4">
+            The PR comment includes a direct link to the Braintrust dashboard where you can see the full diff: which specific test cases improved, which regressed, and side-by-side output comparison. Teams use this to make informed decisions about whether prompt changes are worth merging based on quantified impact across all test dimensions.
+        </p>
+
+        <p>
+            For GitLab, Jenkins, or CircleCI, you can achieve the same result using the Braintrust CLI directly:
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-bash"># GitLab CI, Jenkins, CircleCI, or any CI system
+braintrust eval evals/ --verbose
+
+# Access results programmatically for custom logic
+# The eval returns exit code 0 if all thresholds pass, 1 if any fail</code></pre>
+        </div>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-flask mr-2"></i>Step 4: A/B Testing and Experiment Comparison
+        </h3>
+
+        <p>
+            A/B testing in Braintrust is powered by automatic experiment comparison. When you run two experiments with the same input field values, Braintrust matches test cases and shows you exactly which inputs improved, which regressed, and the aggregate score deltas.
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-python">from braintrust import Eval
+from autoevals import Factuality, Conciseness
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Shared test dataset for fair comparison
+summarization_dataset = [
+    {
+        "input": "Long article about climate change and renewable energy solutions...",
+        "expected": "Article discusses climate change impacts and proposes solar, wind, and battery storage as key solutions.",
+        "metadata": {"article_length": "long"}
+    },
+    # ... 50 more test cases
+]
+
+def summarize_with_prompt_v1(article: str) -> str:
+    """Baseline prompt: simple instruction"""
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "Summarize the article in 2-3 sentences."
+            },
+            {"role": "user", "content": article}
+        ],
+        temperature=0.5,
+    )
+    return response.choices[0].message.content.strip()
+
+def summarize_with_prompt_v2(article: str) -> str:
+    """Improved prompt: explicit constraints and structure"""
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Summarize the article in exactly 2 sentences. "
+                    "First sentence: main topic. Second sentence: key conclusion or insight. "
+                    "Be factual and concise. Do not add information not in the article."
+                )
+            },
+            {"role": "user", "content": article}
+        ],
+        temperature=0.3,  # Lower temperature for consistency
+    )
+    return response.choices[0].message.content.strip()
+
+# Experiment A: Baseline prompt
+Eval(
+    "Summarization Comparison",
+    data=lambda: summarization_dataset,
+    task=lambda input: summarize_with_prompt_v1(input),
+    scores=[
+        Factuality,    # Is the summary factually accurate?
+        Conciseness,   # Is it appropriately concise?
+    ],
+    experimentName="Prompt v1 Baseline",
+    metadata={
+        "model": "gpt-4o",
+        "prompt_version": "v1",
+        "temperature": 0.5,
+    }
+)
+
+# Experiment B: Improved prompt
+Eval(
+    "Summarization Comparison",
+    data=lambda: summarization_dataset,
+    task=lambda input: summarize_with_prompt_v2(input),
+    scores=[
+        Factuality,
+        Conciseness,
+    ],
+    experimentName="Prompt v2 Structured",
+    metadata={
+        "model": "gpt-4o",
+        "prompt_version": "v2",
+        "temperature": 0.3,
+    },
+    # Compare against the baseline experiment
+    baseExperimentName="Prompt v1 Baseline",
+)
+
+# For statistical robustness with non-deterministic outputs, use trialCount:
+Eval(
+    "Summarization Comparison - Statistical",
+    data=lambda: summarization_dataset,
+    task=lambda input: summarize_with_prompt_v2(input),
+    scores=[Factuality, Conciseness],
+    experimentName="Prompt v2 (5 trials)",
+    metadata={"model": "gpt-4o", "prompt_version": "v2"},
+    trialCount=5,  # Run each input 5 times, aggregate scores
+)
+
+# Hill climbing pattern: iteratively improve by always comparing to previous best
+# Set baseExperimentName to the previous winner's experiment name
+# This creates a chain: v1 → v2 → v3 → ... where each iteration beats the last</code></pre>
+        </div>
+
+        <p class="mt-4">
+            In the Braintrust dashboard, select both experiments and click "Compare". You will see:
+        </p>
+
+        <ul class="list-disc list-inside text-gray-300 mb-4 ml-6 space-y-2">
+            <li><strong>Diff table:</strong> Per-test-case score comparison with green (improvement) and red (regression) highlighting</li>
+            <li><strong>Aggregate metrics:</strong> Overall score changes (e.g., "Factuality: 0.87 → 0.92 (+5%), Conciseness: 0.75 → 0.81 (+6%)")</li>
+            <li><strong>Improvement/regression counts:</strong> "32 improvements, 8 regressions, 10 no change"</li>
+            <li><strong>Grid layout:</strong> Side-by-side output comparison for any test case</li>
+            <li><strong>Scatter plots:</strong> Multi-dimensional analysis (e.g., accuracy vs. latency, quality vs. cost)</li>
+        </ul>
+
+        <p>
+            The <code>trialCount</code> parameter runs each input multiple times and aggregates scores, which is critical for non-deterministic applications where temperature &gt; 0 or sampling is involved. This gives statistical confidence that observed differences are real rather than random variation.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-dollar-sign mr-2"></i>Step 5: Cost Tracking and Optimization
+        </h3>
+
+        <p>
+            Braintrust automatically captures cost-related metrics for every LLM call: duration, time to first token (TTFT), prompt tokens, completion tokens, cached tokens (for Anthropic prompt caching), reasoning tokens (for o1 models), and estimated cost based on current provider pricing.
+        </p>
+
+        <!-- Automatic Metrics Table -->
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Description</th>
+                    <th>Unit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Duration</td>
+                    <td>Total span time from start to completion</td>
+                    <td>milliseconds</td>
+                </tr>
+                <tr>
+                    <td>LLM Duration</td>
+                    <td>Time spent in LLM API call (subset of duration)</td>
+                    <td>milliseconds</td>
+                </tr>
+                <tr>
+                    <td>Time to First Token (TTFT)</td>
+                    <td>Latency until streaming begins (streaming only)</td>
+                    <td>milliseconds</td>
+                </tr>
+                <tr>
+                    <td>Prompt Tokens</td>
+                    <td>Input tokens sent to the model</td>
+                    <td>count</td>
+                </tr>
+                <tr>
+                    <td>Completion Tokens</td>
+                    <td>Output tokens generated by the model</td>
+                    <td>count</td>
+                </tr>
+                <tr>
+                    <td>Cached Tokens</td>
+                    <td>Tokens served from cache (AI Proxy or Anthropic prompt caching)</td>
+                    <td>count</td>
+                </tr>
+                <tr>
+                    <td>Reasoning Tokens</td>
+                    <td>Chain-of-thought tokens (OpenAI o1 models)</td>
+                    <td>count</td>
+                </tr>
+                <tr>
+                    <td>Estimated Cost</td>
+                    <td>Calculated from token counts and current provider pricing</td>
+                    <td>USD ($)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="mt-6">
+            Cost optimization strategies in Braintrust:
+        </p>
+
+        <!-- Cost Optimization Diagram -->
+        <div class="architecture-diagram">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-4">Cost Optimization Strategies</h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <div class="diagram-step bg-cyan-500/20 border-cyan-500">
+                    <strong>1. AI Proxy Caching</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Enable with <code>x-bt-use-cache: always</code></span>
+                    <span class="text-sm text-green-300 mt-1 block">✓ Sub-100ms cached responses</span>
+                    <span class="text-sm text-green-300 block">✓ 20-30% cost reduction</span>
+                    <span class="text-sm text-green-300 block">✓ Works for deterministic prompts (temp=0)</span>
+                </div>
+
+                <div class="diagram-step bg-blue-500/20 border-blue-500">
+                    <strong>2. Model Routing</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Use cheaper models for simple tasks</span>
+                    <span class="text-sm text-green-300 mt-1 block">✓ GPT-4o-mini for classification</span>
+                    <span class="text-sm text-green-300 block">✓ GPT-4o for complex reasoning</span>
+                    <span class="text-sm text-green-300 block">✓ A/B test to validate quality</span>
+                </div>
+
+                <div class="diagram-step bg-indigo-500/20 border-indigo-500">
+                    <strong>3. Prompt Optimization</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Reduce token usage via Playground iteration</span>
+                    <span class="text-sm text-green-300 mt-1 block">✓ Remove unnecessary examples</span>
+                    <span class="text-sm text-green-300 block">✓ Compress system prompts</span>
+                    <span class="text-sm text-green-300 block">✓ Measure quality impact with evals</span>
+                </div>
+
+                <div class="diagram-step bg-fuchsia-500/20 border-fuchsia-500">
+                    <strong>4. Token Management</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Monitor dashboard identifies expensive prompts</span>
+                    <span class="text-sm text-green-300 mt-1 block">✓ Filter by cost per trace</span>
+                    <span class="text-sm text-green-300 block">✓ Set budget alerts</span>
+                    <span class="text-sm text-green-300 block">✓ Track cost trends over time</span>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-400 mt-6">
+                All strategies measurable via Braintrust experiments and Monitor dashboards
+            </p>
+        </div>
+
+        <p class="mt-6">
+            Example: Enabling AI Proxy caching for cost reduction:
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-python">from openai import OpenAI
+
+# Use Braintrust AI Proxy with caching enabled
+client = OpenAI(
+    base_url="https://api.braintrust.dev/v1/proxy",
+    api_key=os.getenv("BRAINTRUST_API_KEY"),
+)
+
+response = client.chat.completions.create(
+    model="gpt-4o-mini",  # Route through AI Proxy
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Explain quantum computing"}
+    ],
+    temperature=0,  # Required for caching (deterministic)
+    extra_headers={
+        "x-bt-use-cache": "always",  # Enable aggressive caching
+        "x-bt-cache-ttl": "3600",    # Cache for 1 hour
+    }
+)
+
+# First call: ~1500ms, full cost
+# Subsequent identical calls: ~80ms, zero cost (served from cache)
+# Monitor dashboard shows cache hit rate and cost savings</code></pre>
+        </div>
+
+        <p class="mt-4">
+            The Monitor dashboard provides time-series charts showing cost trends by model, project, or metadata dimension. Filter to "Top 10 most expensive traces" to identify optimization opportunities. Set alerts for daily or monthly cost thresholds to prevent budget overruns.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-user-shield mr-2"></i>Step 6: Security, Access Control, and Team Collaboration
+        </h3>
+
+        <p>
+            Production AI systems require enterprise-grade security and access controls. Braintrust provides role-based access control (RBAC), SOC 2 Type II and HIPAA compliance, and three deployment options to match your security requirements.
+        </p>
+
+        <!-- RBAC Matrix Table -->
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Permission</th>
+                    <th>Owners</th>
+                    <th>Engineers</th>
+                    <th>Viewers</th>
+                    <th>Custom</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Create/edit projects</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+                <tr>
+                    <td>Run experiments</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+                <tr>
+                    <td>View results</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+                <tr>
+                    <td>Manage datasets</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+                <tr>
+                    <td>Manage members</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+                <tr>
+                    <td>Configure online scoring</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+                <tr>
+                    <td>Manage API keys</td>
+                    <td class="text-green-400">✓</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-red-400">✗</td>
+                    <td class="text-yellow-400">Configurable</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="mt-6">
+            Service accounts provide API keys for CI/CD and automation without tying access to individual users. Service account tokens are prefixed with <code>bt-st-</code> and can have scoped permissions to specific projects or organizations.
+        </p>
+
+        <!-- Security Certifications Table -->
+        <table class="comparison-table mt-6">
+            <thead>
+                <tr>
+                    <th>Security Feature</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>SOC 2 Type II</td>
+                    <td>Annual third-party security audit covering security, availability, confidentiality</td>
+                </tr>
+                <tr>
+                    <td>HIPAA Compliance</td>
+                    <td>Business Associate Agreements (BAA) available for healthcare use cases</td>
+                </tr>
+                <tr>
+                    <td>Encryption</td>
+                    <td>TLS 1.2+ in transit, AES-256 at rest, encrypted caching</td>
+                </tr>
+                <tr>
+                    <td>Enterprise SSO/SAML</td>
+                    <td>Okta, Google Workspace, Azure AD, OneLogin integrations</td>
+                </tr>
+                <tr>
+                    <td>Data Residency</td>
+                    <td>US and EU regions available, hybrid deployment for data control</td>
+                </tr>
+                <tr>
+                    <td>Audit Logs</td>
+                    <td>Complete activity logging for compliance and forensics</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Deployment Options Diagram -->
+        <div class="architecture-diagram mt-8">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-4">Three Deployment Options</h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="diagram-step bg-green-500/20 border-green-500">
+                    <strong>Fully Managed SaaS</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Braintrust hosts everything</span>
+                    <span class="text-xs text-green-300 mt-1 block">✓ Simplest setup</span>
+                    <span class="text-xs text-green-300 block">✓ Automatic updates</span>
+                    <span class="text-xs text-green-300 block">✓ AWS US/EU regions</span>
+                    <span class="text-xs text-gray-400 mt-2 block">Best for: Most teams</span>
+                </div>
+
+                <div class="diagram-step bg-blue-500/20 border-blue-500">
+                    <strong>Hybrid Deployment</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Control plane at Braintrust</span>
+                    <span class="text-xs text-green-300 mt-1 block">✓ Data plane in your VPC</span>
+                    <span class="text-xs text-green-300 block">✓ No data leaves your infra</span>
+                    <span class="text-xs text-green-300 block">✓ Managed UI/control</span>
+                    <span class="text-xs text-gray-400 mt-2 block">Best for: Regulated industries</span>
+                </div>
+
+                <div class="diagram-step bg-fuchsia-500/20 border-fuchsia-500">
+                    <strong>Self-Hosted</strong><br>
+                    <span class="text-sm text-gray-400 mt-2 block">Everything behind your firewall</span>
+                    <span class="text-xs text-green-300 mt-1 block">✓ Complete data control</span>
+                    <span class="text-xs text-green-300 block">✓ Custom IAM integration</span>
+                    <span class="text-xs text-green-300 block">✓ Your own audit trails</span>
+                    <span class="text-xs text-gray-400 mt-2 block">Best for: Maximum control</span>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-400 mt-4">
+                Arrow from left to right: Increasing control and compliance, increasing operational overhead
+            </p>
+        </div>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-bug mr-2"></i>Step 7: Debugging Regressions in Production
+        </h3>
+
+        <p>
+            The production debugging workflow in Braintrust creates a continuous feedback loop that turns failures into preventable test cases. This is where the platform's evals-first architecture shows its power: production logs, online scoring, datasets, and offline experiments are tightly integrated.
+        </p>
+
+        <!-- Production Debugging Loop Diagram -->
+        <div class="architecture-diagram">
+            <h4 class="text-xl font-bold text-fuchsia-400 mb-4">Production Debugging Feedback Loop</h4>
+
+            <div class="max-w-2xl mx-auto">
+                <div class="diagram-step bg-violet-500/20 border-violet-500">
+                    <strong>1. Production Logs</strong><br>
+                    <span class="text-sm text-gray-400">Capture every trace with automatic metrics</span>
+                </div>
+
+                <div class="arrow-down text-violet-400">↓</div>
+
+                <div class="diagram-step bg-cyan-500/20 border-cyan-500">
+                    <strong>2. Online Scoring</strong><br>
+                    <span class="text-sm text-gray-400">Automatically score sampled production traffic</span>
+                </div>
+
+                <div class="arrow-down text-cyan-400">↓</div>
+
+                <div class="diagram-step bg-blue-500/20 border-blue-500">
+                    <strong>3. Regression Detection</strong><br>
+                    <span class="text-sm text-gray-400">Dashboard alerts on low scores, filter to failures</span>
+                </div>
+
+                <div class="arrow-down text-blue-400">↓</div>
+
+                <div class="diagram-step bg-indigo-500/20 border-indigo-500">
+                    <strong>4. Add to Dataset</strong><br>
+                    <span class="text-sm text-gray-400">One-click to add failing cases to test datasets</span>
+                </div>
+
+                <div class="arrow-down text-indigo-400">↓</div>
+
+                <div class="diagram-step bg-fuchsia-500/20 border-fuchsia-500">
+                    <strong>5. Offline Eval</strong><br>
+                    <span class="text-sm text-gray-400">Run experiments in CI to validate fixes</span>
+                </div>
+
+                <div class="arrow-down text-fuchsia-400">↓</div>
+
+                <div class="diagram-step bg-pink-500/20 border-pink-500">
+                    <strong>6. Deploy Fix</strong><br>
+                    <span class="text-sm text-gray-400">Improved prompt/model returns to production</span>
+                </div>
+
+                <div class="text-center mt-4">
+                    <div class="inline-block bg-green-500/20 border-2 border-green-500 rounded-lg px-4 py-2">
+                        <span class="text-green-300 font-semibold">Cycle repeats: Continuous improvement</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-sm text-gray-400 mt-6">
+                Each failure teaches the system something new, preventing future regressions
+            </p>
+        </div>
+
+        <p class="mt-6">
+            Practical debugging workflow example:
+        </p>
+
+        <div class="code-block">
+            <pre><code class="language-python"># Scenario: Users report that chatbot gives poor answers about Product X
+# Goal: Identify the issue, fix it, and prevent recurrence
+
+# Step 1: Filter production logs to find failures
+# In Braintrust Dashboard → Logs:
+# - Filter: metadata.product = "Product X" AND Factuality < 0.7
+# - Sort by: "Order by regressions" (shows biggest quality drops)
+# Result: 15 traces identified with Factuality scores 0.4-0.6
+
+# Step 2: Examine trace hierarchy to diagnose root cause
+# Click any failing trace → expand span hierarchy
+# Discovery: The RAG retrieval step is returning outdated documentation
+# The embedding model was updated last week, but the vector DB was not re-indexed
+
+# Step 3: Add failing cases to test dataset
+# Select the 15 failing traces → "Add to dataset" button
+# Choose dataset: "Chatbot Regression Tests"
+# Braintrust automatically creates test cases with input/expected/metadata
+
+# Step 4: Fix the issue (re-index vector DB with new embeddings)
+# Update retrieval pipeline code
+
+# Step 5: Run offline experiment to validate fix
+from braintrust import Eval, init_dataset
+from autoevals import Factuality, AnswerRelevancy
+
+# Load the dataset of failing cases
+regression_dataset = init_dataset(
+    project="Customer Chatbot",
+    name="Chatbot Regression Tests"
+)
+
+def improved_chatbot(query: str) -> dict:
+    # Updated retrieval with re-indexed vector DB
+    context = retrieve_context_v2(query)  # Fixed retrieval
+    answer = generate_answer(query, context)
+    return {"output": answer, "context": context}
+
+Eval(
+    "Customer Chatbot",
+    data=regression_dataset,  # Use the failing cases
+    task=lambda input: improved_chatbot(input),
+    scores=[Factuality, AnswerRelevancy],
+    experimentName="Fix Product X Documentation Retrieval",
+    metadata={
+        "fix": "re-indexed vector DB with new embeddings",
+        "date": "2026-02-10",
+    }
+)
+
+# Results: Factuality improved from 0.5 → 0.92, AnswerRelevancy 0.6 → 0.89
+# All 15 previously failing cases now pass
+
+# Step 6: Deploy the fix to production
+# Merge PR → CI/CD runs the regression test dataset → Passes → Deploy
+
+# Step 7: Monitor in production
+# Enable online scoring on Product X queries
+# Dashboard shows Factuality now trending at 0.90+ (fixed!)
+
+# The 15 failing cases are now permanent regression tests
+# Future changes that break Product X documentation will fail in CI before deployment</code></pre>
+        </div>
+
+        <p class="mt-4">
+            This workflow demonstrates the complete feedback loop. Production failures become test cases. Test cases prevent future regressions. Every incident makes your test suite stronger and your system more robust.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-8 mb-4">
+            <i class="fas fa-tasks mr-2"></i>Step 8-10: Production Readiness Checklist & Platform Comparison
+        </h3>
+
+        <p>
+            Before deploying to production, verify your system meets these 12 production-readiness criteria:
+        </p>
+
+        <!-- Production Readiness Checklist -->
+        <div class="my-8">
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Run evals before every deployment</strong>
+                    <p class="text-sm text-gray-400 mt-1">CI/CD integration with quality gates ensures no changes deploy without measurement against your test suite.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Build datasets from production logs, not just synthetic data</strong>
+                    <p class="text-sm text-gray-400 mt-1">Real user inputs reveal edge cases and distribution shifts that synthetic test cases miss.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Enable online scoring at 10%+ sampling rate</strong>
+                    <p class="text-sm text-gray-400 mt-1">Real-time quality monitoring catches degradation immediately rather than waiting for user complaints.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Add eval gates to CI/CD pipeline</strong>
+                    <p class="text-sm text-gray-400 mt-1">Block merges if scores drop below defined thresholds. Make quality regressions visible before deployment.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Version prompts with environment-based deployment</strong>
+                    <p class="text-sm text-gray-400 mt-1">Separate dev, staging, and production prompt versions. Pin production to stable versions, test changes in staging first.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Enable AI Proxy caching for deterministic prompts</strong>
+                    <p class="text-sm text-gray-400 mt-1">Sub-100ms cached responses for temperature=0 calls reduce costs by 20-30% without quality impact.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Use trialCount for non-deterministic applications</strong>
+                    <p class="text-sm text-gray-400 mt-1">Run each test case multiple times and aggregate scores for statistical confidence with temperature &gt; 0.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Configure RBAC with least-privilege access</strong>
+                    <p class="text-sm text-gray-400 mt-1">PMs get Viewer role (see results, no API keys), engineers get Engineer role, contractors get scoped access.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Set up BTQL-powered monitoring dashboards</strong>
+                    <p class="text-sm text-gray-400 mt-1">Create views for critical metrics: "Factuality &lt; 0.8", "Cost &gt; $0.10 per trace", "Latency &gt; 2000ms".</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Practice dataset reconciliation over static golden sets</strong>
+                    <p class="text-sm text-gray-400 mt-1">Continuously update test datasets from production failures. Living datasets evolve with your product.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Define aggregate scores for single-metric tracking</strong>
+                    <p class="text-sm text-gray-400 mt-1">Weighted averages, min, max across multiple scorers create trackable KPIs for executive reporting.</p>
+                </div>
+            </div>
+
+            <div class="checklist-item">
+                <i class="fas fa-check-square checklist-icon"></i>
+                <div>
+                    <strong class="text-fuchsia-300">Use Loop AI assistant for log analysis and pattern detection</strong>
+                    <p class="text-sm text-gray-400 mt-1">Natural language queries like "Show me traces with low factuality from users in France" surface insights faster.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Comparison -->
+        <h3 class="text-2xl font-semibold text-fuchsia-400 mt-12 mb-4">
+            <i class="fas fa-balance-scale mr-2"></i>Braintrust vs. LangSmith vs. Langfuse vs. Helicone
+        </h3>
+
+        <p>
+            The AI evaluation and observability landscape includes several competing platforms. Here is a direct comparison showing where Braintrust differentiates and where alternatives may be better fits for specific use cases.
+        </p>
+
+        <table class="comparison-table mt-6">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th class="highlight-col">Braintrust</th>
+                    <th>LangSmith</th>
+                    <th>Langfuse</th>
+                    <th>Helicone</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Primary Focus</strong></td>
+                    <td class="highlight-col">Evals-first with unified scoring framework</td>
+                    <td>Tracing-first, evals as feature</td>
+                    <td>Observability-first, open source</td>
+                    <td>Logging-first, quick setup</td>
+                </tr>
+                <tr>
+                    <td><strong>Open Source</strong></td>
+                    <td class="highlight-col">AI Proxy (MIT) + Autoevals library</td>
+                    <td>No (proprietary)</td>
+                    <td>Yes (full platform, MIT)</td>
+                    <td>Yes (core logging, MIT)</td>
+                </tr>
+                <tr>
+                    <td><strong>Framework Lock-in</strong></td>
+                    <td class="highlight-col">None (framework-agnostic)</td>
+                    <td>LangChain-heavy integration</td>
+                    <td>None (OpenTelemetry standard)</td>
+                    <td>None (proxy-based)</td>
+                </tr>
+                <tr>
+                    <td><strong>Built-in Scorers</strong></td>
+                    <td class="highlight-col">25+ autoevals (heuristic, LLM-judge, RAGAS)</td>
+                    <td>Limited set (~5-8 scorers)</td>
+                    <td>Custom only (bring your own)</td>
+                    <td>Score API (external integration)</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Proxy</strong></td>
+                    <td class="highlight-col">100+ models, caching, load balancing (MIT)</td>
+                    <td>No (use LangChain routing)</td>
+                    <td>No (observability only)</td>
+                    <td>Proxy-based logging (core feature)</td>
+                </tr>
+                <tr>
+                    <td><strong>Dataset Management</strong></td>
+                    <td class="highlight-col">Full lifecycle: versioning, production→dataset</td>
+                    <td>Basic dataset storage</td>
+                    <td>Basic dataset support</td>
+                    <td>Datasets from logs</td>
+                </tr>
+                <tr>
+                    <td><strong>CI/CD Action</strong></td>
+                    <td class="highlight-col">Native GitHub Action, quality gates</td>
+                    <td>Custom scripts (no official action)</td>
+                    <td>Custom scripts</td>
+                    <td>No (logging focus)</td>
+                </tr>
+                <tr>
+                    <td><strong>Online Scoring</strong></td>
+                    <td class="highlight-col">Same scorers as offline evals</td>
+                    <td>Separate evaluation workflows</td>
+                    <td>Separate scoring configuration</td>
+                    <td>API-based scoring integration</td>
+                </tr>
+                <tr>
+                    <td><strong>Production → Eval Loop</strong></td>
+                    <td class="highlight-col">One-click: logs→dataset→eval</td>
+                    <td>Manual export and import</td>
+                    <td>Manual workflow</td>
+                    <td>Manual workflow</td>
+                </tr>
+                <tr>
+                    <td><strong>Playground</strong></td>
+                    <td class="highlight-col">Multi-variant comparison + dataset scoring</td>
+                    <td>Basic prompt testing</td>
+                    <td>No playground</td>
+                    <td>Basic playground</td>
+                </tr>
+                <tr>
+                    <td><strong>Pricing Start</strong></td>
+                    <td class="highlight-col">$0 (1M spans, 10K scores free)</td>
+                    <td>$0 (5K traces free)</td>
+                    <td>$0 (50K observations free)</td>
+                    <td>$0 (10K requests free)</td>
+                </tr>
+                <tr>
+                    <td><strong>Best For</strong></td>
+                    <td class="highlight-col">Teams wanting systematic eval workflow</td>
+                    <td>LangChain users needing tracing</td>
+                    <td>Self-hosting + maximum flexibility</td>
+                    <td>Quick proxy-based observability</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Pricing Comparison -->
+        <table class="comparison-table mt-8">
+            <thead>
+                <tr>
+                    <th>Pricing Dimension</th>
+                    <th class="highlight-col">Braintrust</th>
+                    <th>LangSmith</th>
+                    <th>Langfuse</th>
+                    <th>Helicone</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Free Tier Limits</strong></td>
+                    <td class="highlight-col">1M spans, 10K scores/month</td>
+                    <td>5K traces/month</td>
+                    <td>50K observations/month</td>
+                    <td>10K requests/month</td>
+                </tr>
+                <tr>
+                    <td><strong>Paid Starting Price</strong></td>
+                    <td class="highlight-col">$249/month (unlimited users)</td>
+                    <td>$39/seat/month</td>
+                    <td>$59/month (team plan)</td>
+                    <td>$79/month (growth plan)</td>
+                </tr>
+                <tr>
+                    <td><strong>Per-User Pricing</strong></td>
+                    <td class="highlight-col">Unlimited (org-based pricing)</td>
+                    <td>Per-seat pricing</td>
+                    <td>Per-seat pricing</td>
+                    <td>Per-seat pricing</td>
+                </tr>
+                <tr>
+                    <td><strong>Enterprise Features</strong></td>
+                    <td class="highlight-col">SOC 2, HIPAA, hybrid/self-hosted</td>
+                    <td>SOC 2 (managed only)</td>
+                    <td>SOC 2 (self-hosted available)</td>
+                    <td>SOC 2 (managed + on-prem)</td>
+                </tr>
+                <tr>
+                    <td><strong>Self-Hosting</strong></td>
+                    <td class="highlight-col">Yes (hybrid or full self-hosted)</td>
+                    <td>No (managed SaaS only)</td>
+                    <td>Yes (open source, MIT)</td>
+                    <td>Yes (Docker deployment)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="mt-6">
+            <strong>When to choose Braintrust:</strong> Your team wants to build an evaluation-first development workflow where the same scorers work identically in dev experiments and production monitoring. You need framework neutrality (not locked into LangChain). You want built-in scorers (25+ autoevals) rather than writing everything custom. You value one-click production-to-dataset conversion and native CI/CD integration.
+        </p>
+
+        <p>
+            <strong>When to choose LangSmith:</strong> Your application is heavily built on LangChain and you want the tightest possible integration with that ecosystem. You prioritize tracing and debugging over systematic evaluation.
+        </p>
+
+        <p>
+            <strong>When to choose Langfuse:</strong> You require full self-hosting for compliance reasons and prefer open source software. You are comfortable building custom scoring logic and workflows.
+        </p>
+
+        <p>
+            <strong>When to choose Helicone:</strong> You need quick proxy-based observability with minimal setup. Your primary goal is logging rather than comprehensive evaluation.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- Conclusion -->
+        <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion: The Evals-First Advantage</h2>
+
+        <p>
+            This three-part series has taken you from first evaluation to production deployment with Braintrust. Part 1 introduced the three-component model (data, task, scores) and the evals-first philosophy. Part 2 explored the complete feature set: 25+ scorers, datasets, logging and tracing, prompt management, the AI Proxy, and framework integrations. Part 3 delivered production patterns for RAG evaluation, agent testing, CI/CD integration, A/B testing, cost optimization, security controls, and regression debugging.
+        </p>
+
+        <p>
+            The evals-first architecture creates a competitive advantage. Teams that measure every change systematically ship faster with higher confidence than teams that rely on manual spot-checking. The same scorers working identically in development and production create a tight feedback loop that gets tighter with every iteration. Production failures become regression tests. Test datasets evolve with your product. Quality measurement becomes automatic rather than exceptional.
+        </p>
+
+        <p class="font-semibold text-fuchsia-300 text-lg mt-6">
+            Key takeaways from the complete series:
+        </p>
+
+        <ul class="list-disc list-inside text-gray-300 mb-6 space-y-2 ml-6">
+            <li><strong>Evaluation is not a feature, it is the architecture.</strong> Braintrust was built evaluation-first, with every other capability (logging, monitoring, datasets, prompts) connecting through the scoring framework.</li>
+            <li><strong>Same scorers, offline and online.</strong> The Factuality scorer you write for development experiments runs identically on production traffic through online scoring, creating consistency across your workflow.</li>
+            <li><strong>Production failures are test cases.</strong> One-click conversion from production logs to datasets means every failure teaches your system something permanent.</li>
+            <li><strong>Framework neutrality matters.</strong> Braintrust works with OpenAI, Anthropic, Google, LangChain, LlamaIndex, CrewAI, and custom frameworks without lock-in.</li>
+            <li><strong>Quantified comparison beats intuition.</strong> Diff mode showing per-case improvements and regressions across experiments makes prompt iteration systematic rather than guesswork.</li>
+            <li><strong>Cost optimization requires measurement.</strong> Automatic token and cost tracking, combined with AI Proxy caching, makes optimization decisions data-driven.</li>
+        </ul>
+
+        <p>
+            The platform continues to evolve. The team ships new features weekly, expands the autoevals library, and adds integrations based on community feedback. Join the Slack community, explore the cookbook repository with 50+ production patterns, and read the comprehensive documentation at <code>braintrust.dev/docs</code>.
+        </p>
+
+        <p class="mt-6">
+            AI systems that ship to production without systematic evaluation are flying blind. Braintrust provides the instrumentation, the measurement framework, and the feedback loops to make quality improvements continuous rather than reactive. The gap between prototype and production is not just infrastructure. It is systematic measurement and continuous improvement. Build that foundation first, and everything else becomes easier.
+        </p>
+
+        <div class="section-divider"></div>
+
+        <!-- GitHub Card -->
+        <div class="github-card">
+            <div class="flex-shrink-0">
+                <i class="fab fa-github text-6xl text-fuchsia-400"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-fuchsia-300 mb-2">
+                    Complete Code Examples
+                </h3>
+                <p class="text-gray-400 mb-4">
+                    All production patterns from this series—RAG evaluation, agent testing, CI/CD workflows, cost optimization, and debugging examples—are available in my GitHub repository with runnable notebooks and complete datasets.
+                </p>
+                <a href="https://github.com/zubairashfaque/braintrust-production-patterns"
+                   class="inline-flex items-center gap-2 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-fuchsia-600 hover:to-pink-600 transition-all">
+                    <i class="fab fa-github"></i>
+                    View on GitHub
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Series Navigation -->
+        <div class="mt-12 p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+            <h3 class="text-xl font-semibold text-fuchsia-400 mb-4">
+                <i class="fas fa-books mr-2"></i>Braintrust Series
+            </h3>
+            <div class="space-y-3">
+                <a href="braintrust-evals-first-workflow.html" class="block p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Part 1: Getting Started with Braintrust — Evals-First AI Development</span>
+                        <i class="fas fa-arrow-right text-cyan-400"></i>
+                    </div>
+                </a>
+                <a href="braintrust-features-deep-dive.html" class="block p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Part 2: Braintrust Features Deep Dive — From Scoring to Production Monitoring</span>
+                        <i class="fas fa-arrow-right text-cyan-400"></i>
+                    </div>
+                </a>
+                <div class="block p-3 bg-fuchsia-500/20 rounded-lg border-2 border-fuchsia-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-fuchsia-300 font-semibold">Part 3: Production Use Cases and Best Practices with Braintrust (Current)</span>
+                        <i class="fas fa-check-circle text-fuchsia-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-16 pt-8 border-t border-slate-700 text-center text-gray-500">
+            <p>&copy; 2026 Zubair Ashfaque. All rights reserved.</p>
+            <div class="mt-4 flex justify-center gap-6">
+                <a href="https://github.com/zubairashfaque" class="hover:text-fuchsia-400 transition-colors">
+                    <i class="fab fa-github text-xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="hover:text-fuchsia-400 transition-colors">
+                    <i class="fab fa-linkedin text-xl"></i>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+</body>
+</html>
