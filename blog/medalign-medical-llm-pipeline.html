@@ -185,7 +185,7 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             text-align: center;
-            min-width: 180px;
+            min-width: 120px;
             transition: all 0.3s ease;
         }
         .architecture-box:hover {
@@ -653,7 +653,8 @@
             <!-- DIAGRAM 4: Medical Intern Journey -->
             <div class="architecture-diagram">
                 <h4 class="text-center text-white font-bold mb-6">The Medical Intern Journey</h4>
-                <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-1 flex-wrap">
+                <!-- Row 1: First 3 stages -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2">
                     <div class="architecture-box" style="border: 2px solid #64748b; min-width: 130px; padding: 1rem;">
                         <div class="text-slate-400 text-xl mb-1"><i class="fas fa-graduation-cap"></i></div>
                         <div class="text-white font-semibold text-xs">College Graduate</div>
@@ -673,8 +674,11 @@
                         <div class="text-white font-semibold text-xs">Residency</div>
                         <div class="text-cyan-300 text-xs">DPO Alignment</div>
                     </div>
-                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
-                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                </div>
+                <!-- Connecting arrow between rows -->
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <!-- Row 2: Last 3 stages -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2">
                     <div class="architecture-box" style="border: 2px solid #3b82f6; min-width: 130px; padding: 1rem;">
                         <div class="text-blue-400 text-xl mb-1"><i class="fas fa-book-open"></i></div>
                         <div class="text-white font-semibold text-xs">Library Access</div>
@@ -848,7 +852,7 @@
                 <!-- Row 1: Data Pipeline -->
                 <div class="mb-4">
                     <div class="text-xs font-semibold text-violet-400 mb-2 uppercase tracking-wider">Data Pipeline</div>
-                    <div class="flex flex-col md:flex-row items-center gap-2 flex-wrap">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-wrap">
                         <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem; min-width: 140px;">
                             <div class="text-violet-400 text-sm"><i class="fas fa-database mr-1"></i>HuggingFace</div>
                             <div class="text-slate-400 text-xs">3 datasets, 60K</div>
@@ -871,7 +875,7 @@
                 <!-- Row 2: Training Pipeline -->
                 <div class="mb-4">
                     <div class="text-xs font-semibold text-cyan-400 mb-2 uppercase tracking-wider">Training Pipeline</div>
-                    <div class="flex flex-col md:flex-row items-center gap-2 flex-wrap">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-wrap">
                         <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 0.75rem; min-width: 140px;">
                             <div class="text-cyan-400 text-sm"><i class="fas fa-brain mr-1"></i>QLoRA SFT</div>
                             <div class="text-slate-400 text-xs">3 epochs, NF4+LoRA</div>
@@ -894,7 +898,7 @@
                 <!-- Row 3: RAG Pipeline -->
                 <div class="mb-4">
                     <div class="text-xs font-semibold text-blue-400 mb-2 uppercase tracking-wider">RAG Pipeline</div>
-                    <div class="flex flex-col md:flex-row items-center gap-2 flex-wrap">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-wrap">
                         <div class="architecture-box" style="border: 2px solid #3b82f6; padding: 0.75rem; min-width: 140px;">
                             <div class="text-blue-400 text-sm"><i class="fas fa-file-medical mr-1"></i>PubMed Corpus</div>
                             <div class="text-slate-400 text-xs">211K abstracts</div>
@@ -917,7 +921,7 @@
                 <!-- Row 4: Serving -->
                 <div class="mb-4">
                     <div class="text-xs font-semibold text-emerald-400 mb-2 uppercase tracking-wider">Serving</div>
-                    <div class="flex flex-col md:flex-row items-center gap-2 flex-wrap">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-wrap">
                         <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.75rem; min-width: 140px;">
                             <div class="text-emerald-400 text-sm"><i class="fas fa-cube mr-1"></i>GGUF Model</div>
                             <div class="text-slate-400 text-xs">llama-cpp-python</div>
@@ -940,7 +944,7 @@
                 <!-- Row 5: Evaluation -->
                 <div>
                     <div class="text-xs font-semibold text-amber-400 mb-2 uppercase tracking-wider">Evaluation</div>
-                    <div class="flex flex-col md:flex-row items-center gap-2 flex-wrap">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-wrap">
                         <div class="architecture-box" style="border: 2px solid #f59e0b; padding: 0.75rem; min-width: 140px;">
                             <div class="text-amber-400 text-sm"><i class="fas fa-flask mr-1"></i>3 Benchmarks</div>
                             <div class="text-slate-400 text-xs">PubMedQA/MedQA/MedMCQA</div>
@@ -1278,15 +1282,18 @@ def format_chatml(instruction, output="", system_message=None):
                         </div>
                         <div>
                             <div class="text-center text-violet-400 text-sm font-semibold mb-3"><i class="fas fa-cogs mr-1"></i>MLP Block (3 modules)</div>
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-2 gap-2">
                                 <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem;">
-                                    <div class="text-violet-300 text-sm font-mono">gate</div>
+                                    <div class="text-violet-300 text-sm font-mono">gate_proj</div>
+                                    <div class="text-slate-500 text-xs">Gate</div>
                                 </div>
                                 <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem;">
-                                    <div class="text-violet-300 text-sm font-mono">up</div>
+                                    <div class="text-violet-300 text-sm font-mono">up_proj</div>
+                                    <div class="text-slate-500 text-xs">Up</div>
                                 </div>
-                                <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem;">
-                                    <div class="text-violet-300 text-sm font-mono">down</div>
+                                <div class="architecture-box col-span-2 mx-auto" style="border: 2px solid #8b5cf6; padding: 0.75rem; max-width: 50%;">
+                                    <div class="text-violet-300 text-sm font-mono">down_proj</div>
+                                    <div class="text-slate-500 text-xs">Down</div>
                                 </div>
                             </div>
                         </div>
@@ -1626,6 +1633,8 @@ Interpretation:
                 <!-- DIAGRAM 19: Two-Step Conversion -->
                 <div class="architecture-diagram" style="border-color: #10b981;">
                     <h4 class="text-center text-white font-bold mb-4">Two-Step GGUF Conversion</h4>
+                    <!-- Step 1: Format Conversion -->
+                    <div class="text-xs font-semibold text-cyan-400 mb-2 uppercase tracking-wider">Step 1: Format Conversion</div>
                     <div class="flex flex-col md:flex-row items-center justify-center gap-2">
                         <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem;">
                             <div class="text-violet-400 text-sm"><i class="fas fa-cube mr-1"></i>HF Model</div>
@@ -1639,6 +1648,16 @@ Interpretation:
                         </div>
                         <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-slate-400"></i></div>
                         <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-slate-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #f59e0b; padding: 0.75rem;">
+                            <div class="text-amber-400 text-sm"><i class="fas fa-file mr-1"></i>GGUF F16</div>
+                            <div class="text-slate-400 text-xs">2.2GB baseline</div>
+                        </div>
+                    </div>
+                    <!-- Connecting arrow -->
+                    <div class="flow-arrow"><i class="fas fa-arrow-down text-slate-400"></i></div>
+                    <!-- Step 2: Quantization -->
+                    <div class="text-xs font-semibold text-emerald-400 mb-2 uppercase tracking-wider">Step 2: Quantization</div>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2">
                         <div class="architecture-box" style="border: 2px solid #f59e0b; padding: 0.75rem;">
                             <div class="text-amber-400 text-sm"><i class="fas fa-file mr-1"></i>GGUF F16</div>
                             <div class="text-slate-400 text-xs">2.2GB baseline</div>
@@ -1927,23 +1946,27 @@ def _reciprocal_rank_fusion(self, dense_results, sparse_results, k=60):
                 <div class="architecture-diagram" style="border-color: #f59e0b;">
                     <h4 class="text-center text-white font-bold mb-4">Evaluation Flow</h4>
                     <div class="flex flex-col md:flex-row items-center justify-center gap-2">
-                        <div class="architecture-box" style="border: 2px solid #64748b; padding: 0.75rem;">
+                        <div class="architecture-box" style="border: 2px solid #64748b; padding: 0.5rem; min-width: auto;">
                             <div class="text-slate-400 text-sm">Base</div>
                         </div>
                         <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
-                        <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem;">
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.5rem; min-width: auto;">
                             <div class="text-violet-400 text-sm">+ SFT</div>
                         </div>
                         <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
-                        <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 0.75rem;">
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 0.5rem; min-width: auto;">
                             <div class="text-cyan-400 text-sm">+ DPO</div>
                         </div>
                         <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
-                        <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.75rem;">
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.5rem; min-width: auto;">
                             <div class="text-emerald-400 text-sm">+ RAG</div>
                         </div>
                         <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
-                        <div class="architecture-box" style="border: 2px solid #f59e0b; padding: 0.75rem;">
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #f59e0b; padding: 0.5rem; min-width: auto;">
                             <div class="text-amber-400 text-sm"><i class="fas fa-chart-line mr-1"></i>W&B</div>
                         </div>
                     </div>
