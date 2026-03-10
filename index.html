@@ -972,6 +972,17 @@
 
             const journalEntries = [
                 {
+                    title: 'MedAlign: Training a Medical AI on a Laptop \u2014 From TinyLlama to Production QA System',
+                    date: 'March 11, 2026',
+                    category: 'Medical AI',
+                    excerpt: 'Transform TinyLlama-1.1B into a production-grade medical QA system through QLoRA SFT, DPO alignment, hybrid RAG with cross-encoder reranking, and GGUF quantization. Complete pipeline with 33 architecture diagrams, PubMedQA evaluation (38% \u2192 62%), and W&B experiment tracking.',
+                    readTime: '30 min read',
+                    tags: ['Medical AI', 'QLoRA', 'DPO', 'RAG', 'GGUF', 'PubMedQA', 'TinyLlama'],
+                    color: 'from-violet-500 to-fuchsia-500',
+                    icon: 'fa-heartbeat',
+                    link: 'blog/medalign-medical-llm-pipeline.html'
+                },
+                {
                     title: 'Production Use Cases and Best Practices with Braintrust',
                     date: 'February 23, 2026',
                     category: 'AI Architecture',
@@ -1149,7 +1160,7 @@
                 }
             ];
 
-            const categories = ['All', 'AI Research', 'Data Science', 'LLM Engineering', 'AI Architecture'];
+            const categories = ['All', 'Medical AI', 'AI Research', 'Data Science', 'LLM Engineering', 'AI Architecture'];
 
             const filteredEntries = selectedCategory === 'All'
                 ? journalEntries
