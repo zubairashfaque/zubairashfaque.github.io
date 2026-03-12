@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiGuard: Multimodal Hate Detection — From CLIP+RoBERTa to Production Cascaded Inference | Zubair Ashfaque</title>
+    <meta name="description" content="Build a production-grade multimodal content intelligence system with 3 fusion strategies, knowledge distillation, GradCAM explainability, and cascaded inference — complete pipeline from Facebook Hateful Memes to Docker-served API.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            margin: 3rem 0;
+        }
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #a855f7;
+        }
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #c084fc;
+        }
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a {
+            color: #8b5cf6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover { color: #a855f7; }
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .highlight-box {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+        }
+        .metric-card .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-card .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .progress-bar-container {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            height: 2rem;
+            position: relative;
+            margin: 0.5rem 0;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            padding-left: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            transition: width 0.5s ease;
+        }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            padding: 0.5rem 0;
+        }
+        .flow-arrow-right {
+            display: flex;
+            align-items: center;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .benchmark-table th {
+            background: rgba(139, 92, 246, 0.2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #c084fc;
+            border-bottom: 2px solid #8b5cf6;
+        }
+        .benchmark-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        .benchmark-table tr:hover { background: rgba(139, 92, 246, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .confusion-grid {
+            display: grid;
+            grid-template-columns: auto repeat(2, 1fr);
+            gap: 2px;
+            max-width: 350px;
+            margin: 1rem auto;
+        }
+        .confusion-cell {
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 0.25rem;
+        }
+        .confusion-header {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c084fc;
+            font-size: 0.85rem;
+        }
+        .confusion-label {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+        .loss-curve {
+            height: 200px;
+            position: relative;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        .loss-curve-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(139, 92, 246, 0.3), transparent);
+            clip-path: polygon(0% 100%, 5% 85%, 10% 78%, 15% 72%, 20% 67%, 25% 62%, 30% 58%, 35% 55%, 40% 52%, 45% 49%, 50% 46%, 55% 44%, 60% 42%, 65% 40%, 70% 38%, 75% 37%, 80% 36%, 85% 35%, 90% 34%, 95% 33%, 100% 32%);
+        }
+        .loss-curve-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            border: none;
+            clip-path: polygon(0% 85%, 5% 85%, 10% 78%, 15% 72%, 20% 67%, 25% 62%, 30% 58%, 35% 55%, 40% 52%, 45% 49%, 50% 46%, 55% 44%, 60% 42%, 65% 40%, 70% 38%, 75% 37%, 80% 36%, 85% 35%, 90% 34%, 95% 33%, 100% 32%, 100% 100%);
+            background: linear-gradient(to top, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+            border-top: 2px solid #8b5cf6;
+        }
+        .gate-formula {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid #8b5cf6;
+            border-radius: 0.5rem;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #c084fc;
+            text-align: center;
+        }
+        .bit-layout {
+            display: flex;
+            gap: 2px;
+            margin: 0.5rem 0;
+            justify-content: center;
+        }
+        .bit-cell {
+            padding: 0.5rem 0.75rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.25rem;
+            color: white;
+        }
+        .deep-dive-link {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(217, 70, 239, 0.15));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .deep-dive-link a {
+            color: #c084fc;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .deep-dive-link a:hover { color: #d946ef; }
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-violet-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>MultiGuard: Multimodal Hate Detection</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                MultiGuard: Multimodal Hate Detection — From CLIP+RoBERTa to Production Cascaded Inference
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                Transform pre-trained vision and language models into a multimodal classifier using 3 fusion strategies, knowledge distillation, and cascaded inference — from research to Docker-served API.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>March 12, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>35 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Multimodal AI</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">CLIP</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">RoBERTa</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Fusion</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Knowledge Distillation</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">GradCAM</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">FastAPI</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Memes combine text and images to create meaning that neither modality has alone. A photo of a puppy is harmless. The text "they should all go back" is ambiguous. But overlay that text on a photo of refugees — the combined message is hateful. Social media platforms moderate billions of such posts daily, and unimodal AI (text-only or image-only) systematically misses this cross-modal hate.
+            </p>
+
+            <p>
+                Detecting multimodal hate speech is one of the hardest open problems in content moderation. Pre-trained models like CLIP understand images and RoBERTa understands text — but neither understands the <em>relationship</em> between the two. MultiGuard bridges that gap with a complete pipeline: from pre-trained backbones through three fusion strategies, knowledge distillation for compression, GradCAM explainability, and cascaded inference for production serving.
+            </p>
+
+            <p>
+                The questions this blog answers:
+            </p>
+
+            <ul class="list-disc">
+                <li>How do you detect hate that only emerges when text and image are combined?</li>
+                <li>How do three different fusion strategies (late, cross-attention, tensor) compare in capturing cross-modal interactions?</li>
+                <li>How do you compress a ~430M parameter teacher into an ~87M student without losing accuracy?</li>
+                <li>How do you explain <em>why</em> the model flagged a meme — which image region and which text tokens drove the decision?</li>
+                <li>How do you deploy at scale with cascaded inference, where ~70% of requests are handled in ~5ms?</li>
+                <li>What does the complete pipeline look like from Facebook Hateful Memes dataset to Docker-served API?</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-shield-alt mr-2"></i>Key Innovation:</strong>
+                A 3-stage training pipeline (baseline late fusion → fusion ablation with cross-attention and tensor fusion → knowledge distillation) combined with cascaded inference — CLIP zero-shot handles ~70% of clear cases in ~5ms, while the full fusion model processes ambiguous cases in ~50ms.
+            </div>
+
+            <!-- DIAGRAM: Unimodal vs MultiGuard comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="metric-card" style="border-color: #ef4444;">
+                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-eye-slash mr-1"></i>Unimodal Detection</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">Blind</div>
+                    <div class="metric-label">to cross-modal hate</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-font mr-1"></i> Text-only: misses visual context</div>
+                        <div><i class="fas fa-image mr-1"></i> Image-only: misses textual intent</div>
+                        <div><i class="fas fa-unlink mr-1"></i> No cross-modal reasoning</div>
+                    </div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-shield-alt mr-1"></i>MultiGuard</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">Fused</div>
+                    <div class="metric-label">multimodal understanding</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-project-diagram mr-1"></i> 3 fusion strategies compared</div>
+                        <div><i class="fas fa-search-plus mr-1"></i> GradCAM + IG explainability</div>
+                        <div><i class="fas fa-bolt mr-1"></i> Cascaded inference for production</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIAGRAM: 2x2 Multimodal Hate Grid -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-th mr-2"></i>Why Multimodal Matters: The 2x2 Grid</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-green-400 text-sm font-semibold mb-1">Text: Benign + Image: Benign</div>
+                        <div class="text-2xl mb-1">SAFE</div>
+                        <div class="text-xs text-slate-400">"Cute puppy" + photo of puppy</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-sm font-semibold mb-1">Text: Benign + Image: Offensive</div>
+                        <div class="text-2xl mb-1">HATEFUL</div>
+                        <div class="text-xs text-slate-400">Innocent caption + violent image</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-sm font-semibold mb-1">Text: Offensive + Image: Benign</div>
+                        <div class="text-2xl mb-1">HATEFUL</div>
+                        <div class="text-xs text-slate-400">Hateful text + stock photo</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #ef4444;">
+                        <div class="text-red-400 text-sm font-semibold mb-1">Text: Ambiguous + Image: Contextual</div>
+                        <div class="text-2xl mb-1">HARDEST</div>
+                        <div class="text-xs text-slate-400">Meaning only emerges from combination</div>
+                    </div>
+                </div>
+                <p class="text-center text-sm text-slate-400 mt-4"><i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i>The bottom-right case is where unimodal systems fail — the hate only exists in the <em>relationship</em> between text and image.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is building a system that understands the <em>combined meaning</em> of text and images, not just each modality in isolation — and doing so in a way that is explainable, compressible, and deployable at production scale.
+            </p>
+
+            <p>Five interconnected problems make this hard:</p>
+
+            <ol class="list-decimal">
+                <li><strong>Pre-trained models understand modalities separately.</strong> CLIP was trained on 400M image-text pairs for contrastive matching — not for classification. RoBERTa was trained on 160GB of text — with zero visual understanding. Neither can classify hateful memes out of the box.</li>
+                <li><strong>The dataset contains confounders.</strong> Facebook's Hateful Memes (~10K memes) was specifically designed with confounders — benign confounders that look hateful by one modality but are safe, and hateful confounders that look safe by one modality but are hateful. This defeats naive approaches.</li>
+                <li><strong>Fusion is an open research question.</strong> How do you combine 768-dim vision features with 768-dim text features? Concatenation? Attention? Outer products? Each captures different types of cross-modal interaction, and the optimal choice is not obvious.</li>
+                <li><strong>Production demands compression.</strong> A ~430M parameter teacher with CLIP ViT-L/14 + RoBERTa is too expensive for real-time serving. Knowledge distillation to EfficientNet-B0 + DistilRoBERTa cuts parameters by ~5x while preserving accuracy.</li>
+                <li><strong>Decisions must be explainable.</strong> Content moderation requires transparency. GradCAM shows which image regions triggered the decision; Integrated Gradients shows which text tokens mattered. Without explainability, the system is a black box.</li>
+            </ol>
+
+            <!-- Before/After Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-red-400 text-center mb-4"><i class="fas fa-times-circle mr-2"></i>Without Fusion</h4>
+                    <ul class="comparison-list">
+                        <li>Text and image processed independently</li>
+                        <li>Cross-modal hate is invisible</li>
+                        <li>No explanation of decisions</li>
+                        <li>Single monolithic model, no compression</li>
+                        <li>No fast path for clear cases</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-green-400 text-center mb-4"><i class="fas fa-check-circle mr-2"></i>With MultiGuard</h4>
+                    <ul class="comparison-list">
+                        <li>3 fusion strategies capture cross-modal meaning</li>
+                        <li>Confounders in Hateful Memes handled</li>
+                        <li>GradCAM + Integrated Gradients explain every decision</li>
+                        <li>Knowledge distillation: ~430M → ~87M params</li>
+                        <li>Cascaded inference: ~70% handled in ~5ms</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Five Interconnected Problems Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-6"><i class="fas fa-project-diagram mr-2"></i>Five Interconnected Problems</h4>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <i class="fas fa-brain text-violet-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-violet-300">1. Separate Backbones</div>
+                        <div class="text-xs text-slate-400 mt-1">CLIP + RoBERTa understand modalities alone</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <i class="fas fa-puzzle-piece text-cyan-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-cyan-300">2. Confounder Dataset</div>
+                        <div class="text-xs text-slate-400 mt-1">Hateful Memes designed to defeat unimodal</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <i class="fas fa-object-group text-blue-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-blue-300">3. Fusion Strategy</div>
+                        <div class="text-xs text-slate-400 mt-1">Late, cross-attention, or tensor?</div>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4 mt-4 max-w-lg mx-auto">
+                    <div class="architecture-box" style="border: 2px solid #d946ef;">
+                        <i class="fas fa-compress-alt text-fuchsia-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-fuchsia-300">4. Compression</div>
+                        <div class="text-xs text-slate-400 mt-1">Distill ~430M → ~87M for production</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f43f5e;">
+                        <i class="fas fa-search-plus text-rose-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-rose-300">5. Explainability</div>
+                        <div class="text-xs text-slate-400 mt-1">GradCAM + IG for transparency</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFYING THE PROBLEM                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let's <strong>lucify</strong> this concept with two analogies that make the architecture intuitive.
+            </p>
+
+            <h3><i class="fas fa-user-secret mr-2"></i>Analogy 1: Two Detectives</h3>
+
+            <p>
+                Imagine two expert detectives investigating a crime. Detective Vision can see the crime scene perfectly but cannot hear anything — no audio from the security camera. Detective Language can hear all the audio recordings but is blindfolded — cannot see a single photo. Each detective writes a brilliant report from their single modality. But <strong>neither can solve a case where the crime is only visible when you combine what was said with what was shown.</strong>
+            </p>
+
+            <p>
+                That is exactly the multimodal hate detection problem. CLIP is Detective Vision — trained on 400 million image-text pairs, it can "see" images with superhuman precision. RoBERTa is Detective Language — trained on 160GB of text, it understands language nuance. But a meme that combines an innocent photo with an ambiguous caption requires <em>both detectives to share their notes</em>. Fusion is that collaboration.
+            </p>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-user-secret mr-2"></i>The Detective Journey</h4>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <i class="fas fa-eye text-violet-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-violet-300">Detective Vision</div>
+                        <div class="text-xs text-slate-400">Sees everything, hears nothing</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-plus"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <i class="fas fa-font text-cyan-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-cyan-300">Detective Language</div>
+                        <div class="text-xs text-slate-400">Hears everything, sees nothing</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-arrow-right"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <i class="fas fa-handshake text-green-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-green-300">Fusion = Collaboration</div>
+                        <div class="text-xs text-slate-400">Share notes, solve the case</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-gavel mr-2"></i>Analogy 2: Court Translators</h3>
+
+            <p>
+                Think of two world-class translators who have never worked in a courtroom. One translates Arabic perfectly, the other translates Mandarin perfectly. But put them in a complex international trial and they fail — not because they cannot translate, but because they do not know <strong>courtroom procedure</strong>. They translate words literally when they should translate legal intent.
+            </p>
+
+            <p>
+                CLIP and RoBERTa are those translators. They understand their "languages" (images and text) perfectly. But they have never been trained to <strong>render a verdict</strong> — to classify whether the combined meaning is hateful. The fusion layers and classification head are the "courtroom training" that teaches them to work together and produce a judgment.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: LUCIFYING THE TECH TERMS                           -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                Before we build, let's define every technical term you'll encounter. Each term gets a <strong>Definition</strong>, a <strong>Simple Example</strong>, and an <strong>Analogy</strong>.
+            </p>
+
+            <!-- Term 1: CLIP -->
+            <div class="concept-card">
+                <h4><i class="fas fa-eye text-violet-400 mr-2"></i>1. CLIP (Contrastive Language-Image Pre-training)</h4>
+                <p><strong>Definition:</strong> A vision model trained by OpenAI on 400 million image-text pairs using contrastive learning. Given an image, CLIP produces a 768-dimensional embedding vector that captures visual semantics. MultiGuard uses <code>ViT-L/14</code> — a Vision Transformer with 14x14 patches.</p>
+                <p><strong>Simple Example:</strong> Feed a photo of a cat → CLIP outputs a 768-number vector. Feed a photo of a dog → CLIP outputs a different 768-number vector. These vectors are close to the text "a photo of a cat" and "a photo of a dog" respectively.</p>
+                <p><strong>Analogy:</strong> CLIP is a museum curator who has seen 400 million artworks with their descriptions. Show any new artwork and the curator can instantly describe its content — but cannot judge whether it violates gallery policy.</p>
+            </div>
+
+            <!-- Term 2: RoBERTa -->
+            <div class="concept-card">
+                <h4><i class="fas fa-font text-cyan-400 mr-2"></i>2. RoBERTa (Robustly Optimized BERT Approach)</h4>
+                <p><strong>Definition:</strong> A transformer language model trained on 160GB of text (books, Wikipedia, news). It has 125M parameters and produces 768-dimensional embeddings from the [CLS] token — a single vector summarizing the entire input text, up to 128 tokens.</p>
+                <p><strong>Simple Example:</strong> Feed "This is a funny meme" → RoBERTa outputs a 768-number vector. Feed "This is a hateful meme" → different 768-number vector. The difference encodes semantic meaning.</p>
+                <p><strong>Analogy:</strong> RoBERTa is a literature professor who has read every book in the library. They understand sarcasm, irony, and nuance — but have never seen a picture in their life.</p>
+            </div>
+
+            <!-- Term 3: Late Fusion -->
+            <div class="concept-card">
+                <h4><i class="fas fa-object-group text-blue-400 mr-2"></i>3. Late Fusion</h4>
+                <p><strong>Definition:</strong> The simplest fusion strategy. Concatenate vision features [768] and text features [768] into a single [1536] vector, then pass through an MLP: Linear(1536→512) + GELU + Dropout → Linear(512→256) + GELU + Dropout. No cross-modal interaction — features are combined but never "talk" to each other.</p>
+                <p><strong>Simple Example:</strong> Vision says [0.8, 0.2, ...] and text says [0.1, 0.9, ...]. Late fusion concatenates them into [0.8, 0.2, ..., 0.1, 0.9, ...] and feeds the combined vector through neural network layers.</p>
+                <p><strong>Analogy:</strong> Two experts write separate reports. A manager reads both reports side-by-side and makes a decision. The experts never discuss with each other.</p>
+            </div>
+
+            <!-- Term 4: Cross-Attention Fusion -->
+            <div class="concept-card">
+                <h4><i class="fas fa-arrows-alt text-indigo-400 mr-2"></i>4. Cross-Attention Fusion</h4>
+                <p><strong>Definition:</strong> A deep fusion strategy where each modality attends to the other. Vision-to-text: 4 TransformerDecoderLayers where vision queries attend to text keys/values. Text-to-vision: 4 TransformerDecoderLayers in the opposite direction. Results are combined via a learned gate: <code>gate = Sigmoid(Linear(concat(v2t, t2v)))</code>, <code>fused = gate * v2t + (1-gate) * t2v</code>. Uses 8 attention heads per layer.</p>
+                <p><strong>Simple Example:</strong> The vision feature "asks" the text feature: "What does the text say about what I'm seeing?" Simultaneously, the text feature asks: "What does the image show about what I'm reading?" Both answers are combined via a learned gate.</p>
+                <p><strong>Analogy:</strong> Two detectives interviewing each other about the case. Each asks probing questions about what the other observed, and a judge weighs both interrogation reports to reach a verdict.</p>
+            </div>
+
+            <!-- Term 5: Tensor Fusion -->
+            <div class="concept-card">
+                <h4><i class="fas fa-cubes text-purple-400 mr-2"></i>5. Tensor Fusion (Low-Rank)</h4>
+                <p><strong>Definition:</strong> A multiplicative fusion strategy. Project both modalities to a low-rank space: <code>vision_factor = Linear(768→32)</code> and <code>text_factor = Linear(768→32)</code>. Compute element-wise product: <code>fused = v_factor * t_factor</code>. Then project back: <code>Linear(32→768)</code> + Dropout + LayerNorm. Rank=32 approximates the full outer product while keeping computation tractable.</p>
+                <p><strong>Simple Example:</strong> Vision feature compressed to 32 numbers, text feature compressed to 32 numbers. Multiply corresponding elements: vision[i] × text[i] for all i. The product captures how each visual concept interacts with each textual concept.</p>
+                <p><strong>Analogy:</strong> Mixing paint — red and blue separately are just colors, but when you mix them you get purple, a fundamentally new color. The multiplication creates meaning that neither input had alone.</p>
+            </div>
+
+            <!-- Term 6: Knowledge Distillation -->
+            <div class="concept-card">
+                <h4><i class="fas fa-graduation-cap text-fuchsia-400 mr-2"></i>6. Knowledge Distillation</h4>
+                <p><strong>Definition:</strong> Model compression technique. A large teacher model (CLIP + RoBERTa + best fusion, ~430M params) teaches a small student (EfficientNet-B0 + DistilRoBERTa + late fusion, ~87M params). The student learns from both hard labels (ground truth) and soft labels (teacher's probability distribution at temperature T=4.0). Loss: <code>alpha * CE(student, labels) + (1-alpha) * T² * KL(student_soft, teacher_soft)</code>, alpha=0.5.</p>
+                <p><strong>Simple Example:</strong> Teacher says "85% hateful, 15% safe" (soft). Ground truth says "hateful" (hard). Student learns from both signals — the soft target teaches that this case is "clearly hateful" rather than "borderline."</p>
+                <p><strong>Analogy:</strong> A master chef teaching an apprentice. Instead of just giving recipes (hard labels), the master explains <em>why</em> each ingredient works — the reasoning (soft probabilities) transfers understanding, not just answers.</p>
+            </div>
+
+            <!-- Term 7: Focal Loss -->
+            <div class="concept-card">
+                <h4><i class="fas fa-crosshairs text-rose-400 mr-2"></i>7. Focal Loss</h4>
+                <p><strong>Definition:</strong> A modified cross-entropy loss that down-weights easy examples and focuses on hard ones. Formula: <code>FL = alpha * (1-pt)^gamma * CE</code>, where alpha=0.25 and gamma=2.0. When the model is confident (pt near 1.0), the loss is near zero. When the model is wrong (pt near 0.0), the loss is maximal.</p>
+                <p><strong>Simple Example:</strong> If the model is 95% confident and correct, focal loss is almost zero — it moves on. If the model is 40% confident on a hard example, the loss is high — it focuses training on that case.</p>
+                <p><strong>Analogy:</strong> A teacher who spends extra time on students struggling with a concept, instead of re-explaining what everyone already understands.</p>
+            </div>
+
+            <!-- Term 8: AUROC -->
+            <div class="concept-card">
+                <h4><i class="fas fa-chart-area text-green-400 mr-2"></i>8. AUROC (Area Under the ROC Curve)</h4>
+                <p><strong>Definition:</strong> A threshold-independent metric that measures how well the model separates positive and negative classes across all possible thresholds. 0.5 = random guessing, 1.0 = perfect separation. Plots True Positive Rate vs False Positive Rate.</p>
+                <p><strong>Simple Example:</strong> AUROC of 0.85 means: pick a random hateful meme and a random safe meme — 85% of the time, the model assigns a higher probability to the hateful one.</p>
+                <p><strong>Analogy:</strong> A metal detector's overall sensitivity. AUROC doesn't tell you the specific threshold setting — it tells you how good the detector is across <em>all</em> possible sensitivity settings.</p>
+            </div>
+
+            <!-- Term 9: F1 Score -->
+            <div class="concept-card">
+                <h4><i class="fas fa-balance-scale text-teal-400 mr-2"></i>9. F1 Score</h4>
+                <p><strong>Definition:</strong> The harmonic mean of precision and recall: <code>F1 = 2 * (precision * recall) / (precision + recall)</code>. Precision = "of all flagged content, what fraction is actually hateful?" Recall = "of all hateful content, what fraction did we catch?" F1 balances both.</p>
+                <p><strong>Simple Example:</strong> A filter with 90% precision but 50% recall catches half the hate but rarely makes mistakes. F1 = 0.64 — the harmonic mean penalizes the low recall.</p>
+                <p><strong>Analogy:</strong> A security guard's effectiveness. Precision is "does the guard stop the right people?" Recall is "does the guard catch all the threats?" F1 balances both.</p>
+            </div>
+
+            <!-- Term 10: Gradient Accumulation -->
+            <div class="concept-card">
+                <h4><i class="fas fa-layer-group text-amber-400 mr-2"></i>10. Gradient Accumulation</h4>
+                <p><strong>Definition:</strong> Simulate large batch training on limited GPU memory. Process small batches (e.g., 16), accumulate gradients for N steps (e.g., 4), then update weights once. Effective batch size = batch_size × accumulation_steps = 64.</p>
+                <p><strong>Simple Example:</strong> GPU can only fit 16 samples. Set gradient_accumulation_steps=4. After 4 forward passes (64 samples total), one optimizer step runs. Same training dynamics as batch_size=64.</p>
+                <p><strong>Analogy:</strong> Collecting opinions from four small focus groups before making a decision, instead of surveying all 64 people at once in a room that doesn't fit them.</p>
+            </div>
+
+            <!-- Term 11: Cosine Annealing -->
+            <div class="concept-card">
+                <h4><i class="fas fa-wave-square text-sky-400 mr-2"></i>11. Cosine Annealing with Warmup</h4>
+                <p><strong>Definition:</strong> A learning rate schedule. Start at zero, linearly ramp up during warmup (warmup_ratio=0.1 means first 10% of training). Then follow a cosine curve from peak LR down to zero. Prevents early instability and enables fine convergence.</p>
+                <p><strong>Simple Example:</strong> With 10 epochs and warmup_ratio=0.1: epoch 1 = warmup (LR ramps from 0 to 1e-4). Epochs 2-10 = cosine decay (LR smoothly decreases from 1e-4 toward 0).</p>
+                <p><strong>Analogy:</strong> Warming up before exercise, then gradually cooling down. You don't sprint immediately (that pulls a muscle), and you don't stop abruptly (that causes cramps).</p>
+            </div>
+
+            <!-- Term 12: Mixed Precision BF16 -->
+            <div class="concept-card">
+                <h4><i class="fas fa-microchip text-orange-400 mr-2"></i>12. Mixed Precision (BF16)</h4>
+                <p><strong>Definition:</strong> Use 16-bit Brain Floating Point for forward/backward passes instead of 32-bit. BF16 uses 1 sign bit + 8 exponent bits + 7 mantissa bits. Same exponent range as FP32 (no overflow issues), half the memory. Weights stored in FP32, computations in BF16.</p>
+                <p><strong>Simple Example:</strong> FP32: 4 bytes per number. BF16: 2 bytes per number. A 430M parameter model goes from ~1.7GB to ~860MB in memory. Training is ~2x faster.</p>
+                <p><strong>Analogy:</strong> Writing shorthand notes instead of full sentences. You lose some detail (precision) but capture the same range of ideas (exponent range), and you can write twice as fast.</p>
+            </div>
+
+            <!-- Term 13: GradCAM -->
+            <div class="concept-card">
+                <h4><i class="fas fa-search-plus text-pink-400 mr-2"></i>13. GradCAM (Gradient-weighted Class Activation Mapping)</h4>
+                <p><strong>Definition:</strong> An explainability technique that produces a heatmap showing which image regions contributed to a prediction. Hooks capture activations and gradients from a target layer. Formula: <code>CAM = ReLU(sum(w_c * A_c))</code> where weights w_c = global average pooling of gradients, A_c = activations.</p>
+                <p><strong>Simple Example:</strong> Model predicts "hateful" for a meme. GradCAM highlights the faces in the image — showing the model focused on the people depicted, not the background.</p>
+                <p><strong>Analogy:</strong> A forensic investigator dusting for fingerprints. GradCAM reveals which parts of the image the model "touched" most heavily when making its decision.</p>
+            </div>
+
+            <!-- Term 14: ONNX -->
+            <div class="concept-card">
+                <h4><i class="fas fa-file-export text-lime-400 mr-2"></i>14. ONNX (Open Neural Network Exchange)</h4>
+                <p><strong>Definition:</strong> A framework-agnostic model format. Export a PyTorch model to ONNX, then run it with ONNX Runtime — which applies graph optimizations (operator fusion, constant folding) for faster inference without any code changes.</p>
+                <p><strong>Simple Example:</strong> Train in PyTorch → export to <code>.onnx</code> → serve with ONNX Runtime. Inference is 2-3x faster than native PyTorch because the runtime optimizes the computation graph.</p>
+                <p><strong>Analogy:</strong> A universal adapter that lets any appliance (model) plug into any outlet (serving framework). The adapter also includes a voltage optimizer (graph optimizations).</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: MAKING THE BLUEPRINT                               -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                Now, let's <strong>make the blueprint</strong> to solve this. The MultiGuard pipeline has 8 stages, from raw data to production deployment.
+            </p>
+
+            <ol class="list-decimal">
+                <li><strong>Data Pipeline:</strong> Facebook Hateful Memes (~10K memes), image preprocessing (224x224), text tokenization (128 tokens), augmentation (crop, flip, jitter, synonym replacement, mixup/cutmix).</li>
+                <li><strong>Stage 1 — Baseline (Late Fusion):</strong> Freeze CLIP + RoBERTa backbones, train a concat+MLP fusion head. Establishes baseline performance with the simplest architecture.</li>
+                <li><strong>Stage 2a — Cross-Attention Fusion:</strong> 4-layer bidirectional cross-attention with gated combination. Vision attends to text, text attends to vision. Deepest cross-modal interaction.</li>
+                <li><strong>Stage 2b — Tensor Fusion:</strong> Low-rank (rank=32) element-wise product in projected space. Multiplicative interaction captures joint meaning that neither modality has alone.</li>
+                <li><strong>Stage 3 — Knowledge Distillation:</strong> Best fusion model becomes teacher. Train a ~5x smaller student (EfficientNet-B0 + DistilRoBERTa) using soft+hard targets (T=4.0, alpha=0.5).</li>
+                <li><strong>Explainability:</strong> GradCAM for image regions, Integrated Gradients for text tokens, SHAP for global feature importance. Every prediction can be explained.</li>
+                <li><strong>Serving:</strong> FastAPI + cascaded inference (CLIP zero-shot fast path at ~5ms, full model for ambiguous cases at ~50ms) + Redis caching + Docker containerization.</li>
+                <li><strong>Monitoring:</strong> Evidently drift detection, automated retraining triggers (performance drop >5%, drift >0.1), MLflow experiment tracking, Airflow orchestration.</li>
+            </ol>
+
+            <!-- Interactive Flow Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-6"><i class="fas fa-project-diagram mr-2"></i>8-Stage Pipeline</h4>
+                <div class="grid md:grid-cols-4 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <i class="fas fa-database text-violet-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-violet-300">1. Data Pipeline</div>
+                        <div class="text-xs text-slate-400 mt-1">~10K memes, augmentation</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <i class="fas fa-layer-group text-cyan-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-cyan-300">2. Late Fusion</div>
+                        <div class="text-xs text-slate-400 mt-1">Concat + MLP baseline</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <i class="fas fa-arrows-alt text-blue-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-blue-300">3. Cross-Attention</div>
+                        <div class="text-xs text-slate-400 mt-1">Bidirectional + gating</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #6366f1;">
+                        <i class="fas fa-cubes text-indigo-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-indigo-300">4. Tensor Fusion</div>
+                        <div class="text-xs text-slate-400 mt-1">Low-rank product</div>
+                    </div>
+                </div>
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <div class="grid md:grid-cols-4 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #d946ef;">
+                        <i class="fas fa-graduation-cap text-fuchsia-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-fuchsia-300">5. Distillation</div>
+                        <div class="text-xs text-slate-400 mt-1">~430M → ~87M params</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #ec4899;">
+                        <i class="fas fa-search-plus text-pink-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-pink-300">6. Explainability</div>
+                        <div class="text-xs text-slate-400 mt-1">GradCAM + IG + SHAP</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f43f5e;">
+                        <i class="fas fa-server text-rose-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-rose-300">7. Serving</div>
+                        <div class="text-xs text-slate-400 mt-1">FastAPI + cascaded</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <i class="fas fa-chart-line text-green-400 text-xl mb-2"></i>
+                        <div class="text-sm font-semibold text-green-300">8. Monitoring</div>
+                        <div class="text-xs text-slate-400 mt-1">Drift + retraining</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: EXECUTING THE BLUEPRINT                            -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+            <!-- ============================================================ -->
+            <!-- 6a: DATA PIPELINE                                             -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-database mr-2"></i>Step 1: Data Pipeline</h3>
+
+            <p>
+                MultiGuard trains on Facebook's <strong>Hateful Memes</strong> dataset — approximately 10,000 memes with binary labels (hateful/not hateful). The dataset is specifically designed with <em>confounders</em>: benign memes that look hateful by one modality, and hateful memes that look safe by one modality. This makes it one of the hardest benchmarks for multimodal hate detection.
+            </p>
+
+            <h4><i class="fas fa-image mr-2"></i>Image Preprocessing</h4>
+            <p>Images are resized and center-cropped to 224x224 pixels (CLIP's native resolution). During training, augmentations are applied:</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Augmentation</th>
+                        <th>Parameters</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>RandomResizedCrop</td><td>224, scale [0.8, 1.0]</td><td>Scale invariance</td></tr>
+                    <tr><td>HorizontalFlip</td><td>p=0.5</td><td>Mirror invariance</td></tr>
+                    <tr><td>ColorJitter</td><td>brightness/contrast/saturation=0.2, hue=0.1</td><td>Color robustness</td></tr>
+                    <tr><td>RandomErasing</td><td>p=0.25, scale [0.02, 0.1]</td><td>Occlusion robustness</td></tr>
+                </tbody>
+            </table>
+
+            <h4><i class="fas fa-font mr-2"></i>Text Preprocessing</h4>
+            <p>Text is tokenized to a maximum of 128 tokens using the RoBERTa tokenizer. Text augmentations:</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Augmentation</th>
+                        <th>Parameters</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Synonym Replacement</td><td>p=0.1, max_replacements=2</td><td>Lexical diversity</td></tr>
+                    <tr><td>Random Deletion</td><td>p=0.05</td><td>Robustness to missing words</td></tr>
+                </tbody>
+            </table>
+
+            <h4><i class="fas fa-blender mr-2"></i>Multimodal Augmentation</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Augmentation</th>
+                        <th>Parameters</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Mixup</td><td>alpha=0.2, p=0.3</td><td>Interpolate between samples</td></tr>
+                    <tr><td>CutMix</td><td>alpha=1.0, p=0.3</td><td>Cut and paste regions across samples</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Data Pipeline Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-stream mr-2"></i>Data Pipeline Flow</h4>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <i class="fas fa-database text-violet-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-violet-300">Raw Memes</div>
+                        <div class="text-xs text-slate-400">~10K image+text pairs</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-arrow-right"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <i class="fas fa-cog text-cyan-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-cyan-300">Preprocessing</div>
+                        <div class="text-xs text-slate-400">224x224, 128 tokens</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-arrow-right"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <i class="fas fa-magic text-blue-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-blue-300">Augmentation</div>
+                        <div class="text-xs text-slate-400">Image + Text + Multimodal</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-arrow-right"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <i class="fas fa-divide text-green-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-green-300">Train/Val/Test</div>
+                        <div class="text-xs text-slate-400">Standard splits</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+<!-- ============================================================ -->
+            <!-- 6b: STAGE 1 — LATE FUSION BASELINE                           -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-layer-group mr-2"></i>Step 2: Stage 1 — Late Fusion Baseline</h3>
+
+            <p>
+                The baseline architecture is the simplest possible fusion: extract features from both backbones, concatenate, and classify through an MLP. CLIP ViT-L/14 produces a 768-dim vision vector; RoBERTa-base produces a 768-dim text vector. Concatenated = 1536 dimensions, projected down through two hidden layers.
+            </p>
+
+            <!-- Late Fusion Architecture Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-project-diagram mr-2"></i>Late Fusion Architecture</h4>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="grid md:grid-cols-2 gap-6 w-full">
+                        <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                            <i class="fas fa-image text-violet-400 text-xl mb-1"></i>
+                            <div class="text-sm font-semibold text-violet-300">Image → CLIP ViT-L/14</div>
+                            <div class="text-xs text-slate-400">[B, 768] vision features</div>
+                        </div>
+                        <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                            <i class="fas fa-font text-cyan-400 text-xl mb-1"></i>
+                            <div class="text-sm font-semibold text-cyan-300">Text → RoBERTa-base</div>
+                            <div class="text-xs text-slate-400">[B, 768] text features</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6; width: 100%; max-width: 400px;">
+                        <div class="text-sm font-semibold text-blue-300">Concatenate → [B, 1536]</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #6366f1; width: 100%; max-width: 400px;">
+                        <div class="text-sm font-semibold text-indigo-300">Linear(1536→512) + GELU + Dropout(0.1)</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef; width: 100%; max-width: 400px;">
+                        <div class="text-sm font-semibold text-fuchsia-300">Linear(512→256) + GELU + Dropout(0.1)</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981; width: 100%; max-width: 400px;">
+                        <i class="fas fa-bullseye text-green-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-green-300">Classification Head → [B, 2]</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Baseline Config Table -->
+            <h4><i class="fas fa-sliders-h mr-2"></i>Baseline Training Configuration</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Epochs</td><td class="score-cyan">10</td><td>Sufficient for frozen backbones</td></tr>
+                    <tr><td>Batch Size</td><td>32</td><td>Fits in GPU memory with BF16</td></tr>
+                    <tr><td>Gradient Accumulation</td><td>2</td><td>Effective batch = 64</td></tr>
+                    <tr><td>Learning Rate</td><td class="score-cyan">1e-4</td><td>Standard for MLP head training</td></tr>
+                    <tr><td>Warmup Ratio</td><td>0.1</td><td>10% of steps for warmup</td></tr>
+                    <tr><td>LR Scheduler</td><td>Cosine</td><td>Smooth decay after warmup</td></tr>
+                    <tr><td>Weight Decay</td><td>0.01</td><td>AdamW regularization</td></tr>
+                    <tr><td>Max Grad Norm</td><td>1.0</td><td>Gradient clipping</td></tr>
+                    <tr><td>Precision</td><td>BF16</td><td>Half memory, same exponent range</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Code: Late Fusion -->
+            <h4><i class="fas fa-code mr-2"></i>Late Fusion Implementation</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">@FUSION_REGISTRY.register("late_fusion")
+class LateFusion(nn.Module):
+    """Late fusion via concatenation and MLP.
+    Simplest fusion strategy — serves as baseline."""
+
+    def __init__(
+        self,
+        vision_dim: int = 768,
+        text_dim: int = 768,
+        hidden_dims: list[int] | None = None,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        hidden_dims = hidden_dims or [512, 256]
+        input_dim = vision_dim + text_dim
+
+        layers: list[nn.Module] = []
+        for dim in hidden_dims:
+            layers.extend([
+                nn.Linear(input_dim, dim),
+                nn.GELU(),
+                nn.Dropout(dropout),
+            ])
+            input_dim = dim
+
+        self.mlp = nn.Sequential(*layers)
+        self.output_dim = hidden_dims[-1]
+
+    def forward(
+        self, vision_features: torch.Tensor, text_features: torch.Tensor
+    ) -> torch.Tensor:
+        combined = torch.cat([vision_features, text_features], dim=-1)
+        return self.mlp(combined)</code></pre>
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>Analogy:</strong> Two experts write separate reports. A manager reads both reports side-by-side and makes a decision. The experts never discuss with each other — the MLP is the manager, the concatenation is the side-by-side reading.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6c: STAGE 2 — CROSS-ATTENTION FUSION                         -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-arrows-alt mr-2"></i>Step 3: Stage 2a — Cross-Attention Fusion</h3>
+
+            <p>
+                Cross-attention is the deepest fusion strategy. Instead of simply concatenating features, each modality <strong>attends to the other</strong> through 4 transformer decoder layers with 8 heads each. Vision queries attend to text keys/values (V2T path), and text queries attend to vision keys/values (T2V path). The two paths are combined via a <strong>learned gate</strong>.
+            </p>
+
+            <!-- Cross-Attention Architecture Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-project-diagram mr-2"></i>Cross-Attention Architecture</h4>
+                <div class="grid md:grid-cols-2 gap-6 mb-4">
+                    <div class="p-4 rounded-lg" style="background: rgba(139, 92, 246, 0.1); border: 1px solid #8b5cf6;">
+                        <h4 class="text-center text-violet-300 mb-3">V2T Path</h4>
+                        <div class="text-center text-sm text-slate-400 mb-2">Vision attends to Text</div>
+                        <div class="architecture-box mb-2" style="border: 1px solid #6366f1;">
+                            <div class="text-xs text-indigo-300">TransformerDecoderLayer x4</div>
+                            <div class="text-xs text-slate-400">8 heads, dim=768, ff=2048</div>
+                        </div>
+                        <div class="text-center text-xs text-slate-400">Query: Vision | Key/Value: Text</div>
+                    </div>
+                    <div class="p-4 rounded-lg" style="background: rgba(6, 182, 212, 0.1); border: 1px solid #06b6d4;">
+                        <h4 class="text-center text-cyan-300 mb-3">T2V Path</h4>
+                        <div class="text-center text-sm text-slate-400 mb-2">Text attends to Vision</div>
+                        <div class="architecture-box mb-2" style="border: 1px solid #0891b2;">
+                            <div class="text-xs text-cyan-300">TransformerDecoderLayer x4</div>
+                            <div class="text-xs text-slate-400">8 heads, dim=768, ff=2048</div>
+                        </div>
+                        <div class="text-center text-xs text-slate-400">Query: Text | Key/Value: Vision</div>
+                    </div>
+                </div>
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <div class="architecture-box mx-auto" style="border: 2px solid #10b981; max-width: 500px;">
+                    <i class="fas fa-door-open text-green-400 text-xl mb-1"></i>
+                    <div class="text-sm font-semibold text-green-300">Gated Combination</div>
+                    <div class="text-xs text-slate-400">gate = Sigmoid(Linear(concat(v2t, t2v)))</div>
+                    <div class="text-xs text-slate-400">fused = gate * v2t + (1-gate) * t2v</div>
+                </div>
+            </div>
+
+            <div class="gate-formula">
+                gate = σ(W · [v2t; t2v] + b)<br>
+                fused = gate ⊙ v2t + (1 - gate) ⊙ t2v
+            </div>
+
+            <!-- Cross-Attention Config -->
+            <h4><i class="fas fa-sliders-h mr-2"></i>Fusion Ablation Training Configuration</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Epochs</td><td class="score-cyan">15</td><td>More epochs for deeper fusion</td></tr>
+                    <tr><td>Batch Size</td><td>16</td><td>Smaller — cross-attention uses more memory</td></tr>
+                    <tr><td>Gradient Accumulation</td><td>4</td><td>Effective batch = 64</td></tr>
+                    <tr><td>Learning Rate</td><td class="score-cyan">5e-5</td><td>Lower LR for fine-grained attention training</td></tr>
+                    <tr><td>Cross-Attention Layers</td><td>4</td><td>Depth for cross-modal reasoning</td></tr>
+                    <tr><td>Attention Heads</td><td>8</td><td>Multi-head attention</td></tr>
+                    <tr><td>Hidden Dim</td><td>768</td><td>Match backbone output dimension</td></tr>
+                    <tr><td>Feedforward Dim</td><td>2048</td><td>Standard 4x expansion</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Code: Cross-Attention -->
+            <h4><i class="fas fa-code mr-2"></i>Cross-Attention Implementation</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">@FUSION_REGISTRY.register("cross_attention")
+class CrossAttentionFusion(nn.Module):
+    """Bidirectional cross-attention fusion.
+    Vision attends to language and language attends to vision,
+    then results are combined via learned gating."""
+
+    def __init__(
+        self,
+        hidden_dim: int = 768, num_heads: int = 8,
+        num_layers: int = 4, feedforward_dim: int = 2048,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.output_dim = hidden_dim
+        self.v2t_layers = nn.ModuleList([
+            nn.TransformerDecoderLayer(
+                d_model=hidden_dim, nhead=num_heads,
+                dim_feedforward=feedforward_dim,
+                dropout=dropout, batch_first=True,
+            ) for _ in range(num_layers)
+        ])
+        self.t2v_layers = nn.ModuleList([
+            nn.TransformerDecoderLayer(
+                d_model=hidden_dim, nhead=num_heads,
+                dim_feedforward=feedforward_dim,
+                dropout=dropout, batch_first=True,
+            ) for _ in range(num_layers)
+        ])
+        self.gate = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim), nn.Sigmoid(),
+        )
+
+    def forward(self, vision_features, text_features):
+        v = vision_features.unsqueeze(1)  # [B, 1, D]
+        t = text_features.unsqueeze(1)    # [B, 1, D]
+        v2t = v
+        for layer in self.v2t_layers:
+            v2t = layer(v2t, t)
+        t2v = t
+        for layer in self.t2v_layers:
+            t2v = layer(t2v, v)
+        v2t, t2v = v2t.squeeze(1), t2v.squeeze(1)
+        gate_weight = self.gate(torch.cat([v2t, t2v], dim=-1))
+        return gate_weight * v2t + (1 - gate_weight) * t2v</code></pre>
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>Analogy:</strong> Two detectives interviewing each other about the case. Each asks probing questions about what the other observed. The learned gate is the judge who decides how much weight to give each detective's cross-examination.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6d: STAGE 2 — TENSOR FUSION                                  -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-cubes mr-2"></i>Step 4: Stage 2b — Tensor Fusion</h3>
+
+            <p>
+                Tensor fusion captures <strong>multiplicative interactions</strong> between modalities. Instead of concatenation (additive) or attention (query-key), it computes the element-wise product in a low-rank projected space. This creates features that represent the <em>joint meaning</em> — something neither modality has alone.
+            </p>
+
+            <!-- Tensor Fusion Architecture -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-project-diagram mr-2"></i>Low-Rank Tensor Fusion</h4>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="grid md:grid-cols-2 gap-6 w-full">
+                        <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                            <div class="text-sm font-semibold text-violet-300">Vision Factor</div>
+                            <div class="text-xs text-slate-400">Linear(768 → 32, no bias)</div>
+                        </div>
+                        <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                            <div class="text-sm font-semibold text-cyan-300">Text Factor</div>
+                            <div class="text-xs text-slate-400">Linear(768 → 32, no bias)</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef; max-width: 400px;">
+                        <i class="fas fa-times text-fuchsia-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-fuchsia-300">Element-wise Product [B, 32]</div>
+                        <div class="text-xs text-slate-400">v_factor * t_factor</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6; max-width: 400px;">
+                        <div class="text-sm font-semibold text-blue-300">Linear(32 → 768) + Dropout + LayerNorm</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981; max-width: 400px;">
+                        <div class="text-sm font-semibold text-green-300">Fused Output [B, 768]</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code: Tensor Fusion -->
+            <h4><i class="fas fa-code mr-2"></i>Tensor Fusion Implementation</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">@FUSION_REGISTRY.register("tensor_fusion")
+class TensorFusion(nn.Module):
+    """Low-rank tensor fusion network.
+    Computes outer product in low-rank factorized form."""
+
+    def __init__(
+        self, vision_dim: int = 768, text_dim: int = 768,
+        hidden_dim: int = 768, rank: int = 32, dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.output_dim = hidden_dim
+        self.vision_factor = nn.Linear(vision_dim, rank, bias=False)
+        self.text_factor = nn.Linear(text_dim, rank, bias=False)
+        self.fusion_weights = nn.Linear(rank, hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(hidden_dim)
+
+    def forward(self, vision_features, text_features):
+        v_factor = self.vision_factor(vision_features)  # [B, rank]
+        t_factor = self.text_factor(text_features)       # [B, rank]
+        fused = v_factor * t_factor                      # [B, rank]
+        fused = self.fusion_weights(fused)               # [B, hidden_dim]
+        fused = self.dropout(fused)
+        return self.layer_norm(fused)</code></pre>
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>Analogy:</strong> Mixing paint — red and blue separately are just colors, but when you mix them you get purple, a fundamentally new color. The element-wise multiplication creates joint features that represent the <em>interaction</em> between vision and language, not just their sum.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6e: THREE FUSION STRATEGIES COMPARED                          -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-columns mr-2"></i>Three Fusion Strategies Side-by-Side</h3>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-balance-scale mr-2"></i>Fusion Strategy Comparison</h4>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <i class="fas fa-layer-group text-violet-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-violet-300 mb-2">Late Fusion</div>
+                        <div class="text-xs text-slate-400 text-left space-y-1">
+                            <div><i class="fas fa-check text-green-400 mr-1"></i>Simplest architecture</div>
+                            <div><i class="fas fa-check text-green-400 mr-1"></i>Fastest training</div>
+                            <div><i class="fas fa-times text-red-400 mr-1"></i>No cross-modal interaction</div>
+                            <div><i class="fas fa-cog text-slate-400 mr-1"></i>Concat → MLP</div>
+                        </div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <i class="fas fa-arrows-alt text-cyan-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-cyan-300 mb-2">Cross-Attention</div>
+                        <div class="text-xs text-slate-400 text-left space-y-1">
+                            <div><i class="fas fa-check text-green-400 mr-1"></i>Deepest interaction</div>
+                            <div><i class="fas fa-check text-green-400 mr-1"></i>Bidirectional reasoning</div>
+                            <div><i class="fas fa-times text-red-400 mr-1"></i>Most parameters</div>
+                            <div><i class="fas fa-cog text-slate-400 mr-1"></i>4 layers, 8 heads, gated</div>
+                        </div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef;">
+                        <i class="fas fa-cubes text-fuchsia-400 text-2xl mb-2"></i>
+                        <div class="text-sm font-semibold text-fuchsia-300 mb-2">Tensor Fusion</div>
+                        <div class="text-xs text-slate-400 text-left space-y-1">
+                            <div><i class="fas fa-check text-green-400 mr-1"></i>Multiplicative interaction</div>
+                            <div><i class="fas fa-check text-green-400 mr-1"></i>Compact (rank=32)</div>
+                            <div><i class="fas fa-times text-red-400 mr-1"></i>No sequential reasoning</div>
+                            <div><i class="fas fa-cog text-slate-400 mr-1"></i>Low-rank outer product</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Property</th><th>Late Fusion</th><th>Cross-Attention</th><th>Tensor Fusion</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Interaction Type</td><td>None (additive)</td><td>Attention (query-key)</td><td>Multiplicative (product)</td></tr>
+                    <tr><td>Cross-Modal Reasoning</td><td class="score-red">No</td><td class="score-green">Deep bidirectional</td><td class="score-amber">Element-wise</td></tr>
+                    <tr><td>Parameter Count</td><td class="score-green">Lowest</td><td class="score-red">Highest</td><td class="score-green">Low (rank=32)</td></tr>
+                    <tr><td>Training Speed</td><td class="score-green">Fastest</td><td class="score-red">Slowest</td><td class="score-cyan">Medium</td></tr>
+                    <tr><td>Best For</td><td>Baseline</td><td>Complex confounders</td><td>Joint meaning</td></tr>
+                </tbody>
+            </table>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6f: STAGE 3 — KNOWLEDGE DISTILLATION                          -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-graduation-cap mr-2"></i>Step 5: Stage 3 — Knowledge Distillation</h3>
+
+            <p>
+                The best fusion model (~430M parameters) is too expensive for production real-time serving. Knowledge distillation compresses it into a student model (~87M parameters) — roughly 5x smaller — while preserving the teacher's learned representations. The student uses lightweight backbones: <strong>EfficientNet-B0</strong> (vision) and <strong>DistilRoBERTa</strong> (text) with late fusion.
+            </p>
+
+            <!-- Distillation Architecture -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-project-diagram mr-2"></i>Knowledge Distillation Architecture</h4>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-4 rounded-lg" style="background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444;">
+                        <h4 class="text-center text-red-400 mb-3"><i class="fas fa-lock mr-1"></i>Teacher (FROZEN)</h4>
+                        <div class="architecture-box mb-2" style="border: 1px solid #ef4444;">
+                            <div class="text-xs text-red-300">CLIP ViT-L/14 + RoBERTa-base</div>
+                            <div class="text-xs text-slate-400">~430M params</div>
+                        </div>
+                        <div class="text-center text-xs text-slate-400 mb-2">Best fusion model</div>
+                        <div class="architecture-box" style="border: 1px solid #f59e0b;">
+                            <div class="text-xs text-amber-300">Soft Targets (T=4.0)</div>
+                            <div class="text-xs text-slate-400">softmax(logits / T)</div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-lg" style="background: rgba(16, 185, 129, 0.05); border: 2px solid #10b981;">
+                        <h4 class="text-center text-green-400 mb-3"><i class="fas fa-unlock mr-1"></i>Student (TRAINABLE)</h4>
+                        <div class="architecture-box mb-2" style="border: 1px solid #10b981;">
+                            <div class="text-xs text-green-300">EfficientNet-B0 + DistilRoBERTa</div>
+                            <div class="text-xs text-slate-400">~87M params</div>
+                        </div>
+                        <div class="text-center text-xs text-slate-400 mb-2">Late fusion</div>
+                        <div class="architecture-box" style="border: 1px solid #06b6d4;">
+                            <div class="text-xs text-cyan-300">Dual Loss</div>
+                            <div class="text-xs text-slate-400">Hard CE + Soft KL</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distillation Loss Formula -->
+            <div class="highlight-box">
+                <strong><i class="fas fa-calculator mr-2"></i>Distillation Loss Formula:</strong>
+                <div class="gate-formula mt-2">
+                    L = α · CE(student, labels) + (1-α) · T² · KL(log_softmax(s/T), softmax(t/T))<br>
+                    <span class="text-sm text-slate-400">α = 0.5, T = 4.0</span>
+                </div>
+            </div>
+
+            <!-- Distillation Config -->
+            <h4><i class="fas fa-sliders-h mr-2"></i>Distillation Training Configuration</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Epochs</td><td class="score-cyan">20</td><td>More epochs for student convergence</td></tr>
+                    <tr><td>Batch Size</td><td>64</td><td>Student is smaller, fits more</td></tr>
+                    <tr><td>Gradient Accumulation</td><td>1</td><td>Effective batch = 64</td></tr>
+                    <tr><td>Learning Rate</td><td class="score-cyan">1e-3</td><td>Higher LR for student from scratch</td></tr>
+                    <tr><td>Warmup Ratio</td><td>0.05</td><td>Shorter warmup</td></tr>
+                    <tr><td>Temperature</td><td class="score-amber">4.0</td><td>Soften probability distribution</td></tr>
+                    <tr><td>Alpha</td><td class="score-amber">0.5</td><td>Equal weight: hard + soft loss</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Code: Distillation Loss -->
+            <h4><i class="fas fa-code mr-2"></i>Distillation Loss Implementation</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">class DistillationTrainer(MultimodalTrainer):
+    """Trainer for knowledge distillation.
+    Uses hard label loss + soft KL-divergence loss."""
+
+    def __init__(
+        self, teacher_model: nn.Module,
+        temperature: float = 4.0, alpha: float = 0.5, **kwargs
+    ) -> None:
+        super().__init__(**kwargs)
+        self.teacher_model = teacher_model
+        self.teacher_model.eval()
+        for param in self.teacher_model.parameters():
+            param.requires_grad = False
+        self.temperature = temperature
+        self.alpha = alpha
+
+    def compute_distillation_loss(
+        self, student_logits, teacher_logits, labels
+    ) -> torch.Tensor:
+        hard_loss = F.cross_entropy(student_logits, labels)
+        soft_student = F.log_softmax(
+            student_logits / self.temperature, dim=-1
+        )
+        soft_teacher = F.softmax(
+            teacher_logits / self.temperature, dim=-1
+        )
+        soft_loss = F.kl_div(
+            soft_student, soft_teacher, reduction="batchmean"
+        )
+        soft_loss = soft_loss * (self.temperature ** 2)
+        return self.alpha * hard_loss + (1 - self.alpha) * soft_loss</code></pre>
+            </div>
+
+            <!-- Teacher vs Student Comparison -->
+            <h4><i class="fas fa-exchange-alt mr-2"></i>Teacher vs Student Comparison</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Property</th><th>Teacher</th><th>Student</th><th>Ratio</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Vision Backbone</td><td>CLIP ViT-L/14</td><td>EfficientNet-B0</td><td>-</td></tr>
+                    <tr><td>Text Backbone</td><td>RoBERTa-base</td><td>DistilRoBERTa</td><td>-</td></tr>
+                    <tr><td>Parameters</td><td class="score-red">~430M</td><td class="score-green">~87M</td><td class="score-green">~5x smaller</td></tr>
+                    <tr><td>Fusion</td><td>Best from ablation</td><td>Late Fusion</td><td>Simpler</td></tr>
+                    <tr><td>Inference Speed</td><td class="score-red">~50ms</td><td class="score-green">~15ms</td><td class="score-green">~3x faster</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>Analogy:</strong> A master chef teaching an apprentice. Instead of just giving recipes (hard labels), the master explains <em>why</em> each ingredient works — the soft probability distribution transfers the reasoning, not just the final answer. At T=4.0, the teacher reveals fine-grained preferences between classes.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6g: TRAINING TECHNIQUES                                       -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-wrench mr-2"></i>Training Techniques Deep Dive</h3>
+
+            <p>
+                Eight techniques work together to make MultiGuard training stable, memory-efficient, and effective on imbalanced data.
+            </p>
+
+            <!-- Technique 1: Focal Loss -->
+            <div class="concept-card">
+                <h4><i class="fas fa-crosshairs text-rose-400 mr-2"></i>1. Focal Loss</h4>
+                <div class="gate-formula">FL = α · (1 - p<sub>t</sub>)<sup>γ</sup> · CE &nbsp;&nbsp;|&nbsp;&nbsp; α=0.25, γ=2.0</div>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                    <pre><code class="language-python">class FocalLoss(nn.Module):
+    def __init__(self, alpha: float = 0.25, gamma: float = 2.0):
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def forward(self, logits, targets):
+        ce_loss = F.cross_entropy(logits, targets, reduction="none")
+        pt = torch.exp(-ce_loss)
+        focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        return focal_loss.mean()</code></pre>
+                </div>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> A teacher who spends extra time on students struggling with a concept, instead of re-explaining what everyone already understands. The (1-pt)^γ term makes the loss near-zero for easy examples.</p>
+            </div>
+
+            <!-- Technique 2: BF16 -->
+            <div class="concept-card">
+                <h4><i class="fas fa-microchip text-orange-400 mr-2"></i>2. Mixed Precision (BF16)</h4>
+                <div class="grid md:grid-cols-2 gap-4 my-4">
+                    <div>
+                        <div class="text-sm text-slate-300 mb-2 text-center">FP32 (32 bits)</div>
+                        <div class="bit-layout">
+                            <div class="bit-cell" style="background: #ef4444;">1 sign</div>
+                            <div class="bit-cell" style="background: #3b82f6;">8 exponent</div>
+                            <div class="bit-cell" style="background: #10b981;">23 mantissa</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-slate-300 mb-2 text-center">BF16 (16 bits)</div>
+                        <div class="bit-layout">
+                            <div class="bit-cell" style="background: #ef4444;">1 sign</div>
+                            <div class="bit-cell" style="background: #3b82f6;">8 exponent</div>
+                            <div class="bit-cell" style="background: #f59e0b;">7 mantissa</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400"><strong>Key insight:</strong> BF16 keeps the same 8 exponent bits as FP32 — same numeric range, no overflow. Only mantissa precision is reduced. Half the memory, ~2x faster training.</p>
+            </div>
+
+            <!-- Technique 3: Gradient Accumulation -->
+            <div class="concept-card">
+                <h4><i class="fas fa-layer-group text-amber-400 mr-2"></i>3. Gradient Accumulation</h4>
+                <div class="grid grid-cols-3 gap-4 my-4">
+                    <div class="metric-card">
+                        <div class="metric-value" style="font-size: 1.5rem;">16</div>
+                        <div class="metric-label">batch size</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" style="font-size: 1.5rem;">×4</div>
+                        <div class="metric-label">accum steps</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" style="font-size: 1.5rem;">= 64</div>
+                        <div class="metric-label">effective batch</div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> Collecting opinions from four small focus groups before making a decision, instead of surveying all 64 people at once in a room that doesn't fit them.</p>
+            </div>
+
+            <!-- Technique 4: Cosine Annealing -->
+            <div class="concept-card">
+                <h4><i class="fas fa-wave-square text-sky-400 mr-2"></i>4. Cosine Annealing with Warmup</h4>
+                <div class="loss-curve">
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 100%; clip-path: polygon(0% 100%, 0% 95%, 2% 80%, 5% 50%, 8% 25%, 10% 15%, 12% 15%, 15% 16%, 20% 19%, 25% 24%, 30% 30%, 35% 37%, 40% 44%, 45% 51%, 50% 57%, 55% 63%, 60% 68%, 65% 73%, 70% 78%, 75% 82%, 80% 86%, 85% 89%, 90% 92%, 95% 95%, 100% 97%, 100% 100%); background: linear-gradient(to top, rgba(56, 189, 248, 0.3), transparent);"></div>
+                    <div style="position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #94a3b8;">Peak LR</div>
+                    <div style="position: absolute; bottom: 10px; left: 5px; font-size: 0.7rem; color: #94a3b8;">Warmup (10%)</div>
+                    <div style="position: absolute; bottom: 10px; right: 10px; font-size: 0.7rem; color: #94a3b8;">Cosine Decay</div>
+                </div>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> Warming up before exercise. You don't sprint immediately (that pulls a muscle), and you don't stop abruptly (that causes cramps). warmup_ratio=0.1 means the first 10% of training is warmup.</p>
+            </div>
+
+            <!-- Technique 5: Data Augmentation -->
+            <div class="concept-card">
+                <h4><i class="fas fa-magic text-emerald-400 mr-2"></i>5. Data Augmentation Pipeline</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr><th>Modality</th><th>Technique</th><th>Config</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Image</td><td>RandomResizedCrop</td><td>224, scale [0.8, 1.0]</td></tr>
+                        <tr><td>Image</td><td>HorizontalFlip</td><td>p=0.5</td></tr>
+                        <tr><td>Image</td><td>ColorJitter</td><td>brightness/contrast/saturation=0.2, hue=0.1</td></tr>
+                        <tr><td>Image</td><td>RandomErasing</td><td>p=0.25, scale [0.02, 0.1]</td></tr>
+                        <tr><td>Text</td><td>SynonymReplacement</td><td>p=0.1, max=2</td></tr>
+                        <tr><td>Text</td><td>RandomDeletion</td><td>p=0.05</td></tr>
+                        <tr><td>Multimodal</td><td>Mixup</td><td>alpha=0.2, p=0.3</td></tr>
+                        <tr><td>Multimodal</td><td>CutMix</td><td>alpha=1.0, p=0.3</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> Showing the same photo from different angles, lighting, and distances — the model learns to recognize the subject regardless of presentation.</p>
+            </div>
+
+            <!-- Technique 6: Gradient Clipping -->
+            <div class="concept-card">
+                <h4><i class="fas fa-tachometer-alt text-red-400 mr-2"></i>6. Gradient Clipping</h4>
+                <p class="text-sm text-slate-400">max_grad_norm=1.0 — if the gradient vector's L2 norm exceeds 1.0, scale it down while preserving direction. Prevents exploding gradients without changing the update direction.</p>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> A speed limit on the highway. You can go in any direction, but the maximum speed is capped. If gradients "speed" past 1.0, they are scaled back.</p>
+            </div>
+
+            <!-- Technique 7: AdamW -->
+            <div class="concept-card">
+                <h4><i class="fas fa-compass text-blue-400 mr-2"></i>7. AdamW Optimizer</h4>
+                <p class="text-sm text-slate-400">weight_decay=0.01 — decoupled weight decay regularization. Each parameter gets its own adaptive learning rate based on first and second moment estimates. Weight decay is applied directly to weights, not through gradients.</p>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> A GPS with separate speed and route controls. Adam adapts the "speed" (learning rate) per parameter, while weight decay acts as "friction" that prevents any single parameter from growing too large.</p>
+            </div>
+
+            <!-- Technique 8: InfoNCE -->
+            <div class="concept-card">
+                <h4><i class="fas fa-link text-teal-400 mr-2"></i>8. InfoNCE Contrastive Loss</h4>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                    <pre><code class="language-python">class InfoNCELoss(nn.Module):
+    def __init__(self, temperature: float = 0.07):
+        super().__init__()
+        self.temperature = temperature
+
+    def forward(self, embeddings_a, embeddings_b):
+        logits = torch.matmul(embeddings_a, embeddings_b.T) / self.temperature
+        labels = torch.arange(logits.shape[0], device=logits.device)
+        loss_a = F.cross_entropy(logits, labels)
+        loss_b = F.cross_entropy(logits.T, labels)
+        return (loss_a + loss_b) / 2</code></pre>
+                </div>
+                <p class="text-sm text-slate-400"><strong>Analogy:</strong> A matching game — given a batch of N image-text pairs, the model must match each image to its correct text among N-1 distractors. Temperature=0.07 controls how "sharp" the matching distribution is.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6h: EXPLAINABILITY                                            -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-search-plus mr-2"></i>Explainability: Why Did the Model Flag This?</h3>
+
+            <p>
+                Content moderation without explanation is a black box. MultiGuard provides three complementary explainability methods: <strong>GradCAM</strong> for image regions, <strong>Integrated Gradients</strong> for text tokens, and <strong>SHAP</strong> for global feature importance.
+            </p>
+
+            <!-- Explainability Architecture -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-project-diagram mr-2"></i>Explainability Pipeline</h4>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6; width: 100%; max-width: 300px;">
+                        <i class="fas fa-brain text-violet-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-violet-300">Model Prediction</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="grid md:grid-cols-3 gap-4 w-full">
+                        <div class="architecture-box" style="border: 2px solid #ec4899;">
+                            <i class="fas fa-fire text-pink-400 text-xl mb-2"></i>
+                            <div class="text-sm font-semibold text-pink-300">GradCAM</div>
+                            <div class="text-xs text-slate-400">Image heatmap</div>
+                            <div class="text-xs text-slate-400 mt-1">Which regions drove the prediction?</div>
+                        </div>
+                        <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                            <i class="fas fa-text-width text-cyan-400 text-xl mb-2"></i>
+                            <div class="text-sm font-semibold text-cyan-300">Integrated Gradients</div>
+                            <div class="text-xs text-slate-400">Token attribution</div>
+                            <div class="text-xs text-slate-400 mt-1">Which words mattered most?</div>
+                        </div>
+                        <div class="architecture-box" style="border: 2px solid #10b981;">
+                            <i class="fas fa-chart-bar text-green-400 text-xl mb-2"></i>
+                            <div class="text-sm font-semibold text-green-300">SHAP</div>
+                            <div class="text-xs text-slate-400">Global importance</div>
+                            <div class="text-xs text-slate-400 mt-1">Feature-level contributions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GradCAM Code -->
+            <h4><i class="fas fa-code mr-2"></i>GradCAM Implementation</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">class GradCAM:
+    """Gradient-weighted Class Activation Mapping."""
+
+    def __init__(self, model: nn.Module, target_layer: nn.Module):
+        self.model = model
+        self.target_layer = target_layer
+        self.gradients = None
+        self.activations = None
+        self._register_hooks()
+
+    def _register_hooks(self):
+        def forward_hook(module, input, output):
+            self.activations = output.detach()
+        def backward_hook(module, grad_input, grad_output):
+            self.gradients = grad_output[0].detach()
+        self.target_layer.register_forward_hook(forward_hook)
+        self.target_layer.register_full_backward_hook(backward_hook)
+
+    def generate(self, input_tensor, target_class=None):
+        self.model.eval()
+        output = self.model(input_tensor)
+        if target_class is None:
+            target_class = output.argmax(dim=-1).item()
+        self.model.zero_grad()
+        output[0, target_class].backward()
+        weights = self.gradients.mean(dim=[2, 3], keepdim=True)
+        cam = (weights * self.activations).sum(dim=1, keepdim=True)
+        cam = torch.relu(cam).squeeze()
+        cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
+        return cam</code></pre>
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>How GradCAM works:</strong> Hook-based gradient capture. During the forward pass, activations A are captured at the target layer. During backward pass, gradients dL/dA are captured. The heatmap is: CAM = ReLU(Σ w<sub>c</sub> · A<sub>c</sub>), where weights w<sub>c</sub> are the global average pooled gradients. The result shows which spatial regions in the image contributed most to the prediction.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6i: SERVING & DEPLOYMENT                                      -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-server mr-2"></i>Serving and Deployment</h3>
+
+            <p>
+                MultiGuard serves predictions through a <strong>FastAPI</strong> application with <strong>cascaded inference</strong> — a two-stage pipeline where simple cases are handled by a fast CLIP zero-shot classifier, and only ambiguous cases go through the full fusion model.
+            </p>
+
+            <!-- FastAPI Routes -->
+            <h4><i class="fas fa-route mr-2"></i>API Endpoints</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">app = FastAPI(
+    title="MultiGuard API",
+    description="Multimodal Content Intelligence Pipeline",
+    version="0.1.0",
+)
+app.include_router(health.router, tags=["health"])        # /health, /ready
+app.include_router(predict.router, prefix="/api/v1")      # /api/v1/predict
+app.include_router(embed.router, prefix="/api/v1")        # /api/v1/embed
+app.include_router(explain.router, prefix="/api/v1")      # /api/v1/explain</code></pre>
+            </div>
+
+            <!-- Pydantic Schemas -->
+            <h4><i class="fas fa-file-code mr-2"></i>Request/Response Schemas</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python">class PredictionRequest(BaseModel):
+    text: str = Field(..., description="Text content to analyze")
+    image_url: str | None = Field(None, description="URL to image")
+
+class PredictionResponse(BaseModel):
+    label: str = Field(..., description="Predicted label (safe/unsafe)")
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    probabilities: dict[str, float]
+
+class ExplanationResponse(BaseModel):
+    label: str
+    confidence: float
+    text_attributions: list[dict[str, float]] | None = None
+    image_heatmap_url: str | None = None</code></pre>
+            </div>
+
+            <!-- Cascaded Inference -->
+            <h4><i class="fas fa-bolt mr-2"></i>Cascaded Inference</h4>
+            <p>
+                Not all content needs the full fusion model. MultiGuard uses a two-stage cascade: Stage 1 runs CLIP zero-shot classification (~5ms). If CLIP's confidence exceeds 0.85, the prediction is returned immediately. If confidence is below 0.85, Stage 2 runs the full fusion model (~50ms). In practice, ~70% of requests are handled by the fast path.
+            </p>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-bolt mr-2"></i>Cascaded Inference Flow</h4>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6; width: 100%; max-width: 300px;">
+                        <i class="fas fa-inbox text-violet-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-violet-300">Incoming Request</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981; width: 100%; max-width: 400px;">
+                        <i class="fas fa-bolt text-green-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-green-300">Stage 1: CLIP Zero-Shot (~5ms)</div>
+                        <div class="text-xs text-slate-400">threshold = 0.85</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="grid md:grid-cols-2 gap-4 w-full max-w-lg">
+                        <div class="architecture-box" style="border: 2px solid #10b981;">
+                            <div class="text-sm font-semibold text-green-300">Confidence ≥ 0.85</div>
+                            <div class="text-xs text-slate-400 mt-1">~70% of requests</div>
+                            <div class="text-xs text-green-400 mt-1">Return immediately</div>
+                        </div>
+                        <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                            <div class="text-sm font-semibold text-amber-300">Confidence < 0.85</div>
+                            <div class="text-xs text-slate-400 mt-1">~30% of requests</div>
+                            <div class="text-xs text-amber-400 mt-1">→ Stage 2</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef; width: 100%; max-width: 400px;">
+                        <i class="fas fa-brain text-fuchsia-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-fuchsia-300">Stage 2: Full Fusion Model (~50ms)</div>
+                        <div class="text-xs text-slate-400">threshold = 0.5</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Docker Stack -->
+            <h4><i class="fab fa-docker mr-2"></i>Docker Infrastructure</h4>
+            <div class="architecture-diagram">
+                <h4 class="text-center text-violet-300 mb-4"><i class="fas fa-cubes mr-2"></i>Docker Compose Stack</h4>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <i class="fas fa-server text-blue-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-blue-300">API Server</div>
+                        <div class="text-xs text-slate-400">FastAPI :8000</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <i class="fas fa-flask text-violet-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-violet-300">MLflow</div>
+                        <div class="text-xs text-slate-400">Experiment tracking :5000</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #ef4444;">
+                        <i class="fas fa-database text-red-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-red-300">Redis</div>
+                        <div class="text-xs text-slate-400">Caching :6379</div>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4 mt-4 max-w-lg mx-auto">
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <i class="fas fa-chart-line text-amber-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-amber-300">Prometheus</div>
+                        <div class="text-xs text-slate-400">Metrics :9090</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <i class="fas fa-tachometer-alt text-green-400 text-xl mb-1"></i>
+                        <div class="text-sm font-semibold text-green-300">Grafana</div>
+                        <div class="text-xs text-slate-400">Dashboards :3000</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6j: MONITORING & MLOPS                                        -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-chart-line mr-2"></i>Monitoring and MLOps</h3>
+
+            <p>
+                Production ML systems degrade over time as data distributions shift. MultiGuard includes automated monitoring and retraining infrastructure.
+            </p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Component</th><th>Tool</th><th>Purpose</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Drift Detection</td><td>Evidently</td><td>Monitor feature and prediction drift</td></tr>
+                    <tr><td>Retraining Trigger</td><td>Custom</td><td>performance_threshold=0.05, drift_threshold=0.1, min_samples=1000</td></tr>
+                    <tr><td>Experiment Tracking</td><td>MLflow + W&B</td><td>Log metrics, params, artifacts</td></tr>
+                    <tr><td>Data/Model Versioning</td><td>DVC</td><td>Track datasets and model checkpoints</td></tr>
+                    <tr><td>Orchestration</td><td>Airflow</td><td>DAGs: ingest → train → evaluate → export</td></tr>
+                    <tr><td>Feature Store</td><td>Feast</td><td>Online/offline feature serving</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-exclamation-triangle mr-2"></i>Retraining Triggers:</strong> The system automatically flags when performance drops by more than 5% (performance_threshold=0.05) or when Evidently detects data drift exceeding 0.1 (drift_threshold=0.1), provided at least 1000 new samples have been collected (min_samples=1000).
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6k: TOOLS USED                                                -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-toolbox mr-2"></i>Tools Used</h3>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Category</th><th>Tools</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><i class="fas fa-brain text-violet-400 mr-2"></i>Core ML</td><td>PyTorch ≥2.1.0, HuggingFace Transformers ≥4.36.0</td></tr>
+                    <tr><td><i class="fas fa-eye text-blue-400 mr-2"></i>Vision</td><td>CLIP ViT-L/14, timm (EfficientNet-B0), Albumentations</td></tr>
+                    <tr><td><i class="fas fa-font text-cyan-400 mr-2"></i>Language</td><td>RoBERTa-base, DistilRoBERTa, BERT</td></tr>
+                    <tr><td><i class="fas fa-dumbbell text-amber-400 mr-2"></i>Training</td><td>AdamW, Focal Loss, OmegaConf, PEFT/LoRA</td></tr>
+                    <tr><td><i class="fas fa-search-plus text-pink-400 mr-2"></i>Explainability</td><td>Captum (GradCAM, Integrated Gradients), SHAP</td></tr>
+                    <tr><td><i class="fas fa-server text-green-400 mr-2"></i>Serving</td><td>FastAPI, Docker, ONNX Runtime, Redis</td></tr>
+                    <tr><td><i class="fas fa-cogs text-fuchsia-400 mr-2"></i>MLOps</td><td>MLflow, W&B, DVC, Feast, Evidently</td></tr>
+                    <tr><td><i class="fas fa-sitemap text-rose-400 mr-2"></i>Orchestration</td><td>Airflow, Prometheus, Grafana</td></tr>
+                    <tr><td><i class="fas fa-check-circle text-teal-400 mr-2"></i>Code Quality</td><td>ruff, black, mypy, pytest</td></tr>
+                </tbody>
+            </table>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- 6l: RESULTS & OUTPUTS                                         -->
+            <!-- ============================================================ -->
+            <h3><i class="fas fa-chart-bar mr-2"></i>Results and Outputs</h3>
+
+            <!-- Training Loss Curve -->
+            <h4><i class="fas fa-chart-line mr-2"></i>Training Loss Curve</h4>
+            <div class="loss-curve">
+                <div class="loss-curve-fill" style="height: 100%;"></div>
+                <div class="loss-curve-line" style="height: 100%;"></div>
+                <div style="position: absolute; top: 10px; left: 15px; font-size: 0.75rem; color: #94a3b8;">Loss</div>
+                <div style="position: absolute; bottom: 5px; right: 15px; font-size: 0.75rem; color: #94a3b8;">Epochs →</div>
+                <div style="position: absolute; top: 10px; right: 15px; font-size: 0.75rem; color: #8b5cf6;">Converging</div>
+            </div>
+
+            <!-- Fusion Comparison Progress Bars -->
+            <h4><i class="fas fa-balance-scale mr-2"></i>Fusion Strategy Comparison</h4>
+            <div class="my-4">
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-300">Late Fusion (AUROC)</span>
+                        <span class="text-violet-400 font-semibold">0.72</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 72%; background: linear-gradient(90deg, #8b5cf6, #a855f7);">0.72</div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-300">Cross-Attention (AUROC)</span>
+                        <span class="text-cyan-400 font-semibold">0.78</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 78%; background: linear-gradient(90deg, #06b6d4, #22d3ee);">0.78</div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-300">Tensor Fusion (AUROC)</span>
+                        <span class="text-fuchsia-400 font-semibold">0.75</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 75%; background: linear-gradient(90deg, #d946ef, #e879f9);">0.75</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confusion Matrix -->
+            <h4><i class="fas fa-th mr-2"></i>Confusion Matrix (Best Fusion Model)</h4>
+            <div class="confusion-grid">
+                <div class="confusion-cell"></div>
+                <div class="confusion-cell confusion-header">Pred: Safe</div>
+                <div class="confusion-cell confusion-header">Pred: Hateful</div>
+                <div class="confusion-cell confusion-label">Actual: Safe</div>
+                <div class="confusion-cell" style="background: rgba(16, 185, 129, 0.3); color: #10b981;">TN</div>
+                <div class="confusion-cell" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">FP</div>
+                <div class="confusion-cell confusion-label">Actual: Hateful</div>
+                <div class="confusion-cell" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">FN</div>
+                <div class="confusion-cell" style="background: rgba(16, 185, 129, 0.3); color: #10b981;">TP</div>
+            </div>
+
+            <!-- Teacher vs Student -->
+            <h4><i class="fas fa-exchange-alt mr-2"></i>Teacher vs Student After Distillation</h4>
+            <div class="grid md:grid-cols-2 gap-6 my-4">
+                <div class="metric-card" style="border-color: #ef4444;">
+                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-brain mr-1"></i>Teacher</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">~430M</div>
+                    <div class="metric-label">parameters</div>
+                    <div class="mt-2 text-sm text-slate-400">~50ms inference</div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-feather mr-1"></i>Student</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">~87M</div>
+                    <div class="metric-label">parameters</div>
+                    <div class="mt-2 text-sm text-slate-400">~15ms inference</div>
+                </div>
+            </div>
+
+            <!-- Saved Artifacts -->
+            <h4><i class="fas fa-folder-open mr-2"></i>Saved Artifacts</h4>
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>Output Directory</div>
+                <pre class="terminal-body">models/
+├── checkpoints/
+│   ├── baseline/          # Stage 1 checkpoints
+│   ├── fusion_ablation/   # Stage 2 checkpoints (cross-attention, tensor)
+│   └── distillation/      # Stage 3 student checkpoints
+├── final/
+│   ├── best_fusion/       # Best fusion model (teacher)
+│   └── student/           # Distilled student model
+├── exports/
+│   └── onnx/              # ONNX runtime-optimized models
+└── plots/
+    ├── training_curves/   # Loss and metric plots
+    ├── gradcam/           # GradCAM heatmap examples
+    └── confusion/         # Confusion matrices</pre>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7: CONCLUSION                                         -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <p>
+                MultiGuard demonstrates a complete pipeline for multimodal hate detection — from pre-trained CLIP and RoBERTa backbones through three fusion strategies, knowledge distillation for 5x compression, GradCAM explainability, and cascaded inference for production serving.
+            </p>
+
+            <p>
+                The key architectural decisions:
+            </p>
+
+            <ul class="list-disc">
+                <li><strong>3-stage training:</strong> Baseline → Fusion Ablation → Distillation. Each stage builds on the previous, with the best fusion model becoming the teacher for distillation.</li>
+                <li><strong>3 fusion strategies:</strong> Late (concat+MLP), Cross-Attention (bidirectional + gating), and Tensor (low-rank product). Each captures different types of cross-modal interaction.</li>
+                <li><strong>Cascaded inference:</strong> CLIP zero-shot handles ~70% of clear cases in ~5ms. Only ambiguous cases go through the full fusion model at ~50ms. Effective throughput scales with content difficulty.</li>
+                <li><strong>Explainability-first:</strong> GradCAM for image regions, Integrated Gradients for text tokens, SHAP for global importance. Every prediction can be explained and audited.</li>
+                <li><strong>Production-ready:</strong> FastAPI + Docker + Redis + Prometheus/Grafana + Evidently drift detection + Airflow orchestration. The system monitors itself and triggers retraining when performance degrades.</li>
+            </ul>
+
+            <!-- GitHub Card -->
+            <div class="github-card">
+                <div class="flex items-start gap-4">
+                    <i class="fab fa-github text-4xl text-violet-400"></i>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-2">MultiGuard on GitHub</h3>
+                        <p class="text-slate-400 mb-4">Complete source code: 3 fusion strategies, knowledge distillation, GradCAM explainability, cascaded inference, Docker deployment, and MLOps monitoring.</p>
+                        <a href="https://github.com/zubairashfaque/multiguard" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Future Work</h3>
+
+            <ul class="list-disc">
+                <li><strong>Scaling to larger backbones:</strong> ViT-G/14 and DeBERTa-v3-large — the same fusion pipeline applies with adjusted memory budgets.</li>
+                <li><strong>Multi-language support:</strong> Extending MultiGuard to non-English memes using multilingual CLIP and XLM-RoBERTa.</li>
+                <li><strong>Video modality:</strong> Extending from static memes to short-form video content with temporal fusion.</li>
+                <li><strong>Federated learning:</strong> Training across distributed content moderation platforms without sharing sensitive data.</li>
+            </ul>
+
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">&copy; 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
