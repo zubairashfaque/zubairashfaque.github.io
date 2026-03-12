@@ -481,7 +481,7 @@
             <ul class="list-disc">
                 <li>How do you detect hate that only emerges when text and image are combined?</li>
                 <li>How do three different fusion strategies (late, cross-attention, tensor) compare in capturing cross-modal interactions?</li>
-                <li>How do you compress a ~430M parameter teacher into an ~87M student without losing accuracy?</li>
+                <li>How do you compress a ~310M parameter teacher into an ~87M student without losing accuracy?</li>
                 <li>How do you explain <em>why</em> the model flagged a meme — which image region and which text tokens drove the decision?</li>
                 <li>How do you deploy at scale with cascaded inference, where ~70% of requests are handled in ~5ms?</li>
                 <li>What does the complete pipeline look like from Facebook Hateful Memes dataset to Docker-served API?</li>
@@ -489,7 +489,7 @@
 
             <div class="highlight-box">
                 <strong><i class="fas fa-shield-alt mr-2"></i>Key Innovation:</strong>
-                A 3-stage training pipeline (baseline late fusion → fusion ablation with cross-attention and tensor fusion → knowledge distillation) combined with cascaded inference — CLIP zero-shot handles ~70% of clear cases in ~5ms, while the full fusion model processes ambiguous cases in ~50ms.
+                A 3-stage training pipeline (baseline late fusion → fusion ablation with cross-attention and tensor fusion → knowledge distillation) trained on Tesla P100-PCIE-16GB. Cross-attention fusion achieves best AUROC (0.6567). Knowledge distillation compresses to 86.7M params (2.6x smaller, 4.3x faster) while retaining 95% of teacher performance. Cascaded inference routes ~70% of clear cases through CLIP zero-shot (~5ms), with the full model handling ambiguous cases.
             </div>
 
             <!-- DIAGRAM: Unimodal vs MultiGuard comparison -->
@@ -560,8 +560,8 @@
             <ol class="list-decimal">
                 <li><strong>Pre-trained models understand modalities separately.</strong> CLIP was trained on 400M image-text pairs for contrastive matching — not for classification. RoBERTa was trained on 160GB of text — with zero visual understanding. Neither can classify hateful memes out of the box.</li>
                 <li><strong>The dataset contains confounders.</strong> Facebook's Hateful Memes (~10K memes) was specifically designed with confounders — benign confounders that look hateful by one modality but are safe, and hateful confounders that look safe by one modality but are hateful. This defeats naive approaches.</li>
-                <li><strong>Fusion is an open research question.</strong> How do you combine 768-dim vision features with 768-dim text features? Concatenation? Attention? Outer products? Each captures different types of cross-modal interaction, and the optimal choice is not obvious.</li>
-                <li><strong>Production demands compression.</strong> A ~430M parameter teacher with CLIP ViT-L/14 + RoBERTa is too expensive for real-time serving. Knowledge distillation to EfficientNet-B0 + DistilRoBERTa cuts parameters by ~5x while preserving accuracy.</li>
+                <li><strong>Fusion is an open research question.</strong> How do you combine 512-dim vision features with 768-dim text features? Concatenation? Attention? Outer products? Each captures different types of cross-modal interaction, and the optimal choice is not obvious.</li>
+                <li><strong>Production demands compression.</strong> A ~310M parameter teacher with CLIP ViT-B/16 + RoBERTa is too expensive for real-time serving. Knowledge distillation to EfficientNet-B0 + DistilRoBERTa achieves 2.6x compression and 4.3x faster inference while retaining 95% of teacher AUROC.</li>
                 <li><strong>Decisions must be explainable.</strong> Content moderation requires transparency. GradCAM shows which image regions triggered the decision; Integrated Gradients shows which text tokens mattered. Without explainability, the system is a black box.</li>
             </ol>
 
@@ -583,7 +583,7 @@
                         <li>3 fusion strategies capture cross-modal meaning</li>
                         <li>Confounders in Hateful Memes handled</li>
                         <li>GradCAM + Integrated Gradients explain every decision</li>
-                        <li>Knowledge distillation: ~430M → ~87M params</li>
+                        <li>Knowledge distillation: ~310M → ~87M params</li>
                         <li>Cascaded inference: ~70% handled in ~5ms</li>
                     </ul>
                 </div>
@@ -613,7 +613,7 @@
                     <div class="architecture-box" style="border: 2px solid #d946ef;">
                         <i class="fas fa-compress-alt text-fuchsia-400 text-2xl mb-2"></i>
                         <div class="text-sm font-semibold text-fuchsia-300">4. Compression</div>
-                        <div class="text-xs text-slate-400 mt-1">Distill ~430M → ~87M for production</div>
+                        <div class="text-xs text-slate-400 mt-1">Distill ~310M → ~87M for production</div>
                     </div>
                     <div class="architecture-box" style="border: 2px solid #f43f5e;">
                         <i class="fas fa-search-plus text-rose-400 text-2xl mb-2"></i>
@@ -691,15 +691,15 @@
             <!-- Term 1: CLIP -->
             <div class="concept-card">
                 <h4><i class="fas fa-eye text-violet-400 mr-2"></i>1. CLIP (Contrastive Language-Image Pre-training)</h4>
-                <p><strong>Definition:</strong> A vision model trained by OpenAI on 400 million image-text pairs using contrastive learning. Given an image, CLIP produces a 768-dimensional embedding vector that captures visual semantics. MultiGuard uses <code>ViT-L/14</code> — a Vision Transformer with 14x14 patches.</p>
-                <p><strong>Simple Example:</strong> Feed a photo of a cat → CLIP outputs a 768-number vector. Feed a photo of a dog → CLIP outputs a different 768-number vector. These vectors are close to the text "a photo of a cat" and "a photo of a dog" respectively.</p>
+                <p><strong>Definition:</strong> A vision model trained by OpenAI on 400 million image-text pairs using contrastive learning. Given an image, CLIP produces a 512-dimensional embedding vector that captures visual semantics. MultiGuard uses <code>ViT-B/16</code> — a Vision Transformer with 16x16 patches.</p>
+                <p><strong>Simple Example:</strong> Feed a photo of a cat → CLIP outputs a 512-number vector. Feed a photo of a dog → CLIP outputs a different 512-number vector. These vectors are close to the text "a photo of a cat" and "a photo of a dog" respectively.</p>
                 <p><strong>Analogy:</strong> CLIP is a museum curator who has seen 400 million artworks with their descriptions. Show any new artwork and the curator can instantly describe its content — but cannot judge whether it violates gallery policy.</p>
             </div>
 
             <!-- Term 2: RoBERTa -->
             <div class="concept-card">
                 <h4><i class="fas fa-font text-cyan-400 mr-2"></i>2. RoBERTa (Robustly Optimized BERT Approach)</h4>
-                <p><strong>Definition:</strong> A transformer language model trained on 160GB of text (books, Wikipedia, news). It has 125M parameters and produces 768-dimensional embeddings from the [CLS] token — a single vector summarizing the entire input text, up to 128 tokens.</p>
+                <p><strong>Definition:</strong> A transformer language model trained on 160GB of text (books, Wikipedia, news). It has 125M parameters and produces 768-dimensional embeddings from the [CLS] token — a single vector summarizing the entire input text, up to 77 tokens.</p>
                 <p><strong>Simple Example:</strong> Feed "This is a funny meme" → RoBERTa outputs a 768-number vector. Feed "This is a hateful meme" → different 768-number vector. The difference encodes semantic meaning.</p>
                 <p><strong>Analogy:</strong> RoBERTa is a literature professor who has read every book in the library. They understand sarcasm, irony, and nuance — but have never seen a picture in their life.</p>
             </div>
@@ -707,7 +707,7 @@
             <!-- Term 3: Late Fusion -->
             <div class="concept-card">
                 <h4><i class="fas fa-object-group text-blue-400 mr-2"></i>3. Late Fusion</h4>
-                <p><strong>Definition:</strong> The simplest fusion strategy. Concatenate vision features [768] and text features [768] into a single [1536] vector, then pass through an MLP: Linear(1536→512) + GELU + Dropout → Linear(512→256) + GELU + Dropout. No cross-modal interaction — features are combined but never "talk" to each other.</p>
+                <p><strong>Definition:</strong> The simplest fusion strategy. Concatenate vision features [512] and text features [768] into a single [1280] vector, then pass through an MLP: Linear(1280→512) + GELU + Dropout → Linear(512→256) + GELU + Dropout. No cross-modal interaction — features are combined but never "talk" to each other.</p>
                 <p><strong>Simple Example:</strong> Vision says [0.8, 0.2, ...] and text says [0.1, 0.9, ...]. Late fusion concatenates them into [0.8, 0.2, ..., 0.1, 0.9, ...] and feeds the combined vector through neural network layers.</p>
                 <p><strong>Analogy:</strong> Two experts write separate reports. A manager reads both reports side-by-side and makes a decision. The experts never discuss with each other.</p>
             </div>
@@ -723,7 +723,7 @@
             <!-- Term 5: Tensor Fusion -->
             <div class="concept-card">
                 <h4><i class="fas fa-cubes text-purple-400 mr-2"></i>5. Tensor Fusion (Low-Rank)</h4>
-                <p><strong>Definition:</strong> A multiplicative fusion strategy. Project both modalities to a low-rank space: <code>vision_factor = Linear(768→32)</code> and <code>text_factor = Linear(768→32)</code>. Compute element-wise product: <code>fused = v_factor * t_factor</code>. Then project back: <code>Linear(32→768)</code> + Dropout + LayerNorm. Rank=32 approximates the full outer product while keeping computation tractable.</p>
+                <p><strong>Definition:</strong> A multiplicative fusion strategy. Project both modalities to a low-rank space: <code>vision_factor = Linear(512→32)</code> and <code>text_factor = Linear(768→32)</code>. Compute element-wise product: <code>fused = v_factor * t_factor</code>. Then project back: <code>Linear(32→768)</code> + Dropout + LayerNorm. Rank=32 approximates the full outer product while keeping computation tractable.</p>
                 <p><strong>Simple Example:</strong> Vision feature compressed to 32 numbers, text feature compressed to 32 numbers. Multiply corresponding elements: vision[i] × text[i] for all i. The product captures how each visual concept interacts with each textual concept.</p>
                 <p><strong>Analogy:</strong> Mixing paint — red and blue separately are just colors, but when you mix them you get purple, a fundamentally new color. The multiplication creates meaning that neither input had alone.</p>
             </div>
@@ -731,7 +731,7 @@
             <!-- Term 6: Knowledge Distillation -->
             <div class="concept-card">
                 <h4><i class="fas fa-graduation-cap text-fuchsia-400 mr-2"></i>6. Knowledge Distillation</h4>
-                <p><strong>Definition:</strong> Model compression technique. A large teacher model (CLIP + RoBERTa + best fusion, ~430M params) teaches a small student (EfficientNet-B0 + DistilRoBERTa + late fusion, ~87M params). The student learns from both hard labels (ground truth) and soft labels (teacher's probability distribution at temperature T=4.0). Loss: <code>alpha * CE(student, labels) + (1-alpha) * T² * KL(student_soft, teacher_soft)</code>, alpha=0.5.</p>
+                <p><strong>Definition:</strong> Model compression technique. A large teacher model (CLIP ViT-B/16 + RoBERTa + best fusion, ~310M params) teaches a small student (EfficientNet-B0 + DistilRoBERTa + late fusion, ~87M params). The student learns from both hard labels (ground truth) and soft labels (teacher's probability distribution at temperature T=4.0). Loss: <code>alpha * CE(student, labels) + (1-alpha) * T² * KL(student_soft, teacher_soft)</code>, alpha=0.5.</p>
                 <p><strong>Simple Example:</strong> Teacher says "85% hateful, 15% safe" (soft). Ground truth says "hateful" (hard). Student learns from both signals — the soft target teaches that this case is "clearly hateful" rather than "borderline."</p>
                 <p><strong>Analogy:</strong> A master chef teaching an apprentice. Instead of just giving recipes (hard labels), the master explains <em>why</em> each ingredient works — the reasoning (soft probabilities) transfers understanding, not just answers.</p>
             </div>
@@ -776,11 +776,11 @@
                 <p><strong>Analogy:</strong> Warming up before exercise, then gradually cooling down. You don't sprint immediately (that pulls a muscle), and you don't stop abruptly (that causes cramps).</p>
             </div>
 
-            <!-- Term 12: Mixed Precision BF16 -->
+            <!-- Term 12: Mixed Precision FP16 -->
             <div class="concept-card">
-                <h4><i class="fas fa-microchip text-orange-400 mr-2"></i>12. Mixed Precision (BF16)</h4>
-                <p><strong>Definition:</strong> Use 16-bit Brain Floating Point for forward/backward passes instead of 32-bit. BF16 uses 1 sign bit + 8 exponent bits + 7 mantissa bits. Same exponent range as FP32 (no overflow issues), half the memory. Weights stored in FP32, computations in BF16.</p>
-                <p><strong>Simple Example:</strong> FP32: 4 bytes per number. BF16: 2 bytes per number. A 430M parameter model goes from ~1.7GB to ~860MB in memory. Training is ~2x faster.</p>
+                <h4><i class="fas fa-microchip text-orange-400 mr-2"></i>12. Mixed Precision (FP16)</h4>
+                <p><strong>Definition:</strong> Use 16-bit floating point for forward/backward passes instead of 32-bit. FP16 uses 1 sign bit + 5 exponent bits + 10 mantissa bits. Half the memory of FP32 with higher mantissa precision than BF16 (but narrower exponent range). Weights stored in FP32, computations in FP16 with loss scaling to prevent underflow. Used on Tesla P100 which does not support BF16.</p>
+                <p><strong>Simple Example:</strong> FP32: 4 bytes per number. FP16: 2 bytes per number. A 310M parameter model uses roughly half the memory. Training is ~2x faster.</p>
                 <p><strong>Analogy:</strong> Writing shorthand notes instead of full sentences. You lose some detail (precision) but capture the same range of ideas (exponent range), and you can write twice as fast.</p>
             </div>
 
@@ -812,11 +812,11 @@
             </p>
 
             <ol class="list-decimal">
-                <li><strong>Data Pipeline:</strong> Facebook Hateful Memes (~10K memes), image preprocessing (224x224), text tokenization (128 tokens), augmentation (crop, flip, jitter, synonym replacement, mixup/cutmix).</li>
+                <li><strong>Data Pipeline:</strong> Facebook Hateful Memes (~10K memes), image preprocessing (224x224), text tokenization (77 tokens), augmentation (crop, flip, jitter, synonym replacement, mixup/cutmix).</li>
                 <li><strong>Stage 1 — Baseline (Late Fusion):</strong> Freeze CLIP + RoBERTa backbones, train a concat+MLP fusion head. Establishes baseline performance with the simplest architecture.</li>
                 <li><strong>Stage 2a — Cross-Attention Fusion:</strong> 4-layer bidirectional cross-attention with gated combination. Vision attends to text, text attends to vision. Deepest cross-modal interaction.</li>
                 <li><strong>Stage 2b — Tensor Fusion:</strong> Low-rank (rank=32) element-wise product in projected space. Multiplicative interaction captures joint meaning that neither modality has alone.</li>
-                <li><strong>Stage 3 — Knowledge Distillation:</strong> Best fusion model becomes teacher. Train a ~5x smaller student (EfficientNet-B0 + DistilRoBERTa) using soft+hard targets (T=4.0, alpha=0.5).</li>
+                <li><strong>Stage 3 — Knowledge Distillation:</strong> Best fusion model becomes teacher. Train a 2.6x smaller student (EfficientNet-B0 + DistilRoBERTa) using soft+hard targets (T=4.0, alpha=0.5).</li>
                 <li><strong>Explainability:</strong> GradCAM for image regions, Integrated Gradients for text tokens, SHAP for global feature importance. Every prediction can be explained.</li>
                 <li><strong>Serving:</strong> FastAPI + cascaded inference (CLIP zero-shot fast path at ~5ms, full model for ambiguous cases at ~50ms) + Redis caching + Docker containerization.</li>
                 <li><strong>Monitoring:</strong> Evidently drift detection, automated retraining triggers (performance drop >5%, drift >0.1), MLflow experiment tracking, Airflow orchestration.</li>
@@ -852,7 +852,7 @@
                     <div class="architecture-box" style="border: 2px solid #d946ef;">
                         <i class="fas fa-graduation-cap text-fuchsia-400 text-xl mb-2"></i>
                         <div class="text-sm font-semibold text-fuchsia-300">5. Distillation</div>
-                        <div class="text-xs text-slate-400 mt-1">~430M → ~87M params</div>
+                        <div class="text-xs text-slate-400 mt-1">~310M → ~87M params</div>
                     </div>
                     <div class="architecture-box" style="border: 2px solid #ec4899;">
                         <i class="fas fa-search-plus text-pink-400 text-xl mb-2"></i>
@@ -908,7 +908,7 @@
             </table>
 
             <h4><i class="fas fa-font mr-2"></i>Text Preprocessing</h4>
-            <p>Text is tokenized to a maximum of 128 tokens using the RoBERTa tokenizer. Text augmentations:</p>
+            <p>Text is tokenized to a maximum of 77 tokens using the RoBERTa tokenizer. Text augmentations:</p>
 
             <table class="benchmark-table">
                 <thead>
@@ -952,7 +952,7 @@
                     <div class="architecture-box" style="border: 2px solid #06b6d4;">
                         <i class="fas fa-cog text-cyan-400 text-xl mb-1"></i>
                         <div class="text-sm font-semibold text-cyan-300">Preprocessing</div>
-                        <div class="text-xs text-slate-400">224x224, 128 tokens</div>
+                        <div class="text-xs text-slate-400">224x224, 77 tokens</div>
                     </div>
                     <div class="flow-arrow-right"><i class="fas fa-arrow-right"></i></div>
                     <div class="architecture-box" style="border: 2px solid #3b82f6;">
@@ -977,7 +977,7 @@
             <h3><i class="fas fa-layer-group mr-2"></i>Step 2: Stage 1 — Late Fusion Baseline</h3>
 
             <p>
-                The baseline architecture is the simplest possible fusion: extract features from both backbones, concatenate, and classify through an MLP. CLIP ViT-L/14 produces a 768-dim vision vector; RoBERTa-base produces a 768-dim text vector. Concatenated = 1536 dimensions, projected down through two hidden layers.
+                The baseline architecture is the simplest possible fusion: extract features from both backbones, concatenate, and classify through an MLP. CLIP ViT-B/16 produces a 512-dim vision vector; RoBERTa-base produces a 768-dim text vector. Concatenated = 1280 dimensions, projected down through two hidden layers.
             </p>
 
             <!-- Late Fusion Architecture Diagram -->
@@ -987,8 +987,8 @@
                     <div class="grid md:grid-cols-2 gap-6 w-full">
                         <div class="architecture-box" style="border: 2px solid #8b5cf6;">
                             <i class="fas fa-image text-violet-400 text-xl mb-1"></i>
-                            <div class="text-sm font-semibold text-violet-300">Image → CLIP ViT-L/14</div>
-                            <div class="text-xs text-slate-400">[B, 768] vision features</div>
+                            <div class="text-sm font-semibold text-violet-300">Image → CLIP ViT-B/16</div>
+                            <div class="text-xs text-slate-400">[B, 512] vision features</div>
                         </div>
                         <div class="architecture-box" style="border: 2px solid #06b6d4;">
                             <i class="fas fa-font text-cyan-400 text-xl mb-1"></i>
@@ -998,11 +998,11 @@
                     </div>
                     <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                     <div class="architecture-box" style="border: 2px solid #3b82f6; width: 100%; max-width: 400px;">
-                        <div class="text-sm font-semibold text-blue-300">Concatenate → [B, 1536]</div>
+                        <div class="text-sm font-semibold text-blue-300">Concatenate → [B, 1280]</div>
                     </div>
                     <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                     <div class="architecture-box" style="border: 2px solid #6366f1; width: 100%; max-width: 400px;">
-                        <div class="text-sm font-semibold text-indigo-300">Linear(1536→512) + GELU + Dropout(0.1)</div>
+                        <div class="text-sm font-semibold text-indigo-300">Linear(1280→512) + GELU + Dropout(0.1)</div>
                     </div>
                     <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
                     <div class="architecture-box" style="border: 2px solid #d946ef; width: 100%; max-width: 400px;">
@@ -1023,15 +1023,16 @@
                     <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Epochs</td><td class="score-cyan">10</td><td>Sufficient for frozen backbones</td></tr>
-                    <tr><td>Batch Size</td><td>32</td><td>Fits in GPU memory with BF16</td></tr>
+                    <tr><td>Epochs</td><td class="score-cyan">15</td><td>Sufficient for frozen backbones</td></tr>
+                    <tr><td>Batch Size</td><td>32</td><td>Fits in GPU memory with FP16</td></tr>
                     <tr><td>Gradient Accumulation</td><td>2</td><td>Effective batch = 64</td></tr>
-                    <tr><td>Learning Rate</td><td class="score-cyan">1e-4</td><td>Standard for MLP head training</td></tr>
+                    <tr><td>Learning Rate</td><td class="score-cyan">1e-3</td><td>Higher LR for fusion head training</td></tr>
                     <tr><td>Warmup Ratio</td><td>0.1</td><td>10% of steps for warmup</td></tr>
                     <tr><td>LR Scheduler</td><td>Cosine</td><td>Smooth decay after warmup</td></tr>
-                    <tr><td>Weight Decay</td><td>0.01</td><td>AdamW regularization</td></tr>
+                    <tr><td>Weight Decay</td><td>1e-4</td><td>AdamW regularization</td></tr>
                     <tr><td>Max Grad Norm</td><td>1.0</td><td>Gradient clipping</td></tr>
-                    <tr><td>Precision</td><td>BF16</td><td>Half memory, same exponent range</td></tr>
+                    <tr><td>Precision</td><td>FP16</td><td>Half memory, Tesla P100 compatible</td></tr>
+                    <tr><td>GPU</td><td>Tesla P100-PCIE-16GB</td><td>Kaggle free tier</td></tr>
                 </tbody>
             </table>
 
@@ -1046,7 +1047,7 @@ class LateFusion(nn.Module):
 
     def __init__(
         self,
-        vision_dim: int = 768,
+        vision_dim: int = 512,
         text_dim: int = 768,
         hidden_dims: list[int] | None = None,
         dropout: float = 0.1,
@@ -1133,10 +1134,10 @@ class LateFusion(nn.Module):
                     <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Epochs</td><td class="score-cyan">15</td><td>More epochs for deeper fusion</td></tr>
-                    <tr><td>Batch Size</td><td>16</td><td>Smaller — cross-attention uses more memory</td></tr>
-                    <tr><td>Gradient Accumulation</td><td>4</td><td>Effective batch = 64</td></tr>
-                    <tr><td>Learning Rate</td><td class="score-cyan">5e-5</td><td>Lower LR for fine-grained attention training</td></tr>
+                    <tr><td>Epochs</td><td class="score-cyan">20</td><td>More epochs for deeper fusion</td></tr>
+                    <tr><td>Batch Size</td><td>32</td><td>Fits in GPU memory with FP16</td></tr>
+                    <tr><td>Gradient Accumulation</td><td>2</td><td>Effective batch = 64</td></tr>
+                    <tr><td>Learning Rate</td><td class="score-cyan">5e-4</td><td>Moderate LR for attention training</td></tr>
                     <tr><td>Cross-Attention Layers</td><td>4</td><td>Depth for cross-modal reasoning</td></tr>
                     <tr><td>Attention Heads</td><td>8</td><td>Multi-head attention</td></tr>
                     <tr><td>Hidden Dim</td><td>768</td><td>Match backbone output dimension</td></tr>
@@ -1216,7 +1217,7 @@ class CrossAttentionFusion(nn.Module):
                     <div class="grid md:grid-cols-2 gap-6 w-full">
                         <div class="architecture-box" style="border: 2px solid #8b5cf6;">
                             <div class="text-sm font-semibold text-violet-300">Vision Factor</div>
-                            <div class="text-xs text-slate-400">Linear(768 → 32, no bias)</div>
+                            <div class="text-xs text-slate-400">Linear(512 → 32, no bias)</div>
                         </div>
                         <div class="architecture-box" style="border: 2px solid #06b6d4;">
                             <div class="text-sm font-semibold text-cyan-300">Text Factor</div>
@@ -1250,7 +1251,7 @@ class TensorFusion(nn.Module):
     Computes outer product in low-rank factorized form."""
 
     def __init__(
-        self, vision_dim: int = 768, text_dim: int = 768,
+        self, vision_dim: int = 512, text_dim: int = 768,
         hidden_dim: int = 768, rank: int = 32, dropout: float = 0.1,
     ) -> None:
         super().__init__()
@@ -1338,7 +1339,7 @@ class TensorFusion(nn.Module):
             <h3><i class="fas fa-graduation-cap mr-2"></i>Step 5: Stage 3 — Knowledge Distillation</h3>
 
             <p>
-                The best fusion model (~430M parameters) is too expensive for production real-time serving. Knowledge distillation compresses it into a student model (~87M parameters) — roughly 5x smaller — while preserving the teacher's learned representations. The student uses lightweight backbones: <strong>EfficientNet-B0</strong> (vision) and <strong>DistilRoBERTa</strong> (text) with late fusion.
+                The best fusion model (cross-attention, 310.8M parameters) is too expensive for production real-time serving. Knowledge distillation compresses it into a student model (86.7M parameters) — 2.6x smaller and 4.3x faster — while retaining 95% of teacher AUROC. The student uses lightweight backbones: <strong>EfficientNet-B0</strong> (vision) and <strong>DistilRoBERTa</strong> (text) with late fusion.
             </p>
 
             <!-- Distillation Architecture -->
@@ -1348,8 +1349,8 @@ class TensorFusion(nn.Module):
                     <div class="p-4 rounded-lg" style="background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444;">
                         <h4 class="text-center text-red-400 mb-3"><i class="fas fa-lock mr-1"></i>Teacher (FROZEN)</h4>
                         <div class="architecture-box mb-2" style="border: 1px solid #ef4444;">
-                            <div class="text-xs text-red-300">CLIP ViT-L/14 + RoBERTa-base</div>
-                            <div class="text-xs text-slate-400">~430M params</div>
+                            <div class="text-xs text-red-300">CLIP ViT-B/16 + RoBERTa-base</div>
+                            <div class="text-xs text-slate-400">310.8M params</div>
                         </div>
                         <div class="text-center text-xs text-slate-400 mb-2">Best fusion model</div>
                         <div class="architecture-box" style="border: 1px solid #f59e0b;">
@@ -1389,10 +1390,10 @@ class TensorFusion(nn.Module):
                 </thead>
                 <tbody>
                     <tr><td>Epochs</td><td class="score-cyan">20</td><td>More epochs for student convergence</td></tr>
-                    <tr><td>Batch Size</td><td>64</td><td>Student is smaller, fits more</td></tr>
-                    <tr><td>Gradient Accumulation</td><td>1</td><td>Effective batch = 64</td></tr>
+                    <tr><td>Batch Size</td><td>32</td><td>With grad accum for effective 64</td></tr>
+                    <tr><td>Gradient Accumulation</td><td>2</td><td>Effective batch = 64</td></tr>
                     <tr><td>Learning Rate</td><td class="score-cyan">1e-3</td><td>Higher LR for student from scratch</td></tr>
-                    <tr><td>Warmup Ratio</td><td>0.05</td><td>Shorter warmup</td></tr>
+                    <tr><td>Warmup Ratio</td><td>0.1</td><td>10% warmup</td></tr>
                     <tr><td>Temperature</td><td class="score-amber">4.0</td><td>Soften probability distribution</td></tr>
                     <tr><td>Alpha</td><td class="score-amber">0.5</td><td>Equal weight: hard + soft loss</td></tr>
                 </tbody>
@@ -1442,11 +1443,13 @@ class TensorFusion(nn.Module):
                     <tr><th>Property</th><th>Teacher</th><th>Student</th><th>Ratio</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Vision Backbone</td><td>CLIP ViT-L/14</td><td>EfficientNet-B0</td><td>-</td></tr>
+                    <tr><td>Vision Backbone</td><td>CLIP ViT-B/16</td><td>EfficientNet-B0</td><td>-</td></tr>
                     <tr><td>Text Backbone</td><td>RoBERTa-base</td><td>DistilRoBERTa</td><td>-</td></tr>
-                    <tr><td>Parameters</td><td class="score-red">~430M</td><td class="score-green">~87M</td><td class="score-green">~5x smaller</td></tr>
-                    <tr><td>Fusion</td><td>Best from ablation</td><td>Late Fusion</td><td>Simpler</td></tr>
-                    <tr><td>Inference Speed</td><td class="score-red">~50ms</td><td class="score-green">~15ms</td><td class="score-green">~3x faster</td></tr>
+                    <tr><td>Parameters</td><td class="score-red">310.8M</td><td class="score-green">86.7M</td><td class="score-green">2.6x smaller</td></tr>
+                    <tr><td>Model Size</td><td class="score-red">857.2 MB</td><td class="score-green">331.1 MB</td><td class="score-green">2.6x smaller</td></tr>
+                    <tr><td>Fusion</td><td>Cross-Attention (best)</td><td>Late Fusion</td><td>Simpler</td></tr>
+                    <tr><td>Batch Inference</td><td class="score-red">~252ms</td><td class="score-green">~58ms</td><td class="score-green">4.3x faster</td></tr>
+                    <tr><td>AUROC</td><td class="score-cyan">0.6567</td><td class="score-cyan">0.6244</td><td class="score-green">95% retained</td></tr>
                 </tbody>
             </table>
 
@@ -1486,9 +1489,9 @@ class TensorFusion(nn.Module):
                 <p class="text-sm text-slate-400"><strong>Analogy:</strong> A teacher who spends extra time on students struggling with a concept, instead of re-explaining what everyone already understands. The (1-pt)^γ term makes the loss near-zero for easy examples.</p>
             </div>
 
-            <!-- Technique 2: BF16 -->
+            <!-- Technique 2: FP16 -->
             <div class="concept-card">
-                <h4><i class="fas fa-microchip text-orange-400 mr-2"></i>2. Mixed Precision (BF16)</h4>
+                <h4><i class="fas fa-microchip text-orange-400 mr-2"></i>2. Mixed Precision (FP16)</h4>
                 <div class="grid md:grid-cols-2 gap-4 my-4">
                     <div>
                         <div class="text-sm text-slate-300 mb-2 text-center">FP32 (32 bits)</div>
@@ -1499,15 +1502,15 @@ class TensorFusion(nn.Module):
                         </div>
                     </div>
                     <div>
-                        <div class="text-sm text-slate-300 mb-2 text-center">BF16 (16 bits)</div>
+                        <div class="text-sm text-slate-300 mb-2 text-center">FP16 (16 bits)</div>
                         <div class="bit-layout">
                             <div class="bit-cell" style="background: #ef4444;">1 sign</div>
-                            <div class="bit-cell" style="background: #3b82f6;">8 exponent</div>
-                            <div class="bit-cell" style="background: #f59e0b;">7 mantissa</div>
+                            <div class="bit-cell" style="background: #3b82f6;">5 exponent</div>
+                            <div class="bit-cell" style="background: #f59e0b;">10 mantissa</div>
                         </div>
                     </div>
                 </div>
-                <p class="text-sm text-slate-400"><strong>Key insight:</strong> BF16 keeps the same 8 exponent bits as FP32 — same numeric range, no overflow. Only mantissa precision is reduced. Half the memory, ~2x faster training.</p>
+                <p class="text-sm text-slate-400"><strong>Key insight:</strong> FP16 has higher mantissa precision than BF16 (10 vs 7 bits) but narrower exponent range (5 vs 8 bits). Loss scaling prevents underflow. Used on Tesla P100 (which does not support BF16). Half the memory, ~2x faster training.</p>
             </div>
 
             <!-- Technique 3: Gradient Accumulation -->
@@ -1515,11 +1518,11 @@ class TensorFusion(nn.Module):
                 <h4><i class="fas fa-layer-group text-amber-400 mr-2"></i>3. Gradient Accumulation</h4>
                 <div class="grid grid-cols-3 gap-4 my-4">
                     <div class="metric-card">
-                        <div class="metric-value" style="font-size: 1.5rem;">16</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">32</div>
                         <div class="metric-label">batch size</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" style="font-size: 1.5rem;">×4</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">×2</div>
                         <div class="metric-label">accum steps</div>
                     </div>
                     <div class="metric-card">
@@ -1844,7 +1847,7 @@ class ExplanationResponse(BaseModel):
                 </thead>
                 <tbody>
                     <tr><td><i class="fas fa-brain text-violet-400 mr-2"></i>Core ML</td><td>PyTorch ≥2.1.0, HuggingFace Transformers ≥4.36.0</td></tr>
-                    <tr><td><i class="fas fa-eye text-blue-400 mr-2"></i>Vision</td><td>CLIP ViT-L/14, timm (EfficientNet-B0), Albumentations</td></tr>
+                    <tr><td><i class="fas fa-eye text-blue-400 mr-2"></i>Vision</td><td>CLIP ViT-B/16, timm (EfficientNet-B0), Albumentations</td></tr>
                     <tr><td><i class="fas fa-font text-cyan-400 mr-2"></i>Language</td><td>RoBERTa-base, DistilRoBERTa, BERT</td></tr>
                     <tr><td><i class="fas fa-dumbbell text-amber-400 mr-2"></i>Training</td><td>AdamW, Focal Loss, OmegaConf, PEFT/LoRA</td></tr>
                     <tr><td><i class="fas fa-search-plus text-pink-400 mr-2"></i>Explainability</td><td>Captum (GradCAM, Integrated Gradients), SHAP</td></tr>
@@ -1878,60 +1881,63 @@ class ExplanationResponse(BaseModel):
                 <div class="mb-4">
                     <div class="flex justify-between text-sm mb-1">
                         <span class="text-slate-300">Late Fusion (AUROC)</span>
-                        <span class="text-violet-400 font-semibold">0.72</span>
+                        <span class="text-violet-400 font-semibold">0.6440</span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: 72%; background: linear-gradient(90deg, #8b5cf6, #a855f7);">0.72</div>
+                        <div class="progress-bar-fill" style="width: 64.4%; background: linear-gradient(90deg, #8b5cf6, #a855f7);">0.6440</div>
                     </div>
                 </div>
                 <div class="mb-4">
                     <div class="flex justify-between text-sm mb-1">
-                        <span class="text-slate-300">Cross-Attention (AUROC)</span>
-                        <span class="text-cyan-400 font-semibold">0.78</span>
+                        <span class="text-slate-300">Cross-Attention (AUROC) — BEST</span>
+                        <span class="text-cyan-400 font-semibold">0.6567</span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: 78%; background: linear-gradient(90deg, #06b6d4, #22d3ee);">0.78</div>
+                        <div class="progress-bar-fill" style="width: 65.67%; background: linear-gradient(90deg, #06b6d4, #22d3ee);">0.6567</div>
                     </div>
                 </div>
                 <div class="mb-4">
                     <div class="flex justify-between text-sm mb-1">
                         <span class="text-slate-300">Tensor Fusion (AUROC)</span>
-                        <span class="text-fuchsia-400 font-semibold">0.75</span>
+                        <span class="text-fuchsia-400 font-semibold">0.6502</span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: 75%; background: linear-gradient(90deg, #d946ef, #e879f9);">0.75</div>
+                        <div class="progress-bar-fill" style="width: 65.02%; background: linear-gradient(90deg, #d946ef, #e879f9);">0.6502</div>
                     </div>
                 </div>
             </div>
 
             <!-- Confusion Matrix -->
-            <h4><i class="fas fa-th mr-2"></i>Confusion Matrix (Best Fusion Model)</h4>
+            <h4><i class="fas fa-th mr-2"></i>Confusion Matrix (Cross-Attention, Best Model)</h4>
             <div class="confusion-grid">
                 <div class="confusion-cell"></div>
                 <div class="confusion-cell confusion-header">Pred: Safe</div>
                 <div class="confusion-cell confusion-header">Pred: Hateful</div>
                 <div class="confusion-cell confusion-label">Actual: Safe</div>
-                <div class="confusion-cell" style="background: rgba(16, 185, 129, 0.3); color: #10b981;">TN</div>
-                <div class="confusion-cell" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">FP</div>
+                <div class="confusion-cell" style="background: rgba(16, 185, 129, 0.3); color: #10b981;">153</div>
+                <div class="confusion-cell" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">97</div>
                 <div class="confusion-cell confusion-label">Actual: Hateful</div>
-                <div class="confusion-cell" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">FN</div>
-                <div class="confusion-cell" style="background: rgba(16, 185, 129, 0.3); color: #10b981;">TP</div>
+                <div class="confusion-cell" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">88</div>
+                <div class="confusion-cell" style="background: rgba(16, 185, 129, 0.3); color: #10b981;">162</div>
             </div>
+            <p class="text-center text-sm text-slate-400 mt-2">Precision: 0.63 | Recall: Not Hateful 0.61, Hateful 0.65 | Accuracy: 0.63 (500 test samples)</p>
 
             <!-- Teacher vs Student -->
             <h4><i class="fas fa-exchange-alt mr-2"></i>Teacher vs Student After Distillation</h4>
             <div class="grid md:grid-cols-2 gap-6 my-4">
                 <div class="metric-card" style="border-color: #ef4444;">
-                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-brain mr-1"></i>Teacher</div>
-                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">~430M</div>
-                    <div class="metric-label">parameters</div>
-                    <div class="mt-2 text-sm text-slate-400">~50ms inference</div>
+                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-brain mr-1"></i>Teacher (Cross-Attention)</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">310.8M</div>
+                    <div class="metric-label">parameters (857.2 MB)</div>
+                    <div class="mt-2 text-sm text-slate-400">~252ms batch inference</div>
+                    <div class="text-sm text-cyan-400">AUROC: 0.6567 | F1: 0.6299</div>
                 </div>
                 <div class="metric-card" style="border-color: #10b981;">
-                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-feather mr-1"></i>Student</div>
-                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">~87M</div>
-                    <div class="metric-label">parameters</div>
-                    <div class="mt-2 text-sm text-slate-400">~15ms inference</div>
+                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-feather mr-1"></i>Student (Distilled)</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">86.7M</div>
+                    <div class="metric-label">parameters (331.1 MB)</div>
+                    <div class="mt-2 text-sm text-slate-400">~58ms batch inference (4.3x faster)</div>
+                    <div class="text-sm text-cyan-400">AUROC: 0.6244 | 95% retained</div>
                 </div>
             </div>
 
@@ -1963,7 +1969,7 @@ class ExplanationResponse(BaseModel):
             <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
 
             <p>
-                MultiGuard demonstrates a complete pipeline for multimodal hate detection — from pre-trained CLIP and RoBERTa backbones through three fusion strategies, knowledge distillation for 5x compression, GradCAM explainability, and cascaded inference for production serving.
+                MultiGuard demonstrates a complete pipeline for multimodal hate detection — from pre-trained CLIP ViT-B/16 and RoBERTa backbones through three fusion strategies, knowledge distillation for 2.6x compression (with 4.3x faster inference), GradCAM explainability, and cascaded inference for production serving. Trained on Tesla P100-PCIE-16GB (Kaggle) with FP16 mixed precision.
             </p>
 
             <p>
@@ -1973,7 +1979,7 @@ class ExplanationResponse(BaseModel):
             <ul class="list-disc">
                 <li><strong>3-stage training:</strong> Baseline → Fusion Ablation → Distillation. Each stage builds on the previous, with the best fusion model becoming the teacher for distillation.</li>
                 <li><strong>3 fusion strategies:</strong> Late (concat+MLP), Cross-Attention (bidirectional + gating), and Tensor (low-rank product). Each captures different types of cross-modal interaction.</li>
-                <li><strong>Cascaded inference:</strong> CLIP zero-shot handles ~70% of clear cases in ~5ms. Only ambiguous cases go through the full fusion model at ~50ms. Effective throughput scales with content difficulty.</li>
+                <li><strong>Cascaded inference:</strong> CLIP zero-shot handles ~70% of clear cases in ~5ms. Only ambiguous cases go through the full fusion model. Effective throughput scales with content difficulty.</li>
                 <li><strong>Explainability-first:</strong> GradCAM for image regions, Integrated Gradients for text tokens, SHAP for global importance. Every prediction can be explained and audited.</li>
                 <li><strong>Production-ready:</strong> FastAPI + Docker + Redis + Prometheus/Grafana + Evidently drift detection + Airflow orchestration. The system monitors itself and triggers retraining when performance degrades.</li>
             </ul>
