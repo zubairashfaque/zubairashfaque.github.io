@@ -315,8 +315,7 @@
         .screenshot-container { margin: 1.5rem 0; text-align: center; }
         .screenshot-container img { width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .screenshot-caption { font-size: 0.875rem; color: #94a3b8; margin-top: 0.75rem; font-style: italic; }
-        .debug-error { background: #1e1e1e; border: 2px solid #ef4444; border-radius: 0.5rem; overflow: hidden; font-family: 'Courier New', monospace; margin: 1rem 0; }
-        .debug-error .terminal-header { background: #7f1d1d; color: #fca5a5; }
+
         @media (max-width: 768px) {
             .blog-container { padding: 1rem; }
             article h2 { font-size: 1.5rem; }
@@ -1494,45 +1493,6 @@ Pipeline: 20 &rarr; CRAG(0R/20I) &rarr; Fallback(9) &rarr; Rerank &rarr; 5
                 <strong><i class="fas fa-clock mr-2 text-violet-400"></i>CPU-Only Timing Note:</strong> This run used Mistral-7B on CPU only (no GPU offload for LLM inference). HyDE took 126.2s, CRAG judging took 290.4s, and answer generation took 469.6s. With GPU offload (<code>num_gpu: 99</code> and 4+ GB VRAM), these stages run 10-20x faster — expect ~10-20s total pipeline time instead of ~893s.
             </div>
 
-            <!-- Debugging Journey -->
-            <h3><i class="fas fa-bug mr-2"></i>Debugging Journey: Three Real Errors We Hit</h3>
-
-            <p>
-                Building MedRAG-Local was not a smooth ride. Here are three real errors from our development logs and how we fixed them.
-            </p>
-
-            <!-- Error 1: trust_remote_code -->
-            <div class="debug-error">
-                <div class="terminal-header"><i class="fas fa-times-circle mr-2"></i>Error 1: trust_remote_code</div>
-                <pre class="terminal-body"><span style="color:#ef4444;">ValueError: The repository for pubmed contains custom code which must
-be executed to correctly load the dataset. Please pass the argument
-`trust_remote_code=True`</span></pre>
-            </div>
-
-            <div class="tip-box">
-                <strong><i class="fas fa-wrench mr-2 text-green-400"></i>Fix:</strong> The raw <code>pubmed</code> dataset on HuggingFace requires custom loading scripts. We switched to the <code>MedRAG/pubmed</code> dataset which is pre-processed and does not require <code>trust_remote_code</code>. For datasets that do require it, pass <code>trust_remote_code=True</code> to <code>load_dataset()</code>.
-            </div>
-
-            <!-- Error 2: model not found -->
-            <div class="debug-error">
-                <div class="terminal-header"><i class="fas fa-times-circle mr-2"></i>Error 2: Ollama Model Not Found</div>
-                <pre class="terminal-body"><span style="color:#ef4444;">Ollama HTTP error: 404
-{"error":"model 'mistral:7b-instruct-v0.3-q4_K_M' not found"}</span></pre>
-            </div>
-
-            <div class="tip-box">
-                <strong><i class="fas fa-wrench mr-2 text-green-400"></i>Fix:</strong> The model tag in our config (<code>mistral:7b-instruct-v0.3-q4_K_M</code>) did not match what Ollama had pulled. Running <code>ollama list</code> showed the model was registered as <code>mistral:latest</code>. Updated <code>app_config.yaml</code> to use <code>primary_model: "mistral:latest"</code>.
-            </div>
-
-            <!-- Error 3: QdrantClient.search -->
-            <div class="debug-error">
-                <div class="terminal-header"><i class="fas fa-times-circle mr-2"></i>Error 3: Qdrant API Changed</div>
-                <pre class="terminal-body"><span style="color:#ef4444;">AttributeError: 'QdrantClient' object has no attribute 'search'</span></pre>
-            </div>
-
-            <div class="tip-box">
-                <strong><i class="fas fa-wrench mr-2 text-green-400"></i>Fix:</strong> The Qdrant Python client v1.7+ renamed <code>.search()</code> to <code>.query_points()</code>. Updated the vector store module to use the new API: <code>client.query_points(collection_name, query=vector, limit=top_k)</code>.
-            </div>
 
             <!-- Step 8: RAGAS Evaluation -->
             <h3><i class="fas fa-chart-bar mr-2"></i>Step 8: RAGAS Evaluation</h3>
