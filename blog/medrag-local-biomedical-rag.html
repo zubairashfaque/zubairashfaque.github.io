@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedRAG-Local: Building a Zero-Cloud Biomedical Q&A System | Zubair Ashfaque</title>
+    <meta name="description" content="Build a production-grade biomedical literature Q&A system running 100% locally. 5-stage pipeline: HyDE retrieval, Corrective RAG with PubMed fallback, cross-encoder reranking, and citation-aware generation with RAGAS evaluation.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            margin: 3rem 0;
+        }
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #a855f7;
+        }
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #c084fc;
+        }
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a {
+            color: #8b5cf6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover { color: #a855f7; }
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .highlight-box {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .info-box {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+        }
+        .metric-card .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-card .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .benchmark-table th {
+            background: rgba(139, 92, 246, 0.2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #c084fc;
+            border-bottom: 2px solid #8b5cf6;
+        }
+        .benchmark-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        .benchmark-table tr:hover { background: rgba(139, 92, 246, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            padding: 0.5rem 0;
+        }
+        .flow-arrow-right {
+            display: flex;
+            align-items: center;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .analogy-card {
+            background: rgba(6, 182, 212, 0.05);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-violet-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>MedRAG-Local: Zero-Cloud Biomedical Q&A</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                MedRAG-Local: Building a Zero-Cloud Biomedical Q&A System — HyDE, CRAG, and Citation-Aware Generation Over PubMed
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                A complete guide to building a production-grade medical literature search system that runs entirely on your laptop
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>March 16, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>25 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Medical AI</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">RAG</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">HyDE</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">CRAG</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">PubMed</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Qdrant</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">RAGAS</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Ollama</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                There are over 36 million articles in PubMed. A doctor searching for "What is the current first-line treatment for EGFR-mutated non-small cell lung cancer?" faces hours of keyword searches, scanning abstracts, and cross-referencing citations. By the time they find the right evidence, the clinical decision has already been made on instinct rather than data.
+            </p>
+
+            <p>
+                Cloud-based medical AI tools exist, but they come with fundamental problems. Every patient query travels through an external API. Every piece of sensitive health data leaves the premises, raising HIPAA compliance concerns. Every question costs money. And in environments without reliable internet — rural clinics, field hospitals, developing nations — these tools simply do not work.
+            </p>
+
+            <p>
+                What if you could build a biomedical Q&A system that searches medical literature semantically, self-corrects when results are irrelevant, verifies every citation against real PubMed records, and runs 100% on your laptop? That is not a hypothetical. That is what MedRAG-Local delivers.
+            </p>
+
+            <p>
+                The questions this blog answers:
+            </p>
+
+            <ul class="list-disc">
+                <li>How do you search medical literature semantically, not just by keywords?</li>
+                <li>How does HyDE bridge the gap between natural language questions and scientific abstracts?</li>
+                <li>How does Corrective RAG (CRAG) self-correct when retrieved results are irrelevant?</li>
+                <li>How do you ensure every claim in the answer is backed by a real PubMed citation?</li>
+                <li>How does RAGAS evaluation measure faithfulness, relevancy, recall, and precision automatically?</li>
+                <li>How do you run all of this locally with zero cloud dependency?</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-stethoscope mr-2"></i>Key Innovation:</strong>
+                A 5-stage pipeline (HyDE &rarr; Dense Retrieval &rarr; CRAG &rarr; Cross-Encoder Reranking &rarr; Citation-Aware Generation) running 100% locally with Mistral-7B, BGE embeddings, and Qdrant — zero API keys, zero cloud, zero data leakage.
+            </div>
+
+            <!-- Cost Comparison Cards -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="metric-card" style="border-color: #ef4444;">
+                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-cloud mr-1"></i>Cloud Medical AI</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">$0.03</div>
+                    <div class="metric-label">per 1K tokens</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-wifi mr-1"></i> API required (internet dependent)</div>
+                        <div><i class="fas fa-external-link-alt mr-1"></i> Patient data leaves premises</div>
+                        <div><i class="fas fa-server mr-1"></i> Vendor lock-in, rate limits</div>
+                    </div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-laptop-medical mr-1"></i>MedRAG-Local</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">$0.00</div>
+                    <div class="metric-label">per query (runs locally)</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-wifi-slash mr-1"></i> Runs fully offline</div>
+                        <div><i class="fas fa-lock mr-1"></i> Data stays on-device (HIPAA-safe)</div>
+                        <div><i class="fas fa-check-circle mr-1"></i> Every citation verified against source</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech Stack Visual -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Technology Stack</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-2xl mb-2"><i class="fas fa-robot"></i></div>
+                        <div class="text-white font-semibold text-sm">Ollama + Mistral-7B</div>
+                        <div class="text-slate-400 text-xs mt-1">Local LLM inference</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-vector-square"></i></div>
+                        <div class="text-white font-semibold text-sm">BGE-base-en-v1.5</div>
+                        <div class="text-slate-400 text-xs mt-1">768-dim embeddings</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-2xl mb-2"><i class="fas fa-database"></i></div>
+                        <div class="text-white font-semibold text-sm">Qdrant</div>
+                        <div class="text-slate-400 text-xs mt-1">Vector database (Docker)</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-desktop"></i></div>
+                        <div class="text-white font-semibold text-sm">Streamlit</div>
+                        <div class="text-slate-400 text-xs mt-1">4-page dashboard</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-2xl mb-2"><i class="fas fa-chart-bar"></i></div>
+                        <div class="text-white font-semibold text-sm">RAGAS v0.2.x</div>
+                        <div class="text-slate-400 text-xs mt-1">Automated evaluation</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef;">
+                        <div class="text-fuchsia-400 text-2xl mb-2"><i class="fas fa-book-medical"></i></div>
+                        <div class="text-white font-semibold text-sm">PubMed / MedRAG</div>
+                        <div class="text-slate-400 text-xs mt-1">2.21M biomedical abstracts</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-violet-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">MedRAG-Local</h3>
+                        <p class="text-gray-300 mb-4">
+                            Complete MedRAG-Local codebase: HyDE retrieval, Corrective RAG with PubMed fallback, cross-encoder reranking, citation-aware generation, RAGAS evaluation suite, Streamlit dashboard, and YAML-based configuration.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/medrag-local" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is building a biomedical Q&A system that is both accurate and trustworthy requires solving <strong>five interconnected problems simultaneously</strong>. Solving any single problem in isolation produces a system that fails in production.
+            </p>
+
+            <ol class="list-decimal">
+                <li><strong>Vocabulary gap</strong> — Natural language queries like "What helps heart failure?" use different words than scientific abstracts discussing "SGLT2 inhibitors in HFrEF management." Traditional keyword search returns zero results for the user's actual question.</li>
+                <li><strong>Irrelevant retrieval</strong> — Dense retrieval returns semantically similar but medically irrelevant chunks. A query about "heart failure treatment" may retrieve chunks about "heart transplant surgery" or "cardiac rehabilitation exercises" — semantically close, clinically different.</li>
+                <li><strong>Hallucinated citations</strong> — LLMs fabricate PMIDs and invent paper titles that sound plausible but point to non-existent publications. A clinician who follows a hallucinated citation loses trust in the entire system.</li>
+                <li><strong>Faithfulness uncertainty</strong> — Without automated evaluation, there is no way to know whether the generated answer is actually grounded in the retrieved evidence or contains unsupported claims.</li>
+                <li><strong>Cloud dependency</strong> — Cloud APIs are expensive, leak patient data, require internet, and create vendor lock-in. Medical environments demand on-premise solutions.</li>
+            </ol>
+
+            <!-- Without vs With Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Naive RAG<br/>
+                        <span class="text-base font-normal text-slate-400">(Basic vector search + LLM)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Keyword mismatch: misses relevant abstracts</li>
+                        <li>No quality check on retrieved chunks</li>
+                        <li>Hallucinated PMIDs and fake papers</li>
+                        <li>No evaluation of answer faithfulness</li>
+                        <li>Requires cloud API keys and internet</li>
+                        <li>No fallback when retrieval fails</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>MedRAG-Local<br/>
+                        <span class="text-base font-normal text-slate-400">(5-stage verified pipeline)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>HyDE bridges vocabulary gap automatically</li>
+                        <li>CRAG judges and filters every chunk</li>
+                        <li>Every PMID verified against source chunks</li>
+                        <li>RAGAS scores faithfulness, relevancy, recall</li>
+                        <li>100% local: Ollama + Qdrant + BGE</li>
+                        <li>PubMed E-utilities fallback when needed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- The Five Challenges Interconnection -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">The Five Interconnected Challenges</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-2xl mb-2"><i class="fas fa-language"></i></div>
+                        <div class="text-white font-semibold text-sm">Vocabulary Gap</div>
+                        <div class="text-slate-400 text-xs mt-1">HyDE closes the gap</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-filter"></i></div>
+                        <div class="text-white font-semibold text-sm">Irrelevant Retrieval</div>
+                        <div class="text-slate-400 text-xs mt-1">CRAG judges relevance</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-2xl mb-2"><i class="fas fa-ghost"></i></div>
+                        <div class="text-white font-semibold text-sm">Hallucinated Citations</div>
+                        <div class="text-slate-400 text-xs mt-1">PMID verification</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-question-circle"></i></div>
+                        <div class="text-white font-semibold text-sm">Faithfulness Uncertainty</div>
+                        <div class="text-slate-400 text-xs mt-1">RAGAS evaluation</div>
+                    </div>
+                    <div class="architecture-box md:col-span-2" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-2xl mb-2"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <div class="text-white font-semibold text-sm">Cloud Dependency</div>
+                        <div class="text-slate-400 text-xs mt-1">Ollama + Qdrant = 100% local</div>
+                    </div>
+                </div>
+                <p class="text-center text-slate-400 text-sm mt-4"><i class="fas fa-link mr-1"></i> Each challenge feeds into the next — skip one, the pipeline fails.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFYING THE PROBLEM                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let's <strong>lucify</strong> the entire MedRAG-Local pipeline using a single extended analogy that captures every stage.
+            </p>
+
+            <h3>The Medical Librarian Analogy</h3>
+
+            <div class="analogy-card">
+                <h4 class="text-cyan-400 font-bold mb-4"><i class="fas fa-book-reader mr-2"></i>Imagine You Walk Into a Massive Medical Library...</h4>
+
+                <p class="text-sm leading-relaxed">
+                    The library holds <strong>36 million books</strong> — that is PubMed. You walk up to the reference desk and ask: <em>"What helps heart failure patients?"</em>
+                </p>
+
+                <p class="text-sm leading-relaxed">
+                    The librarian does not search by your exact words. Instead, she writes a <strong>fake research summary</strong> matching your question — something like "Background: SGLT2 inhibitors emerged as novel therapy for HFrEF... Methods: systematic review of randomized trials... Results: 26% reduction in hospitalization..." That is <strong>HyDE</strong> — creating a hypothetical document to bridge the gap between your casual question and scientific writing.
+                </p>
+
+                <p class="text-sm leading-relaxed">
+                    She then finds real books whose content <strong>looks like her fake summary</strong>. That is <strong>Dense Retrieval</strong> — embedding the hypothetical document and searching for real chunks with similar vectors.
+                </p>
+
+                <p class="text-sm leading-relaxed">
+                    But some of the books she found are about general cardiology, not heart failure treatment. So she reads each one and judges: <em>"Is this actually about heart failure treatment, or just mentions the heart?"</em> She assigns a relevance score (0.0&ndash;1.0) and keeps only the ones above 0.5. If too few books pass, she <strong>calls another library branch</strong> for fresh books. That is <strong>CRAG</strong> — Corrective RAG with PubMed E-utilities fallback.
+                </p>
+
+                <p class="text-sm leading-relaxed">
+                    She then <strong>carefully reads each surviving book alongside your question</strong>, ranking them by how precisely they answer your specific query. That is <strong>Cross-Encoder Reranking</strong> — joint encoding of query + document for precision scoring.
+                </p>
+
+                <p class="text-sm leading-relaxed">
+                    Finally, she writes you an answer <strong>citing exact page numbers</strong> for every claim: "SGLT2 inhibitors reduced HF hospitalization by 26% [Book #31535829, Page 12]." That is <strong>Citation-Aware Generation</strong> — every claim backed by a real PMID.
+                </p>
+
+                <p class="text-sm leading-relaxed">
+                    A supervisor then checks: <em>"Did she make up any page numbers? Is every claim backed by a real book? Did she answer the right question?"</em> That is <strong>RAGAS Evaluation</strong> — automated quality scoring across faithfulness, relevancy, recall, and precision.
+                </p>
+            </div>
+
+            <!-- Analogy Flow Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">The Medical Librarian Pipeline</h4>
+                <!-- Row 1 -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6; min-width: 130px; padding: 1rem;">
+                        <div class="text-violet-400 text-xl mb-1"><i class="fas fa-comment-medical"></i></div>
+                        <div class="text-white font-semibold text-xs">Your Question</div>
+                        <div class="text-slate-500 text-xs">"What helps heart failure?"</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4; min-width: 130px; padding: 1rem;">
+                        <div class="text-cyan-400 text-xl mb-1"><i class="fas fa-magic"></i></div>
+                        <div class="text-white font-semibold text-xs">Fake Summary</div>
+                        <div class="text-cyan-300 text-xs">HyDE</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6; min-width: 130px; padding: 1rem;">
+                        <div class="text-blue-400 text-xl mb-1"><i class="fas fa-search"></i></div>
+                        <div class="text-white font-semibold text-xs">Find Real Books</div>
+                        <div class="text-blue-300 text-xs">Dense Retrieval</div>
+                    </div>
+                </div>
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <!-- Row 2 -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                    <div class="architecture-box" style="border: 2px solid #6366f1; min-width: 130px; padding: 1rem;">
+                        <div class="text-indigo-400 text-xl mb-1"><i class="fas fa-shield-alt"></i></div>
+                        <div class="text-white font-semibold text-xs">Judge Each Book</div>
+                        <div class="text-indigo-300 text-xs">CRAG</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef; min-width: 130px; padding: 1rem;">
+                        <div class="text-fuchsia-400 text-xl mb-1"><i class="fas fa-sort-amount-down"></i></div>
+                        <div class="text-white font-semibold text-xs">Rank Best Books</div>
+                        <div class="text-fuchsia-300 text-xs">Cross-Encoder</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981; min-width: 130px; padding: 1rem;">
+                        <div class="text-emerald-400 text-xl mb-1"><i class="fas fa-quote-right"></i></div>
+                        <div class="text-white font-semibold text-xs">Cited Answer</div>
+                        <div class="text-emerald-300 text-xs">Citation-Aware Gen</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: LUCIFYING THE TECH TERMS                           -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                Before diving into the blueprint, here are the six key technical terms you need to understand. Each follows the Definition / Simple Example / Analogy pattern.
+            </p>
+
+            <!-- Term 1: HyDE -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold"><i class="fas fa-magic mr-2"></i>1. HyDE (Hypothetical Document Embedding)</h4>
+                <p class="text-sm mt-2 mb-1"><strong class="text-white">Definition:</strong> A retrieval technique where the LLM first generates a hypothetical document that would answer the query, then uses that document's embedding (not the query's) to search the vector database. This bridges the vocabulary gap between conversational questions and scientific writing.</p>
+                <p class="text-sm mb-1"><strong class="text-white">Simple Example:</strong> You ask "What helps heart failure?" — HyDE generates a fake abstract: "Background: SGLT2 inhibitors emerged as novel therapy for HFrEF... Methods: systematic review... Results: 26% reduction in hospitalization..." Then it searches for real abstracts that look like this fake one.</p>
+                <p class="text-sm"><strong class="text-white">Analogy:</strong> Like a detective creating a sketch of the suspect (hypothetical document) to show witnesses, rather than describing the suspect in words. The sketch matches faces better than a verbal description matches faces.</p>
+            </div>
+
+            <!-- HyDE Comparison Cards -->
+            <div class="grid md:grid-cols-2 gap-6 my-6">
+                <div class="comparison-column" style="border: 2px solid #8b5cf6;">
+                    <h4 class="text-violet-400 font-bold mb-3"><i class="fas fa-keyboard mr-2"></i>Raw Query Embedding</h4>
+                    <div class="text-sm text-slate-300 mb-2"><strong>Input:</strong></div>
+                    <div class="bg-slate-800 rounded p-3 text-sm text-slate-300 mb-3">"What helps heart failure?"</div>
+                    <div class="text-sm text-slate-400">
+                        <i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i> Short, casual language<br/>
+                        <i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i> No medical terminology<br/>
+                        <i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i> Sparse embedding vector
+                    </div>
+                </div>
+                <div class="comparison-column" style="border: 2px solid #06b6d4;">
+                    <h4 class="text-cyan-400 font-bold mb-3"><i class="fas fa-magic mr-2"></i>HyDE Document Embedding</h4>
+                    <div class="text-sm text-slate-300 mb-2"><strong>Generated:</strong></div>
+                    <div class="bg-slate-800 rounded p-3 text-sm text-slate-300 mb-3">"Background: SGLT2 inhibitors have emerged as a novel therapeutic class for heart failure with reduced ejection fraction (HFrEF). Methods: This systematic review analyzed..."</div>
+                    <div class="text-sm text-slate-400">
+                        <i class="fas fa-check text-green-400 mr-1"></i> Scientific vocabulary<br/>
+                        <i class="fas fa-check text-green-400 mr-1"></i> Domain-specific terms<br/>
+                        <i class="fas fa-check text-green-400 mr-1"></i> Dense embedding vector
+                    </div>
+                </div>
+            </div>
+
+            <!-- Term 2: CRAG -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold"><i class="fas fa-shield-alt mr-2"></i>2. Corrective RAG (CRAG)</h4>
+                <p class="text-sm mt-2 mb-1"><strong class="text-white">Definition:</strong> A self-correcting retrieval layer where an LLM judges each retrieved chunk's relevance (0.0&ndash;1.0 score), filters out irrelevant ones, and triggers a fallback search (PubMed E-utilities API) if fewer than 3 chunks pass the threshold (0.5). Includes early stopping after finding enough relevant chunks.</p>
+                <p class="text-sm mb-1"><strong class="text-white">Simple Example:</strong> After retrieving 20 chunks about "SGLT2 in heart failure," CRAG judges each: Chunk A (DAPA-HF trial) scores 0.92 &check;, Chunk B (diabetes management) scores 0.35 &cross;. If only 2 pass, CRAG calls PubMed's live API for fresh abstracts.</p>
+                <p class="text-sm"><strong class="text-white">Analogy:</strong> Like a quality inspector on an assembly line — she checks each product (chunk), stamps "PASS" or "FAIL," and if too many fail, she calls the warehouse for replacement parts (PubMed fallback).</p>
+            </div>
+
+            <!-- CRAG Decision Flow -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">CRAG Decision Flow</h4>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 1rem; min-width: 200px;">
+                        <div class="text-violet-400 text-lg mb-1"><i class="fas fa-cubes"></i></div>
+                        <div class="text-white font-semibold text-sm">Retrieved Chunks (top-20)</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 1rem; min-width: 200px;">
+                        <div class="text-cyan-400 text-lg mb-1"><i class="fas fa-gavel"></i></div>
+                        <div class="text-white font-semibold text-sm">LLM Judges Each Chunk (0.0&ndash;1.0)</div>
+                        <div class="text-slate-400 text-xs mt-1">Threshold: 0.5</div>
+                    </div>
+                    <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="flex flex-col md:flex-row items-center gap-4">
+                        <div class="architecture-box" style="border: 2px solid #10b981; padding: 1rem; min-width: 180px;">
+                            <div class="text-green-400 text-lg mb-1"><i class="fas fa-check-circle"></i></div>
+                            <div class="text-white font-semibold text-xs">&ge;3 Relevant Chunks?</div>
+                            <div class="text-green-300 text-xs mt-1">Proceed to Reranking</div>
+                        </div>
+                        <div class="text-slate-400 text-sm font-bold">OR</div>
+                        <div class="architecture-box" style="border: 2px solid #ef4444; padding: 1rem; min-width: 180px;">
+                            <div class="text-red-400 text-lg mb-1"><i class="fas fa-exclamation-circle"></i></div>
+                            <div class="text-white font-semibold text-xs">&lt;3 Relevant Chunks?</div>
+                            <div class="text-amber-300 text-xs mt-1">PubMed Fallback &rarr; Merge</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Term 3: Cross-Encoder Reranking -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold"><i class="fas fa-sort-amount-down mr-2"></i>3. Cross-Encoder Reranking</h4>
+                <p class="text-sm mt-2 mb-1"><strong class="text-white">Definition:</strong> A precision reranking step that scores query-document pairs jointly (not independently like bi-encoders). The cross-encoder reads the query and chunk together through a single transformer, producing a fine-grained relevance score. Uses MS MARCO-trained MiniLM model. Reduces top-20 to top-5.</p>
+                <p class="text-sm mb-1"><strong class="text-white">Simple Example:</strong> Bi-encoder (HyDE) scores query and doc separately: cosine(embed("heart failure"), embed(chunk)). Cross-encoder scores them together: model("[heart failure] [SEP] [chunk text]") &rarr; 9.23. The joint encoding catches nuances that independent encoding misses.</p>
+                <p class="text-sm"><strong class="text-white">Analogy:</strong> Like the difference between judging a dance couple from separate photos vs. watching them dance together. The duet reveals chemistry (relevance) that solo photos cannot.</p>
+            </div>
+
+            <!-- Bi-Encoder vs Cross-Encoder Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-6">
+                <div class="comparison-column" style="border: 2px solid #8b5cf6;">
+                    <h4 class="text-violet-400 font-bold mb-3"><i class="fas fa-columns mr-2"></i>Bi-Encoder (Stage 1)</h4>
+                    <div class="text-sm text-slate-300 space-y-2">
+                        <div><strong class="text-white">Encoding:</strong> Independent</div>
+                        <div><strong class="text-white">Speed:</strong> Fast (pre-computed embeddings)</div>
+                        <div><strong class="text-white">Precision:</strong> Approximate</div>
+                        <div><strong class="text-white">Use:</strong> Initial retrieval (top-20)</div>
+                        <div class="bg-slate-800 rounded p-2 text-xs mt-2">
+                            cosine(embed(query), embed(doc)) = 0.82
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-column" style="border: 2px solid #06b6d4;">
+                    <h4 class="text-cyan-400 font-bold mb-3"><i class="fas fa-compress-alt mr-2"></i>Cross-Encoder (Stage 2)</h4>
+                    <div class="text-sm text-slate-300 space-y-2">
+                        <div><strong class="text-white">Encoding:</strong> Joint (query + doc together)</div>
+                        <div><strong class="text-white">Speed:</strong> Slower (pair-by-pair)</div>
+                        <div><strong class="text-white">Precision:</strong> High fidelity</div>
+                        <div><strong class="text-white">Use:</strong> Precision reranking (top-5)</div>
+                        <div class="bg-slate-800 rounded p-2 text-xs mt-2">
+                            model("[query] [SEP] [doc]") = 9.23
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Term 4: Citation-Aware Generation -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold"><i class="fas fa-quote-right mr-2"></i>4. Citation-Aware Generation</h4>
+                <p class="text-sm mt-2 mb-1"><strong class="text-white">Definition:</strong> An answer generation approach where every factual claim must cite its source using [PMID: XXXXX] format. The system formats retrieved chunks with numbered PMID references, instructs the LLM to cite after each claim, then extracts all cited PMIDs via regex and cross-references them against source chunks to detect hallucinated citations.</p>
+                <p class="text-sm mb-1"><strong class="text-white">Simple Example:</strong> Answer: "SGLT2 inhibitors reduced HF hospitalization by 26% (HR 0.74) [PMID: 31535829]." The system checks: Is PMID 31535829 in our retrieved chunks? Yes &rarr; verified. If not &rarr; flagged as hallucinated.</p>
+                <p class="text-sm"><strong class="text-white">Analogy:</strong> Like an academic paper where every claim needs a footnote — and a reviewer checks every footnote against the bibliography. If a footnote points to a paper that doesn't exist, it's flagged as fabrication.</p>
+            </div>
+
+            <!-- Term 5: RAGAS -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold"><i class="fas fa-chart-bar mr-2"></i>5. RAGAS Evaluation</h4>
+                <p class="text-sm mt-2 mb-1"><strong class="text-white">Definition:</strong> An automated evaluation framework (v0.2.x) that measures RAG quality using 4 LLM-judged metrics: Faithfulness (are claims grounded in context? &ge;0.80), Answer Relevancy (does the answer address the query? &ge;0.75), Context Recall (is ground truth covered? &ge;0.70), Context Precision (is retrieved context relevant? &ge;0.70). Uses SingleTurnSample API with local Ollama backend.</p>
+                <p class="text-sm mb-1"><strong class="text-white">Simple Example:</strong> The system asks 10 curated medical questions (e.g., "first-line EGFR-mutated NSCLC treatment?"), compares answers against ground truth, and produces a scorecard: Faithfulness 0.85 &check;, Answer Relevancy 0.78 &check;, etc.</p>
+                <p class="text-sm"><strong class="text-white">Analogy:</strong> Like a standardized exam for your AI — it tests factual accuracy (did you study the right textbook?), relevance (did you answer the right question?), recall (did you cover all key points?), and precision (did you avoid including irrelevant material?).</p>
+            </div>
+
+            <!-- Term 6: PubMed Dataset -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold"><i class="fas fa-database mr-2"></i>6. MedRAG/PubMed Dataset</h4>
+                <p class="text-sm mt-2 mb-1"><strong class="text-white">Definition:</strong> A curated subset of 36M+ PubMed biomedical abstracts hosted on HuggingFace (MedRAG/pubmed, 2.21M articles in 1166 shards). The system filters by 4 medical domains (Cardiology, Oncology, Neurology, Infectious Diseases) using 67 domain-specific keywords, estimates publication year from PMID boundaries, and applies skip optimization to jump directly to recent records.</p>
+                <p class="text-sm mb-1"><strong class="text-white">Simple Example:</strong> Configuring <code>year_range: [2023, 2024]</code> and <code>mesh_terms: ["Cardiology"]</code> — the loader skips to PMID ~34M, scans for keywords like "cardiovascular," "heart failure," "SGLT2," and collects up to 10,000 matching abstracts.</p>
+                <p class="text-sm"><strong class="text-white">Analogy:</strong> Like a librarian who knows that books published after 2023 are on shelves 34 million and above — she walks directly there instead of starting from shelf 1, then picks only books with "Cardiology" on the spine.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: MAKING THE BLUEPRINT                               -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                MedRAG-Local is built as an <strong>8-step pipeline</strong>. Each step solves one of the challenges identified above and feeds into the next.
+            </p>
+
+            <!-- Blueprint Steps -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-bold mb-4"><i class="fas fa-list-ol mr-2 text-violet-400"></i>The 8-Step Blueprint</h4>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-violet-500/20 text-violet-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">1</div>
+                        <div>
+                            <div class="text-white font-semibold">Configure the System</div>
+                            <div class="text-slate-400 text-sm">YAML-based configuration for models, domains, thresholds, and pipeline behavior</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-cyan-500/20 text-cyan-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">2</div>
+                        <div>
+                            <div class="text-white font-semibold">Start Infrastructure</div>
+                            <div class="text-slate-400 text-sm">Docker Qdrant vector database + Ollama with Mistral-7B and BGE embeddings</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-blue-500/20 text-blue-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">3</div>
+                        <div>
+                            <div class="text-white font-semibold">Ingest PubMed Data</div>
+                            <div class="text-slate-400 text-sm">Stream from HuggingFace &rarr; keyword filter &rarr; year filter &rarr; deduplicate by PMID</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-indigo-500/20 text-indigo-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">4</div>
+                        <div>
+                            <div class="text-white font-semibold">Chunk with Sentence Windows</div>
+                            <div class="text-slate-400 text-sm">3-sentence sliding window, stride 1, preserving sentence boundaries for overlap</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-fuchsia-500/20 text-fuchsia-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">5</div>
+                        <div>
+                            <div class="text-white font-semibold">Embed and Index</div>
+                            <div class="text-slate-400 text-sm">BGE-base-en-v1.5 (768-dim) &rarr; Qdrant HNSW index with cosine similarity</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-purple-500/20 text-purple-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">6</div>
+                        <div>
+                            <div class="text-white font-semibold">Retrieve with HyDE + CRAG</div>
+                            <div class="text-slate-400 text-sm">Hypothetical doc &rarr; dense search &rarr; relevance judging &rarr; PubMed fallback if needed</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-emerald-500/20 text-emerald-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">7</div>
+                        <div>
+                            <div class="text-white font-semibold">Rerank and Generate</div>
+                            <div class="text-slate-400 text-sm">Cross-encoder top-5 &rarr; Citation-aware answer with [PMID: XXXXX] references</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="bg-amber-500/20 text-amber-400 font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">8</div>
+                        <div>
+                            <div class="text-white font-semibold">Evaluate with RAGAS</div>
+                            <div class="text-slate-400 text-sm">4 RAGAS metrics + citation precision + retrieval IR metrics + text similarity</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Pipeline Flow Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">MedRAG-Local: 5-Stage Query Pipeline</h4>
+
+                <!-- Stage 1: HyDE -->
+                <div class="mb-4">
+                    <div class="text-xs font-semibold text-violet-400 mb-2 uppercase tracking-wider">Stage 1: Query Enhancement</div>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-violet-400 text-sm"><i class="fas fa-user mr-1"></i>User Query</div>
+                            <div class="text-slate-400 text-xs">Natural language</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-violet-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-violet-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-violet-400 text-sm"><i class="fas fa-magic mr-1"></i>HyDE</div>
+                            <div class="text-slate-400 text-xs">Hypothetical abstract</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-violet-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-violet-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-violet-400 text-sm"><i class="fas fa-vector-square mr-1"></i>BGE Embed</div>
+                            <div class="text-slate-400 text-xs">768-dim vector</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 2: Dense Retrieval -->
+                <div class="mb-4">
+                    <div class="text-xs font-semibold text-cyan-400 mb-2 uppercase tracking-wider">Stage 2: Dense Retrieval</div>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-cyan-400 text-sm"><i class="fas fa-database mr-1"></i>Qdrant Search</div>
+                            <div class="text-slate-400 text-xs">HNSW cosine sim</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-cyan-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-cyan-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-cyan-400 text-sm"><i class="fas fa-list-ol mr-1"></i>Top-20 Chunks</div>
+                            <div class="text-slate-400 text-xs">With PMID metadata</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 3: CRAG -->
+                <div class="mb-4">
+                    <div class="text-xs font-semibold text-blue-400 mb-2 uppercase tracking-wider">Stage 3: Corrective RAG</div>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div class="architecture-box" style="border: 2px solid #3b82f6; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-blue-400 text-sm"><i class="fas fa-gavel mr-1"></i>LLM Judge</div>
+                            <div class="text-slate-400 text-xs">Relevance 0.0&ndash;1.0</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-blue-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-blue-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #3b82f6; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-blue-400 text-sm"><i class="fas fa-filter mr-1"></i>Filter &ge;0.5</div>
+                            <div class="text-slate-400 text-xs">Keep relevant only</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-blue-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-blue-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #3b82f6; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-blue-400 text-sm"><i class="fas fa-life-ring mr-1"></i>PubMed Fallback</div>
+                            <div class="text-slate-400 text-xs">If &lt;3 pass</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 4: Reranking -->
+                <div class="mb-4">
+                    <div class="text-xs font-semibold text-indigo-400 mb-2 uppercase tracking-wider">Stage 4: Precision Reranking</div>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div class="architecture-box" style="border: 2px solid #6366f1; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-indigo-400 text-sm"><i class="fas fa-compress-alt mr-1"></i>Cross-Encoder</div>
+                            <div class="text-slate-400 text-xs">MiniLM MS MARCO</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-indigo-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-indigo-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #6366f1; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-indigo-400 text-sm"><i class="fas fa-trophy mr-1"></i>Top-5 Ranked</div>
+                            <div class="text-slate-400 text-xs">Precision-scored</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 5: Generation -->
+                <div>
+                    <div class="text-xs font-semibold text-emerald-400 mb-2 uppercase tracking-wider">Stage 5: Citation-Aware Generation</div>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-emerald-400 text-sm"><i class="fas fa-pen-fancy mr-1"></i>Mistral-7B</div>
+                            <div class="text-slate-400 text-xs">Cite every claim</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-emerald-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-emerald-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-emerald-400 text-sm"><i class="fas fa-check-double mr-1"></i>PMID Verify</div>
+                            <div class="text-slate-400 text-xs">Detect hallucinations</div>
+                        </div>
+                        <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-emerald-400"></i></div>
+                        <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-emerald-400"></i></div>
+                        <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.75rem; min-width: 140px;">
+                            <div class="text-emerald-400 text-sm"><i class="fas fa-file-medical-alt mr-1"></i>Cited Answer</div>
+                            <div class="text-slate-400 text-xs">With [PMID: XXXXX]</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingestion Pipeline Flow -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Data Ingestion Pipeline</h4>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-wrap">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6; padding: 0.75rem; min-width: 140px;">
+                        <div class="text-violet-400 text-sm"><i class="fas fa-cloud-download-alt mr-1"></i>Stream PubMed</div>
+                        <div class="text-slate-400 text-xs">HuggingFace shards</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-violet-400"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-violet-400"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4; padding: 0.75rem; min-width: 140px;">
+                        <div class="text-cyan-400 text-sm"><i class="fas fa-filter mr-1"></i>Filter &amp; Dedup</div>
+                        <div class="text-slate-400 text-xs">Keywords + year + PMID</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-cyan-400"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-cyan-400"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6; padding: 0.75rem; min-width: 140px;">
+                        <div class="text-blue-400 text-sm"><i class="fas fa-cut mr-1"></i>Sentence Chunk</div>
+                        <div class="text-slate-400 text-xs">3-sent window, stride 1</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right text-blue-400"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down text-blue-400"></i></div>
+                    <div class="architecture-box" style="border: 2px solid #10b981; padding: 0.75rem; min-width: 140px;">
+                        <div class="text-emerald-400 text-sm"><i class="fas fa-project-diagram mr-1"></i>Embed &amp; Index</div>
+                        <div class="text-slate-400 text-xs">BGE &rarr; Qdrant HNSW</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: EXECUTING THE BLUEPRINT                            -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+            <!-- Step 1: Configuration -->
+            <h3><i class="fas fa-sliders-h mr-2"></i>Step 1: Configuration (YAML-Based)</h3>
+
+            <p>
+                MedRAG-Local uses a single YAML configuration file that controls the entire pipeline — models, domains, thresholds, and behavior — without changing any code.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-yaml"># app_config.yaml — Core configuration
+ollama:
+  base_url: "http://localhost:11434"
+  model: "mistral:7b-instruct-v0.3-q4_K_M"
+  temperature: 0.3
+  timeout: 120
+
+embedding:
+  model_name: "BAAI/bge-base-en-v1.5"
+  dimension: 768
+  batch_size: 32
+  device: "cpu"
+
+retrieval:
+  collection_name: "medrag_pubmed"
+  top_k: 20
+  reranker_top_k: 5
+  similarity_threshold: 0.5
+  use_hyde: true
+  use_crag: true
+  use_reranking: true
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+ingestion:
+  source: "MedRAG/pubmed"
+  max_articles: 10000
+  year_range: [2020, 2024]
+  domains: ["Cardiology", "Oncology", "Neurology", "Infectious Diseases"]
+  chunk_window_size: 3
+  chunk_stride: 1</code></pre>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-lightbulb mr-2 text-green-400"></i>Tip:</strong> All pipeline behavior is controlled through this single YAML file. Change <code>use_hyde: false</code> to disable HyDE, or adjust <code>reranker_top_k: 10</code> to keep more chunks after reranking.
+            </div>
+
+            <!-- Step 2: Quick Start -->
+            <h3><i class="fas fa-rocket mr-2"></i>Step 2: Quick Start</h3>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-bash"># 1. Start Qdrant vector database
+docker run -d --name qdrant -p 6333:6333 -p 6334:6334 \
+  -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
+
+# 2. Pull models via Ollama
+ollama pull mistral:7b-instruct-v0.3-q4_K_M
+ollama pull nomic-embed-text  # fallback embeddings
+
+# 3. Install MedRAG-Local
+git clone https://github.com/zubairashfaque/medrag-local.git
+cd medrag-local
+pip install -e .
+
+# 4. Run ingestion
+python -m medrag_local.ingest --config config/app_config.yaml
+
+# 5. Launch dashboard
+streamlit run src/streamlit_app/app.py</code></pre>
+            </div>
+
+            <!-- Step 3: PubMed Ingestion -->
+            <h3><i class="fas fa-database mr-2"></i>Step 3: PubMed Data Ingestion</h3>
+
+            <p>
+                The ingestion system streams from HuggingFace's MedRAG/pubmed dataset (2.21M articles across 1166 shards), applies domain keyword filtering, year range filtering via PMID boundaries, and deduplicates by PMID.
+            </p>
+
+            <!-- PMID Boundary Table -->
+            <h4>PMID Boundary Table (Skip Optimization)</h4>
+
+            <p>
+                PubMed assigns PMIDs sequentially. By knowing the approximate PMID ranges for each year, the loader can skip directly to the relevant shards instead of scanning from the beginning.
+            </p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Year Range</th>
+                        <th>PMID Start</th>
+                        <th>PMID End</th>
+                        <th>Approx. Articles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2020</td>
+                        <td class="score-cyan">31,000,000</td>
+                        <td class="score-cyan">33,000,000</td>
+                        <td>~2M</td>
+                    </tr>
+                    <tr>
+                        <td>2021</td>
+                        <td class="score-cyan">33,000,000</td>
+                        <td class="score-cyan">34,500,000</td>
+                        <td>~1.5M</td>
+                    </tr>
+                    <tr>
+                        <td>2022</td>
+                        <td class="score-cyan">34,500,000</td>
+                        <td class="score-cyan">36,000,000</td>
+                        <td>~1.5M</td>
+                    </tr>
+                    <tr>
+                        <td>2023</td>
+                        <td class="score-cyan">36,000,000</td>
+                        <td class="score-cyan">37,500,000</td>
+                        <td>~1.5M</td>
+                    </tr>
+                    <tr>
+                        <td>2024</td>
+                        <td class="score-cyan">37,500,000</td>
+                        <td class="score-cyan">39,000,000</td>
+                        <td>~1.5M</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong><i class="fas fa-info-circle mr-2 text-violet-400"></i>Skip Optimization:</strong> When configured with <code>year_range: [2023, 2024]</code>, the loader calculates the starting PMID (~36M) and skips all earlier shards entirely. This reduces ingestion time from hours to minutes.
+            </div>
+
+            <!-- Domain Keywords Table -->
+            <h4>Domain Keyword Filtering</h4>
+
+            <p>
+                The system filters abstracts using 67 domain-specific keywords across 4 medical specialties. An abstract matches a domain if any keyword appears in its title or text (case-insensitive).
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 my-6">
+                <div class="concept-card" style="border-color: #ef4444;">
+                    <h4 class="text-red-400 font-bold text-sm"><i class="fas fa-heartbeat mr-2"></i>Cardiology</h4>
+                    <p class="text-xs text-slate-400 mt-2">cardiovascular, heart failure, myocardial, cardiac, SGLT2, atrial fibrillation, hypertension, coronary, cardiomyopathy, arrhythmia, heart valve, aortic, ventricular, atherosclerosis, statin, anticoagulant</p>
+                </div>
+                <div class="concept-card" style="border-color: #d946ef;">
+                    <h4 class="text-fuchsia-400 font-bold text-sm"><i class="fas fa-ribbon mr-2"></i>Oncology</h4>
+                    <p class="text-xs text-slate-400 mt-2">cancer, tumor, oncology, chemotherapy, immunotherapy, EGFR, carcinoma, metastasis, lymphoma, leukemia, melanoma, sarcoma, radiotherapy, checkpoint inhibitor, PD-1, PD-L1, targeted therapy</p>
+                </div>
+                <div class="concept-card" style="border-color: #3b82f6;">
+                    <h4 class="text-blue-400 font-bold text-sm"><i class="fas fa-brain mr-2"></i>Neurology</h4>
+                    <p class="text-xs text-slate-400 mt-2">neurological, Alzheimer, Parkinson, stroke, epilepsy, multiple sclerosis, dementia, neuropathy, seizure, cerebrovascular, neurodegenerative, brain injury, migraine, ALS, motor neuron</p>
+                </div>
+                <div class="concept-card" style="border-color: #10b981;">
+                    <h4 class="text-emerald-400 font-bold text-sm"><i class="fas fa-virus mr-2"></i>Infectious Diseases</h4>
+                    <p class="text-xs text-slate-400 mt-2">infection, antimicrobial, antibiotic, viral, bacterial, COVID-19, SARS-CoV-2, HIV, tuberculosis, malaria, sepsis, pneumonia, hepatitis, influenza, antifungal, resistance, vaccine</p>
+                </div>
+            </div>
+
+            <!-- Ingestion Terminal Output -->
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>Ingestion Output</div>
+                <pre class="terminal-body">$ python -m medrag_local.ingest --config config/app_config.yaml
+
+[INFO] Loading config from config/app_config.yaml
+[INFO] Target domains: Cardiology, Oncology, Neurology, Infectious Diseases
+[INFO] Year range: 2020-2024 (PMID >= 31000000)
+[INFO] Skipping to shard 812/1166 (PMID boundary optimization)
+[INFO] Streaming from MedRAG/pubmed...
+
+[PROGRESS] Shard 812: scanned 1,892 articles, matched 234 (Cardiology: 89, Oncology: 78, Neurology: 41, Infectious: 26)
+[PROGRESS] Shard 813: scanned 1,905 articles, matched 221 ...
+...
+[INFO] Ingestion complete:
+  - Articles scanned:  142,567
+  - Articles matched:   8,432
+  - Duplicates removed:   127
+  - Chunks created:    24,891
+  - Embeddings indexed: 24,891
+  - Time elapsed:       12m 34s
+  - Qdrant collection:  medrag_pubmed (24,891 vectors, 768-dim)</pre>
+            </div>
+
+            <!-- Step 4: Sentence Window Chunking -->
+            <h3><i class="fas fa-cut mr-2"></i>Step 4: Sentence Window Chunking</h3>
+
+            <p>
+                Instead of fixed-size character chunks that break mid-sentence, MedRAG-Local uses a 3-sentence sliding window with stride 1. This preserves sentence boundaries and creates overlapping chunks that ensure no information is lost at chunk boundaries.
+            </p>
+
+            <!-- Chunking Visual -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">Sentence Window Chunking (window=3, stride=1)</h4>
+                <div class="space-y-3">
+                    <div class="text-sm text-slate-300 mb-4">
+                        <strong class="text-white">Original abstract (5 sentences):</strong><br/>
+                        <span class="text-violet-300">S1:</span> "SGLT2 inhibitors reduce heart failure hospitalization."
+                        <span class="text-cyan-300">S2:</span> "The DAPA-HF trial showed 26% reduction."
+                        <span class="text-blue-300">S3:</span> "This benefit was consistent across subgroups."
+                        <span class="text-indigo-300">S4:</span> "Adverse events included ketoacidosis."
+                        <span class="text-emerald-300">S5:</span> "Further research is needed."
+                    </div>
+                    <div class="bg-slate-800 rounded p-3 text-xs space-y-2">
+                        <div><span class="text-violet-400 font-bold">Chunk 1:</span> <span class="text-violet-300">S1</span> + <span class="text-cyan-300">S2</span> + <span class="text-blue-300">S3</span></div>
+                        <div><span class="text-cyan-400 font-bold">Chunk 2:</span> <span class="text-cyan-300">S2</span> + <span class="text-blue-300">S3</span> + <span class="text-indigo-300">S4</span> <span class="text-slate-500">(overlaps with Chunk 1 on S2, S3)</span></div>
+                        <div><span class="text-blue-400 font-bold">Chunk 3:</span> <span class="text-blue-300">S3</span> + <span class="text-indigo-300">S4</span> + <span class="text-emerald-300">S5</span> <span class="text-slate-500">(overlaps with Chunk 2 on S3, S4)</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-lightbulb mr-2 text-green-400"></i>Why stride 1?</strong> With stride 1, every pair of adjacent sentences appears in at least one chunk together. This means the retriever can find information that spans sentence boundaries — crucial for medical abstracts where a result (S2) often depends on context from the preceding methodology (S1).
+            </div>
+
+            <!-- Step 5: HyDE Retrieval -->
+            <h3><i class="fas fa-magic mr-2"></i>Step 5: HyDE Retrieval</h3>
+
+            <p>
+                When a user asks a question, the system first generates a hypothetical scientific abstract that would answer the question. This hypothetical document is then embedded and used to search Qdrant, rather than embedding the raw query.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># HyDE: Generate hypothetical document, then embed it for retrieval
+def hyde_retrieve(query: str, ollama_client, embedder, qdrant_client):
+    # Step 1: Generate hypothetical abstract
+    hyde_prompt = f"""You are a biomedical researcher. Given the question below,
+write a short scientific abstract that would answer it.
+Include relevant medical terminology, study details, and findings.
+
+Question: {query}
+
+Hypothetical Abstract:"""
+
+    hypothetical_doc = ollama_client.generate(
+        model="mistral:7b-instruct-v0.3-q4_K_M",
+        prompt=hyde_prompt,
+        options={"temperature": 0.3}
+    )
+
+    # Step 2: Embed the hypothetical document (NOT the raw query)
+    hyde_embedding = embedder.encode(hypothetical_doc)
+
+    # Step 3: Search Qdrant with the HyDE embedding
+    results = qdrant_client.search(
+        collection_name="medrag_pubmed",
+        query_vector=hyde_embedding,
+        limit=20  # Retrieve top-20 for CRAG filtering
+    )
+    return results</code></pre>
+            </div>
+
+            <!-- Step 6: CRAG Judging -->
+            <h3><i class="fas fa-shield-alt mr-2"></i>Step 6: CRAG Relevance Judging</h3>
+
+            <p>
+                After retrieval, CRAG asks the LLM to judge each chunk's relevance to the original query on a 0.0&ndash;1.0 scale. Chunks scoring below 0.5 are filtered out. If fewer than 3 chunks survive, the system triggers a PubMed E-utilities API fallback to fetch fresh abstracts.
+            </p>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-gavel mr-2"></i>CRAG Relevance Scoring Output</div>
+                <pre class="terminal-body">{
+  "query": "What is the first-line treatment for EGFR-mutated NSCLC?",
+  "chunks_evaluated": 20,
+  "relevance_scores": [
+    {"pmid": "33045183", "score": 0.95, "status": "PASS", "reason": "Directly discusses osimertinib as first-line EGFR-mutated NSCLC therapy"},
+    {"pmid": "31091374", "score": 0.88, "status": "PASS", "reason": "FLAURA trial results for osimertinib vs gefitinib/erlotinib"},
+    {"pmid": "29151359", "score": 0.82, "status": "PASS", "reason": "EGFR TKI comparison meta-analysis in advanced NSCLC"},
+    {"pmid": "34215892", "score": 0.79, "status": "PASS", "reason": "Third-generation EGFR inhibitors review"},
+    {"pmid": "30207593", "score": 0.72, "status": "PASS", "reason": "Resistance mechanisms to EGFR-targeted therapy"},
+    {"pmid": "32841120", "score": 0.41, "status": "FAIL", "reason": "General NSCLC staging, not treatment-specific"},
+    {"pmid": "29370322", "score": 0.33, "status": "FAIL", "reason": "ALK-positive NSCLC, different mutation target"},
+    ...
+  ],
+  "chunks_passed": 8,
+  "chunks_failed": 12,
+  "fallback_triggered": false,
+  "action": "Proceeding to cross-encoder reranking with 8 chunks"
+}</pre>
+            </div>
+
+            <!-- Step 7: End-to-End Query -->
+            <h3><i class="fas fa-search-plus mr-2"></i>Step 7: End-to-End Query Trace</h3>
+
+            <p>
+                Here is a complete trace of a query flowing through all 5 stages of the pipeline.
+            </p>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-play-circle mr-2"></i>Full Pipeline Trace</div>
+                <pre class="terminal-body">Query: "What is the current first-line treatment for EGFR-mutated non-small cell lung cancer?"
+
+[Stage 1: HyDE] Generating hypothetical abstract... (1.2s)
+  > "Background: Epidermal growth factor receptor (EGFR) mutations are present
+    in 15-50% of non-small cell lung cancer (NSCLC) cases. Third-generation
+    EGFR tyrosine kinase inhibitors (TKIs), particularly osimertinib, have
+    demonstrated superior efficacy as first-line therapy..."
+
+[Stage 2: Dense Retrieval] Searching Qdrant... (0.3s)
+  > Retrieved 20 chunks from medrag_pubmed collection
+  > Top similarity: 0.89 (PMID: 33045183)
+
+[Stage 3: CRAG] Judging chunk relevance... (4.8s)
+  > Evaluated 20 chunks, 8 passed (threshold: 0.5)
+  > No fallback needed (8 >= 3)
+
+[Stage 4: Reranking] Cross-encoder scoring... (1.1s)
+  > Reranked 8 chunks to top-5
+  > Top score: 9.47 (PMID: 33045183)
+
+[Stage 5: Generation] Generating cited answer... (3.2s)
+
+Answer:
+The current first-line treatment for EGFR-mutated non-small cell lung cancer
+(NSCLC) is osimertinib (Tagrisso), a third-generation EGFR tyrosine kinase
+inhibitor (TKI) [PMID: 33045183].
+
+The FLAURA trial demonstrated that osimertinib significantly improved
+progression-free survival (PFS) compared to first-generation EGFR TKIs
+(gefitinib or erlotinib), with a median PFS of 18.9 months vs 10.2 months
+(HR 0.46, 95% CI 0.37-0.57) [PMID: 31091374]. Overall survival was also
+improved, with a median OS of 38.6 months vs 31.8 months [PMID: 31091374].
+
+For patients with uncommon EGFR mutations (e.g., G719X, L861Q, S768I),
+afatinib has shown clinical benefit [PMID: 29151359].
+
+Citation Verification:
+  [PMID: 33045183] VERIFIED - found in retrieved chunks
+  [PMID: 31091374] VERIFIED - found in retrieved chunks
+  [PMID: 29151359] VERIFIED - found in retrieved chunks
+  Hallucinated citations: 0
+
+Total pipeline time: 10.6s</pre>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-exclamation-triangle mr-2 text-amber-400"></i>Important:</strong> MedRAG-Local is a research tool for exploring medical literature. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for clinical decisions.
+            </div>
+
+            <!-- Step 8: RAGAS Evaluation -->
+            <h3><i class="fas fa-chart-bar mr-2"></i>Step 8: RAGAS Evaluation</h3>
+
+            <p>
+                MedRAG-Local evaluates pipeline quality using 14 metrics across 4 evaluation strategies. The RAGAS framework (v0.2.x) uses the local Ollama backend for all LLM-judged metrics — no cloud API needed.
+            </p>
+
+            <!-- Evaluation Metrics Dashboard -->
+            <h4>Evaluation Metrics Overview</h4>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Metric</th>
+                        <th>Threshold</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="4"><strong class="text-violet-400">RAGAS</strong></td>
+                        <td>Faithfulness</td>
+                        <td class="score-green">&ge;0.80</td>
+                        <td>Are claims grounded in retrieved context?</td>
+                    </tr>
+                    <tr>
+                        <td>Answer Relevancy</td>
+                        <td class="score-green">&ge;0.75</td>
+                        <td>Does the answer address the query?</td>
+                    </tr>
+                    <tr>
+                        <td>Context Recall</td>
+                        <td class="score-cyan">&ge;0.70</td>
+                        <td>Is ground truth covered by context?</td>
+                    </tr>
+                    <tr>
+                        <td>Context Precision</td>
+                        <td class="score-cyan">&ge;0.70</td>
+                        <td>Is retrieved context relevant?</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong class="text-cyan-400">Citation</strong></td>
+                        <td>Citation Precision</td>
+                        <td class="score-green">&ge;0.90</td>
+                        <td>% of cited PMIDs that exist in sources</td>
+                    </tr>
+                    <tr>
+                        <td>Citation Coverage</td>
+                        <td class="score-cyan">&ge;0.60</td>
+                        <td>% of source PMIDs that are cited</td>
+                    </tr>
+                    <tr>
+                        <td>Hallucinated PMIDs</td>
+                        <td class="score-green">0</td>
+                        <td>Count of fabricated citation IDs</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong class="text-blue-400">Retrieval IR</strong></td>
+                        <td>Hit Rate@5</td>
+                        <td class="score-cyan">&ge;0.70</td>
+                        <td>% of queries with relevant doc in top-5</td>
+                    </tr>
+                    <tr>
+                        <td>MRR@5</td>
+                        <td class="score-cyan">&ge;0.50</td>
+                        <td>Mean reciprocal rank of first relevant doc</td>
+                    </tr>
+                    <tr>
+                        <td>NDCG@5</td>
+                        <td class="score-cyan">&ge;0.50</td>
+                        <td>Normalized discounted cumulative gain</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong class="text-emerald-400">Text Similarity</strong></td>
+                        <td>ROUGE-1</td>
+                        <td class="score-amber">&ge;0.30</td>
+                        <td>Unigram overlap with ground truth</td>
+                    </tr>
+                    <tr>
+                        <td>ROUGE-L</td>
+                        <td class="score-amber">&ge;0.25</td>
+                        <td>Longest common subsequence overlap</td>
+                    </tr>
+                    <tr>
+                        <td>BERTScore</td>
+                        <td class="score-cyan">&ge;0.70</td>
+                        <td>Semantic similarity via BERT embeddings</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- RAGAS Scorecard Visual -->
+            <h4>Sample Evaluation Scorecard</h4>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">0.85</div>
+                    <div class="metric-label">Faithfulness</div>
+                    <div class="text-xs text-green-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (&ge;0.80)</div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">0.78</div>
+                    <div class="metric-label">Answer Relevancy</div>
+                    <div class="text-xs text-green-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (&ge;0.75)</div>
+                </div>
+                <div class="metric-card" style="border-color: #06b6d4;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #06b6d4;">0.72</div>
+                    <div class="metric-label">Context Recall</div>
+                    <div class="text-xs text-cyan-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (&ge;0.70)</div>
+                </div>
+                <div class="metric-card" style="border-color: #06b6d4;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #06b6d4;">0.74</div>
+                    <div class="metric-label">Context Precision</div>
+                    <div class="text-xs text-cyan-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (&ge;0.70)</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">1.00</div>
+                    <div class="metric-label">Citation Precision</div>
+                    <div class="text-xs text-green-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (&ge;0.90)</div>
+                </div>
+                <div class="metric-card" style="border-color: #06b6d4;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #06b6d4;">0.67</div>
+                    <div class="metric-label">Citation Coverage</div>
+                    <div class="text-xs text-cyan-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (&ge;0.60)</div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">0</div>
+                    <div class="metric-label">Hallucinated PMIDs</div>
+                    <div class="text-xs text-green-400 mt-1"><i class="fas fa-check mr-1"></i>PASS (= 0)</div>
+                </div>
+            </div>
+
+            <!-- Evaluation Terminal Output -->
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-chart-line mr-2"></i>RAGAS Evaluation Output</div>
+                <pre class="terminal-body">$ python -m medrag_local.evaluate --config config/app_config.yaml
+
+[INFO] Loading 10 curated test questions with ground truth...
+[INFO] Running full pipeline for each question...
+[INFO] Computing RAGAS metrics via local Ollama backend...
+
+=== RAGAS EVALUATION SCORECARD ===
+
+Question 1: "What is the first-line treatment for EGFR-mutated NSCLC?"
+  Faithfulness:      0.90  PASS
+  Answer Relevancy:  0.85  PASS
+  Context Recall:    0.80  PASS
+  Context Precision: 0.78  PASS
+  Citations:         3/3 verified, 0 hallucinated
+
+Question 2: "What are the benefits of SGLT2 inhibitors in heart failure?"
+  Faithfulness:      0.88  PASS
+  Answer Relevancy:  0.82  PASS
+  Context Recall:    0.75  PASS
+  Context Precision: 0.71  PASS
+  Citations:         4/4 verified, 0 hallucinated
+
+...
+
+=== AGGREGATE RESULTS (10 questions) ===
+
+  Faithfulness:       0.85 (threshold: 0.80)  PASS
+  Answer Relevancy:   0.78 (threshold: 0.75)  PASS
+  Context Recall:     0.72 (threshold: 0.70)  PASS
+  Context Precision:  0.74 (threshold: 0.70)  PASS
+  Citation Precision: 1.00 (threshold: 0.90)  PASS
+  Hallucinated PMIDs: 0    (threshold: 0)     PASS
+  Hit Rate@5:         0.80 (threshold: 0.70)  PASS
+  MRR@5:              0.65 (threshold: 0.50)  PASS</pre>
+            </div>
+
+            <!-- Test Questions Table -->
+            <h4>Curated Test Questions</h4>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Domain</th>
+                        <th>Test Question</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><span class="text-fuchsia-400">Oncology</span></td>
+                        <td>What is the first-line treatment for EGFR-mutated NSCLC?</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><span class="text-red-400">Cardiology</span></td>
+                        <td>What are the benefits of SGLT2 inhibitors in heart failure?</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><span class="text-blue-400">Neurology</span></td>
+                        <td>What are the current disease-modifying therapies for multiple sclerosis?</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><span class="text-emerald-400">Infectious</span></td>
+                        <td>What is the recommended treatment for multi-drug resistant tuberculosis?</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td><span class="text-red-400">Cardiology</span></td>
+                        <td>What are the current guidelines for atrial fibrillation anticoagulation?</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td><span class="text-fuchsia-400">Oncology</span></td>
+                        <td>What is the role of immune checkpoint inhibitors in melanoma?</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td><span class="text-blue-400">Neurology</span></td>
+                        <td>What are the latest developments in Alzheimer's disease treatment?</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td><span class="text-emerald-400">Infectious</span></td>
+                        <td>What is the efficacy of mRNA vaccines against COVID-19 variants?</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td><span class="text-red-400">Cardiology</span></td>
+                        <td>What is the evidence for PCSK9 inhibitors in hypercholesterolemia?</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td><span class="text-fuchsia-400">Oncology</span></td>
+                        <td>What are the side effects of CAR-T cell therapy?</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Streamlit Dashboard -->
+            <h3><i class="fas fa-desktop mr-2"></i>Streamlit Dashboard</h3>
+
+            <p>
+                MedRAG-Local includes a 4-page Streamlit dashboard for interactive use:
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 my-6">
+                <div class="concept-card" style="border-color: #8b5cf6;">
+                    <h4 class="text-violet-400 font-bold text-sm"><i class="fas fa-download mr-2"></i>Page 1: Ingest</h4>
+                    <p class="text-xs text-slate-400 mt-2">Configure domains, year range, and max articles. Monitor ingestion progress with live stats. View collection statistics after indexing.</p>
+                </div>
+                <div class="concept-card" style="border-color: #06b6d4;">
+                    <h4 class="text-cyan-400 font-bold text-sm"><i class="fas fa-search mr-2"></i>Page 2: Query</h4>
+                    <p class="text-xs text-slate-400 mt-2">Ask biomedical questions in natural language. View cited answers with verified PMIDs. Toggle HyDE, CRAG, and reranking on/off.</p>
+                </div>
+                <div class="concept-card" style="border-color: #3b82f6;">
+                    <h4 class="text-blue-400 font-bold text-sm"><i class="fas fa-project-diagram mr-2"></i>Page 3: Pipeline Viz</h4>
+                    <p class="text-xs text-slate-400 mt-2">Visualize each pipeline stage step-by-step. See HyDE output, CRAG scores, reranking results, and citation verification in real-time.</p>
+                </div>
+                <div class="concept-card" style="border-color: #10b981;">
+                    <h4 class="text-emerald-400 font-bold text-sm"><i class="fas fa-chart-bar mr-2"></i>Page 4: Evaluation</h4>
+                    <p class="text-xs text-slate-400 mt-2">Run RAGAS evaluation on curated test set. View scorecard with pass/fail indicators. Compare metrics across different pipeline configurations.</p>
+                </div>
+            </div>
+
+            <!-- Performance Table -->
+            <h3><i class="fas fa-tachometer-alt mr-2"></i>Performance Timings</h3>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Pipeline Stage</th>
+                        <th>GPU (RTX 3060)</th>
+                        <th>CPU Only</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>HyDE Generation</td>
+                        <td class="score-green">1.2s</td>
+                        <td class="score-amber">3.8s</td>
+                    </tr>
+                    <tr>
+                        <td>Dense Retrieval (Qdrant)</td>
+                        <td class="score-green">0.3s</td>
+                        <td class="score-green">0.3s</td>
+                    </tr>
+                    <tr>
+                        <td>CRAG Judging (20 chunks)</td>
+                        <td class="score-amber">4.8s</td>
+                        <td class="score-red">12.5s</td>
+                    </tr>
+                    <tr>
+                        <td>Cross-Encoder Reranking</td>
+                        <td class="score-green">1.1s</td>
+                        <td class="score-green">1.8s</td>
+                    </tr>
+                    <tr>
+                        <td>Citation-Aware Generation</td>
+                        <td class="score-green">3.2s</td>
+                        <td class="score-amber">8.4s</td>
+                    </tr>
+                    <tr style="background: rgba(139, 92, 246, 0.1);">
+                        <td><strong>Total Pipeline</strong></td>
+                        <td class="score-green"><strong>10.6s</strong></td>
+                        <td class="score-amber"><strong>26.8s</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong><i class="fas fa-info-circle mr-2 text-violet-400"></i>Note:</strong> CRAG judging is the bottleneck because it requires the LLM to evaluate each chunk individually. With early stopping enabled, the system stops judging after finding 5 relevant chunks, reducing time significantly.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7: CONCLUSION                                         -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <p>
+                MedRAG-Local demonstrates that production-grade biomedical Q&A does not require cloud APIs, expensive GPUs, or data leaving your premises. The 5-stage pipeline — <strong>HyDE</strong> for bridging vocabulary gaps, <strong>Dense Retrieval</strong> over a curated PubMed corpus, <strong>CRAG</strong> for self-correcting irrelevant results, <strong>Cross-Encoder Reranking</strong> for precision, and <strong>Citation-Aware Generation</strong> for trustworthiness — delivers verified, evidence-based answers with every claim traceable to a real PubMed record.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-star mr-2"></i>Key Achievements:</strong>
+                <ul class="list-disc mt-2 text-sm">
+                    <li><strong>Zero cloud dependency:</strong> Ollama (Mistral-7B) + Qdrant + BGE embeddings — all local</li>
+                    <li><strong>Citation verification:</strong> Every PMID cross-referenced against retrieved chunks — zero tolerance for hallucinated references</li>
+                    <li><strong>Self-correcting retrieval:</strong> CRAG judges relevance and triggers PubMed fallback when local results are insufficient</li>
+                    <li><strong>Automated evaluation:</strong> 14 metrics across RAGAS, citation, retrieval IR, and text similarity — all computed locally</li>
+                    <li><strong>Domain-filtered ingestion:</strong> 67 keywords across 4 medical specialties with PMID skip optimization</li>
+                </ul>
+            </div>
+
+            <!-- Final GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-violet-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Try MedRAG-Local</h3>
+                        <p class="text-gray-300 mb-4">
+                            Complete MedRAG-Local codebase: HyDE retrieval, Corrective RAG with PubMed fallback, cross-encoder reranking, citation-aware generation, RAGAS evaluation suite, Streamlit dashboard, and YAML-based configuration. Clone, configure, and start querying biomedical literature in minutes.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/medrag-local" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Future Work</h3>
+
+            <ul class="list-disc">
+                <li><strong>Multi-language support:</strong> Extending HyDE to generate hypothetical documents in multiple languages for non-English medical literature.</li>
+                <li><strong>Full-text indexing:</strong> Moving beyond abstracts to full-text PubMed Central articles for deeper evidence retrieval.</li>
+                <li><strong>Active learning:</strong> Using CRAG judgments as training signal to fine-tune the relevance model over time.</li>
+                <li><strong>Multi-hop reasoning:</strong> Chaining multiple retrieval rounds for complex questions that require synthesizing evidence across papers.</li>
+            </ul>
+
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">&copy; 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
