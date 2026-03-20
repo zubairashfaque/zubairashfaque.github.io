@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Data Analyst: From Plain-Language Questions to Visual Reports with LangGraph and GPT-4o | Zubair Ashfaque</title>
+    <meta name="description" content="Build a production-grade analytics agent that converts business questions into SQL, statistical analysis, charts, and reports using a 7-node LangGraph pipeline with GPT-4o, PostgreSQL, and multi-provider observability.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            margin: 3rem 0;
+        }
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+        }
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #a855f7;
+        }
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #c084fc;
+        }
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a {
+            color: #8b5cf6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover { color: #a855f7; }
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .highlight-box {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .info-box {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+        }
+        .metric-card .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-card .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .benchmark-table th {
+            background: rgba(139, 92, 246, 0.2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #c084fc;
+            border-bottom: 2px solid #8b5cf6;
+        }
+        .benchmark-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        .benchmark-table tr:hover { background: rgba(139, 92, 246, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            padding: 0.5rem 0;
+        }
+        .flow-arrow-right {
+            display: flex;
+            align-items: center;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .analogy-card {
+            background: rgba(6, 182, 212, 0.05);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .screenshot-container { margin: 1.5rem 0; text-align: center; }
+        .screenshot-container img { width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .screenshot-caption { font-size: 0.875rem; color: #94a3b8; margin-top: 0.75rem; font-style: italic; }
+        .svg-diagram-container {
+            background: #ffffff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            border: 2px solid #334155;
+        }
+        .svg-diagram-container img {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+        }
+        .svg-caption {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.75rem;
+            font-style: italic;
+            background: transparent;
+        }
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        .pipeline-node {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            text-align: center;
+            min-width: 130px;
+            transition: all 0.3s ease;
+        }
+        .pipeline-node:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        .pipeline-node .node-number {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .pipeline-node .node-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+        .pipeline-node .node-desc {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .pipeline-arrow {
+            color: #8b5cf6;
+            font-size: 1.25rem;
+        }
+        .routing-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px dashed #8b5cf6;
+            border-radius: 0.75rem;
+            min-width: 130px;
+        }
+
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+            .pipeline-flow { flex-direction: column; }
+            .pipeline-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-violet-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>AI Data Analyst</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                AI Data Analyst: From Plain-Language Questions to Visual Reports with LangGraph and GPT-4o
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                A complete guide to building a production-grade analytics agent that turns business questions into SQL, statistical analysis, charts, and markdown reports &mdash; autonomously
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>March 20, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>30 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">LangGraph</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">GPT-4o</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">PostgreSQL</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Streamlit</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Observability</span>
+                <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm">Statistical Analysis</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Every organisation sits on a gold mine of data. Sales numbers, customer behaviour, product performance, revenue trends &mdash; it is all there, waiting inside a PostgreSQL database. The problem is that the people who need these insights the most &mdash; product managers, executives, marketing leads &mdash; cannot write SQL. They file a ticket with the data team, wait two days, and get a spreadsheet that may or may not answer their original question.
+            </p>
+
+            <p>
+                Meanwhile, the data team is drowning. Eighty percent of their queries are ad-hoc one-offs: "What were our top 10 products by revenue last quarter?" or "Show me customer retention by signup month." These are not hard queries, but they require a human to translate English into SQL, run the query, sanity-check the results, compute some statistics, build a chart, and write a summary. The entire loop takes anywhere from thirty minutes to two days depending on the queue.
+            </p>
+
+            <p>
+                What if an AI agent could handle the entire analyst workflow? You ask a question in plain English. The agent reads the database schema, plans the analysis, generates safe SQL, executes it, runs statistical tests, creates charts, and writes a professional report &mdash; all in under a minute. That is not a hypothetical. That is what the AI Data Analyst delivers.
+            </p>
+
+            <p>
+                The questions this blog answers:
+            </p>
+
+            <ul class="list-disc">
+                <li>How do you build a multi-step AI agent that decomposes business questions into executable analysis plans?</li>
+                <li>How do you generate safe, read-only SQL from natural language without risking injection or data mutation?</li>
+                <li>How does conditional routing handle SQL errors, empty results, and retries gracefully?</li>
+                <li>How do you run statistical analysis (descriptive stats, t-tests, ANOVA, correlation, trends) without an LLM?</li>
+                <li>How do you make the entire pipeline observable with LangSmith, Langfuse, Helicone, and Braintrust?</li>
+                <li>How do you wrap everything in a Streamlit dashboard that non-technical users can actually use?</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-chart-line mr-2"></i>Key Innovation:</strong>
+                A 7-node LangGraph DAG that decomposes business questions, introspects database schemas, generates safe read-only SQL, recovers from errors with intelligent retries, runs statistical analysis with pure Python (no LLM), creates publication-quality charts, and writes structured markdown reports &mdash; all autonomously, with full observability across four providers.
+            </div>
+
+            <!-- Comparison Cards -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="metric-card" style="border-color: #ef4444;">
+                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-user-clock mr-1"></i>Manual Analyst Workflow</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">2 days</div>
+                    <div class="metric-label">average turnaround</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-ticket-alt mr-1"></i> File a ticket, wait in queue</div>
+                        <div><i class="fas fa-keyboard mr-1"></i> Manual SQL, manual charts</div>
+                        <div><i class="fas fa-redo mr-1"></i> Back-and-forth clarifications</div>
+                    </div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-robot mr-1"></i>AI Data Analyst</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">&lt; 60s</div>
+                    <div class="metric-label">question to report</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-comment mr-1"></i> Ask in plain English</div>
+                        <div><i class="fas fa-shield-alt mr-1"></i> Safe, read-only SQL</div>
+                        <div><i class="fas fa-chart-bar mr-1"></i> Automated stats, charts, report</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech Stack Visual -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Technology Stack</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-2xl mb-2"><i class="fas fa-project-diagram"></i></div>
+                        <div class="text-white font-semibold text-sm">LangGraph</div>
+                        <div class="text-slate-400 text-xs mt-1">DAG orchestration</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-brain"></i></div>
+                        <div class="text-white font-semibold text-sm">GPT-4o</div>
+                        <div class="text-slate-400 text-xs mt-1">Planning, SQL, reports</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-2xl mb-2"><i class="fas fa-database"></i></div>
+                        <div class="text-white font-semibold text-sm">PostgreSQL</div>
+                        <div class="text-slate-400 text-xs mt-1">Data source (psycopg3)</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-desktop"></i></div>
+                        <div class="text-white font-semibold text-sm">Streamlit</div>
+                        <div class="text-slate-400 text-xs mt-1">Interactive dashboard</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-2xl mb-2"><i class="fas fa-calculator"></i></div>
+                        <div class="text-white font-semibold text-sm">pandas + scipy</div>
+                        <div class="text-slate-400 text-xs mt-1">Statistical engine</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef;">
+                        <div class="text-fuchsia-400 text-2xl mb-2"><i class="fas fa-eye"></i></div>
+                        <div class="text-white font-semibold text-sm">4 Observability Providers</div>
+                        <div class="text-slate-400 text-xs mt-1">LangSmith, Langfuse, Helicone, Braintrust</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-violet-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">AI Data Analyst</h3>
+                        <p class="text-gray-300 mb-4">
+                            Complete codebase: 7-node LangGraph pipeline, safe SQL generation, statistical analysis toolkit, chart builder, markdown reporter, Streamlit dashboard, and multi-provider observability stack.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/ai-data-analyst" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is building an end-to-end analyst agent that is safe, resilient, statistically rigorous, and observable in production. Solving any one of these problems in isolation produces a system that fails the moment it meets real-world data.
+            </p>
+
+            <ol class="list-decimal">
+                <li><strong>SQL injection and data mutation</strong> &mdash; An LLM generating SQL can produce <code>DROP TABLE</code>, <code>UPDATE</code>, or <code>DELETE</code> statements. Without strict safety guardrails, a single malformed query could destroy production data.</li>
+                <li><strong>Empty results and failed queries</strong> &mdash; Not every generated SQL query will succeed. Column names change, tables get renamed, syntax varies across databases. The agent must recover gracefully, not crash or return blank reports.</li>
+                <li><strong>Statistical rigour without hallucination</strong> &mdash; Asking an LLM to "compute the mean and standard deviation" produces plausible-looking numbers that may be entirely fabricated. Statistical calculations must be deterministic &mdash; pure Python, no LLM.</li>
+                <li><strong>No visibility into decisions</strong> &mdash; When a 7-node pipeline produces a wrong answer, you need to see exactly which node failed, what the LLM was thinking, and how long each step took. Without observability, debugging is guesswork.</li>
+                <li><strong>Graceful degradation</strong> &mdash; If the SQL fails after two retries, the system should still produce a partial report explaining what happened, not throw an unhandled exception.</li>
+            </ol>
+
+            <!-- Without vs With Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Naive Text-to-SQL<br/>
+                        <span class="text-base font-normal text-slate-400">(Single LLM call + execute)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>No SQL safety checks &mdash; can mutate data</li>
+                        <li>Crashes on query errors, no retry</li>
+                        <li>LLM "calculates" statistics (hallucinated)</li>
+                        <li>No tracing, no debugging capability</li>
+                        <li>All-or-nothing: fails silently</li>
+                        <li>No schema awareness &mdash; guesses table names</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>AI Data Analyst<br/>
+                        <span class="text-base font-normal text-slate-400">(7-node LangGraph pipeline)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Keyword blocklist + read-only sessions + timeouts</li>
+                        <li>Error handler with 2 retries and LLM feedback</li>
+                        <li>Pure pandas/scipy &mdash; deterministic stats</li>
+                        <li>4 observability providers, full trace trees</li>
+                        <li>Graceful degradation to partial reports</li>
+                        <li>Schema introspection before every query</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFY THE PROBLEM                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucify the Problem</h2>
+
+            <p>
+                Imagine you walk into a large research library and ask the front desk: "What were the most popular science books last year?" You do not know which section to look in, which catalogue system the library uses, or how to interpret the checkout statistics. You just have a question.
+            </p>
+
+            <div class="analogy-card">
+                <h4 class="text-cyan-400 font-bold mb-4"><i class="fas fa-book-reader mr-2"></i>The Research Assistant Analogy</h4>
+                <p class="text-slate-300 mb-4">
+                    A skilled research assistant handles your request in stages. First, they <strong>read the catalogue</strong> to understand what sections and shelving systems exist &mdash; that is <em>schema introspection</em>. Then they <strong>plan their approach</strong>: "I will check the checkout logs, filter by the science section, and rank by frequency" &mdash; that is the <em>planner</em>.
+                </p>
+                <p class="text-slate-300 mb-4">
+                    Next, they <strong>look up the data</strong> in the library's records system &mdash; that is the <em>SQL agent</em>. If the record system returns an error ("that shelf code does not exist"), they try a different approach &mdash; that is the <em>error handler with retry</em>. Once they have the raw data, they <strong>count, rank, and compute averages</strong> by hand &mdash; that is the <em>analyst</em> running deterministic statistics. They then <strong>draw a bar chart</strong> of the top 10 &mdash; that is the <em>visualiser</em>. Finally, they <strong>write a summary memo</strong> with findings and recommendations &mdash; that is the <em>reporter</em>.
+                </p>
+                <p class="text-slate-300 mb-0">
+                    <strong>Where the analogy breaks down:</strong> a human assistant takes hours. Our AI agent completes this entire loop in under sixty seconds, handles statistical tests (t-tests, ANOVA, correlation analysis) automatically, and logs every decision for later audit via four different observability providers.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: LUCIFY THE JARGON                                  -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book-open mr-3"></i>Lucify the Jargon</h2>
+
+            <p>
+                Before we dive into the architecture, let us define the five key concepts that underpin the entire system. Each gets a definition, a concrete example, and a real-world analogy.
+            </p>
+
+            <!-- Concept 1: LangGraph StateGraph -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold mb-2"><i class="fas fa-project-diagram mr-2"></i>LangGraph StateGraph</h4>
+                <p class="mb-2"><strong>Definition:</strong> A directed acyclic graph (DAG) framework where each node is a function that reads and writes to a shared state object. Nodes are connected by edges, and conditional edges allow branching logic based on the current state.</p>
+                <p class="mb-2"><strong>Example:</strong> Our graph has 7 nodes: <code>introspect_schema &rarr; planner &rarr; sql_agent &rarr; [routing] &rarr; analyst &rarr; visualizer &rarr; reporter</code>. The state is an <code>AnalystState</code> Pydantic model containing the question, schema summary, SQL result, analysis, charts, and final report.</p>
+                <p class="mb-0"><strong>Analogy:</strong> Think of an assembly line in a factory. Each station (node) performs one operation on the product (state) and passes it to the next station. If quality control (conditional routing) detects a defect after the welding station (SQL agent), it sends the product back to the repair station (error handler) instead of forward to painting (analyst).</p>
+            </div>
+
+            <!-- Concept 2: Conditional Routing -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold mb-2"><i class="fas fa-code-branch mr-2"></i>Conditional Routing</h4>
+                <p class="mb-2"><strong>Definition:</strong> A function that inspects the current state after a node completes and returns the name of the next node to execute. This allows the graph to branch dynamically at runtime rather than following a fixed sequence.</p>
+                <p class="mb-2"><strong>Example:</strong> After <code>sql_agent</code> runs, the <code>route_after_sql</code> function checks three conditions: (1) if there was an error and retries remain, go to <code>sql_error_handler</code>; (2) if there was an error and retries are exhausted, skip to <code>reporter</code> for a partial report; (3) if the query returned zero rows, skip to <code>reporter</code>; (4) if data exists, proceed to <code>analyst</code>.</p>
+                <p class="mb-0"><strong>Analogy:</strong> A GPS recalculating your route. If the highway is blocked (SQL error), it reroutes you through a side road (error handler). If the side road is also blocked (retries exhausted), it takes you directly to the nearest rest stop (reporter with partial results) instead of leaving you stranded.</p>
+            </div>
+
+            <!-- Concept 3: Schema Introspection -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold mb-2"><i class="fas fa-sitemap mr-2"></i>Schema Introspection</h4>
+                <p class="mb-2"><strong>Definition:</strong> Querying the database's <code>information_schema</code> and <code>pg_catalog</code> to discover all tables, columns, data types, primary keys, and estimated row counts &mdash; before generating any SQL. This gives the LLM accurate context instead of guessing table names.</p>
+                <p class="mb-2"><strong>Example:</strong> The <code>SchemaIntrospector</code> produces a text summary like: <code>Table: customers (~500 rows) &mdash; customer_id INTEGER PK, first_name VARCHAR, email VARCHAR UNIQUE, signup_date DATE</code>. This summary is injected into every LLM prompt as context.</p>
+                <p class="mb-0"><strong>Analogy:</strong> Before cooking a meal, you open the fridge and pantry to see exactly what ingredients you have. You do not guess that you might have chicken &mdash; you look. Schema introspection is the agent opening the database's "pantry" before writing a single line of SQL.</p>
+            </div>
+
+            <!-- Concept 4: Statistical Analysis Pipeline -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold mb-2"><i class="fas fa-calculator mr-2"></i>Statistical Analysis Pipeline</h4>
+                <p class="mb-2"><strong>Definition:</strong> A pure-Python toolkit (<code>StatsToolkit</code>) that runs deterministic statistical computations on query results using pandas and scipy. It computes descriptive statistics (mean, median, std, skewness, kurtosis), Pearson correlation matrices, Welch's t-tests, one-way ANOVA, and linear trend analysis &mdash; all without calling an LLM.</p>
+                <p class="mb-2"><strong>Example:</strong> Given a DataFrame of product revenue, <code>StatsToolkit.full_analysis()</code> returns the mean revenue ($245.67), standard deviation ($89.12), identifies a positive trend (slope +$12.34/month, R&sup2; = 0.87), and flags two product categories as statistically different (p = 0.003 via ANOVA).</p>
+                <p class="mb-0"><strong>Analogy:</strong> An accountant with a calculator. They do not "feel" that revenue is trending up &mdash; they compute the exact slope, the R-squared, and the p-value. The calculator never hallucinates. That is why the analyst node uses scipy, not GPT-4o.</p>
+            </div>
+
+            <!-- Concept 5: Observability Providers -->
+            <div class="concept-card">
+                <h4 class="text-violet-400 font-bold mb-2"><i class="fas fa-eye mr-2"></i>Observability Providers</h4>
+                <p class="mb-2"><strong>Definition:</strong> External services that capture traces, spans, token counts, latencies, and costs for every LLM call and pipeline step. The AI Data Analyst supports four providers: LangSmith and Langfuse (callback-based, can run simultaneously) and Helicone and Braintrust (proxy-based, mutually exclusive).</p>
+                <p class="mb-2"><strong>Example:</strong> Langfuse captures a trace tree showing: <code>introspect_schema (0.8s) &rarr; planner (2.1s, 847 tokens) &rarr; sql_agent (1.9s, 623 tokens) &rarr; analyst (0.3s, no LLM) &rarr; visualizer (2.4s, 512 tokens) &rarr; reporter (3.2s, 1,204 tokens)</code>. You can see exactly where time and tokens are spent.</p>
+                <p class="mb-0"><strong>Analogy:</strong> Security cameras in every room of a building. If something goes wrong on the third floor, you rewind the footage and see exactly what happened, when, and in what order. Without cameras (observability), you are left guessing which room the incident started in.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: MAKE THE BLUEPRINT                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Make the Blueprint</h2>
+
+            <p>
+                The AI Data Analyst is a 7-node LangGraph pipeline. Each node has a single responsibility, communicates through a shared Pydantic state, and can be tested independently. Here is the high-level flow:
+            </p>
+
+            <!-- Interactive Pipeline Flow -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Pipeline Architecture</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                        <div class="node-number text-cyan-400">1</div>
+                        <div class="node-name">introspect_schema</div>
+                        <div class="node-desc">Read DB structure</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">2</div>
+                        <div class="node-name">planner</div>
+                        <div class="node-desc">Decompose question</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #3b82f6;">
+                        <div class="node-number text-blue-400">3</div>
+                        <div class="node-name">sql_agent</div>
+                        <div class="node-desc">Generate &amp; execute SQL</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="routing-branch">
+                        <div class="text-xs text-violet-400 font-bold">ROUTING</div>
+                        <div class="text-xs text-slate-400">error &rarr; retry/reporter</div>
+                        <div class="text-xs text-slate-400">empty &rarr; reporter</div>
+                        <div class="text-xs text-slate-400">data &rarr; analyst</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">5</div>
+                        <div class="node-name">analyst</div>
+                        <div class="node-desc">Stats (no LLM)</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                        <div class="node-number text-amber-400">6</div>
+                        <div class="node-name">visualizer</div>
+                        <div class="node-desc">Charts &amp; plots</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #d946ef;">
+                        <div class="node-number text-fuchsia-400">7</div>
+                        <div class="node-name">reporter</div>
+                        <div class="node-desc">Markdown report</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Node 1 &mdash; introspect_schema:</strong> Queries PostgreSQL's <code>information_schema</code> and <code>pg_catalog</code> to discover all tables, columns, data types, primary keys, and estimated row counts. Produces a text summary that becomes the LLM's database context for the rest of the pipeline.
+            </p>
+            <p>
+                <strong>Node 2 &mdash; planner:</strong> Takes the user's question and the schema summary, then uses GPT-4o with structured output to produce an <code>AnalysisPlan</code> containing the restated question, sub-questions, required tables, analysis type (trend, ranking, comparison, etc.), and suggested visualisations.
+            </p>
+            <p>
+                <strong>Node 3 &mdash; sql_agent:</strong> Receives the plan and generates a SQL query. Before execution, the query passes through a keyword blocklist (<code>INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, GRANT</code>). The database connection enforces <code>SET default_transaction_read_only = ON</code> and <code>SET statement_timeout = '30s'</code>. Results are capped at 10,000 rows.
+            </p>
+            <p>
+                <strong>Node 4 &mdash; sql_error_handler:</strong> If the SQL agent returns an error and <code>retry_count &lt; 2</code>, this node feeds the error message back to GPT-4o along with the original plan and schema, asking it to fix the query. The corrected query goes back to <code>sql_agent</code>.
+            </p>
+            <p>
+                <strong>Node 5 &mdash; analyst:</strong> Converts query results into a pandas DataFrame and runs <code>StatsToolkit.full_analysis()</code> &mdash; descriptive statistics, correlation matrix, and contextual tests (t-test, ANOVA, trend analysis). No LLM call. Deterministic, reproducible numbers.
+            </p>
+            <p>
+                <strong>Node 6 &mdash; visualizer:</strong> Uses GPT-4o with structured output (<code>ChartSpecs</code>) to recommend chart types based on the data shape and analysis insights. <code>ChartBuilder</code> renders the charts using matplotlib, seaborn, and plotly.
+            </p>
+            <p>
+                <strong>Node 7 &mdash; reporter:</strong> Takes the question, SQL, results, analysis, and chart references, and produces a structured markdown report with Executive Summary, Question, Methodology, Key Findings, Visualisations, and Recommendations.
+            </p>
+
+            <h3>Compiled State Graph</h3>
+            <p>
+                The diagram below shows the complete compiled LangGraph state graph &mdash; the full DAG topology with all nodes, edges, and conditional routing paths as compiled by LangGraph's runtime.
+            </p>
+            <div class="svg-diagram-container">
+                <img src="images/ai-data-analyst/compiled-state-graph.svg" alt="Compiled LangGraph state graph showing all 7 nodes and conditional routing paths" loading="lazy">
+            </div>
+            <div class="svg-caption">Compiled State Graph &mdash; The complete DAG showing node connections, conditional edges after sql_agent, and the error handler retry loop back to sql_agent.</div>
+
+            <h3>Route After SQL</h3>
+            <p>
+                The most critical decision point in the pipeline is what happens after the SQL agent executes. Four paths are possible depending on the query result.
+            </p>
+            <div class="svg-diagram-container">
+                <img src="images/ai-data-analyst/route-after-sql.svg" alt="Route after SQL diagram showing 4 conditional paths: error+retry, error+exhausted, empty results, and success" loading="lazy">
+            </div>
+            <div class="svg-caption">Route After SQL &mdash; Four conditional paths: (1) error with retries remaining &rarr; sql_error_handler, (2) error with retries exhausted &rarr; reporter (partial report), (3) empty results &rarr; reporter, (4) data returned &rarr; analyst.</div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: EXECUTE THE BLUEPRINT                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Execute the Blueprint</h2>
+
+            <p>
+                Now we walk through the implementation step by step. Each subsection covers one component of the system, with the actual code that powers it.
+            </p>
+
+            <!-- Step 1: Project Setup -->
+            <h3>Step 1: Project Setup and Configuration</h3>
+
+            <p>
+                The entire application is configured through Pydantic <code>BaseSettings</code>, which reads from environment variables and <code>.env</code> files. Every component &mdash; database, LLM, observability providers &mdash; is type-checked at startup.
+            </p>
+
+            <!-- Tech Stack Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+                <div class="metric-card">
+                    <div class="metric-value">7</div>
+                    <div class="metric-label">Pipeline Nodes</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4</div>
+                    <div class="metric-label">Observability Providers</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6</div>
+                    <div class="metric-label">Chart Types</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5</div>
+                    <div class="metric-label">Statistical Tests</div>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/config/settings.py
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
+
+class DatabaseSettings(BaseSettings):
+    host: str = "localhost"
+    port: int = 5432
+    name: str = "analytics"
+    user: str = "postgres"
+    password: str = ""
+    min_pool_size: int = 2
+    max_pool_size: int = 10
+
+class LLMSettings(BaseSettings):
+    model: str = "gpt-4o"
+    temperature: float = 0.0
+    max_tokens: int = 4096
+    openai_api_key: str = ""
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    app_name: str = "ai-data-analyst"
+    log_level: str = "INFO"
+    output_dir: str = "output"
+
+    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    llm: LLMSettings = Field(default_factory=LLMSettings)
+    langsmith: LangSmithSettings = Field(default_factory=LangSmithSettings)
+    langfuse: LangfuseSettings = Field(default_factory=LangfuseSettings)
+    helicone: HeliconeSettings = Field(default_factory=HeliconeSettings)
+    braintrust: BraintrustSettings = Field(default_factory=BraintrustSettings)</code></pre>
+            </div>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-bash"># .env.example
+OPENAI_API_KEY=sk-proj-...
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=analytics
+DATABASE_USER=postgres
+DATABASE_PASSWORD=your_password
+
+# Observability (enable one or more)
+LANGSMITH_API_KEY=ls-...
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+HELICONE_API_KEY=sk-helicone-...
+BRAINTRUST_API_KEY=bt-...</code></pre>
+            </div>
+
+            <!-- Step 2: Database Layer -->
+            <h3>Step 2: Database Layer (Schema Introspection)</h3>
+
+            <p>
+                The database layer has two responsibilities: maintaining a connection pool and introspecting the schema. The <code>SchemaIntrospector</code> queries PostgreSQL system catalogues to produce a human-readable summary of every table, column, and data type. This summary is what gives the LLM accurate context for SQL generation.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/db/introspect.py
+class SchemaIntrospector:
+    """Introspect PostgreSQL schema metadata."""
+
+    def get_tables(self, schema: str = "public") -> list[TableInfo]:
+        """Return all tables with columns and estimated row counts."""
+        # Queries information_schema.tables and pg_catalog
+
+    def get_schema_summary(self, schema: str = "public") -> str:
+        """Return a text summary suitable for LLM context."""
+        tables = self.get_tables(schema)
+        lines = []
+        for t in tables:
+            lines.append(f"Table: {t.name} (~{t.row_count} rows)")
+            for col in t.columns:
+                pk = "  PK" if col.is_primary_key else ""
+                lines.append(f"  {col.name:&lt;20} {col.data_type:&lt;12}{pk}")
+        return "\n".join(lines)</code></pre>
+            </div>
+
+            <p>
+                The state model is the contract between all seven nodes. Every node reads from and writes to an <code>AnalystState</code> Pydantic model. The diagram below shows how the state fields map to the sub-models that flow through the pipeline.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/graph/state.py
+from pydantic import BaseModel, Field
+from typing import Annotated
+import operator
+
+class AnalysisPlan(BaseModel):
+    question: str = ""
+    sub_questions: list[str] = Field(default_factory=list)
+    required_tables: list[str] = Field(default_factory=list)
+    analysis_type: str = ""
+    suggested_charts: list[str] = Field(default_factory=list)
+
+class QueryResult(BaseModel):
+    sql: str = ""
+    columns: list[str] = Field(default_factory=list)
+    rows: list[list] = Field(default_factory=list)
+    row_count: int = 0
+    error: str = ""
+
+class AnalystState(BaseModel):
+    """Main state flowing through the LangGraph pipeline."""
+    question: str = ""
+    schema_summary: str = ""
+    plan: AnalysisPlan = Field(default_factory=AnalysisPlan)
+    query_result: QueryResult = Field(default_factory=QueryResult)
+    sql_retry_count: int = 0
+    analysis: AnalysisResult = Field(default_factory=AnalysisResult)
+    charts: list[ChartArtifact] = Field(default_factory=list)
+    report: str = ""
+    errors: Annotated[list[str], operator.add] = Field(default_factory=list)</code></pre>
+            </div>
+
+            <div class="svg-diagram-container">
+                <img src="images/ai-data-analyst/state-model-relationships.svg" alt="State model relationships showing AnalystState fields and sub-models" loading="lazy">
+            </div>
+            <div class="svg-caption">State Model Relationships &mdash; The AnalystState contains nested Pydantic models (AnalysisPlan, QueryResult, AnalysisResult, ChartArtifact) that flow through the 7-node pipeline. Each node reads specific fields and writes back its results.</div>
+
+            <!-- Step 3: The Planner Agent -->
+            <h3>Step 3: The Planner Agent</h3>
+
+            <p>
+                The planner takes the user's plain-language question and the schema summary, and uses GPT-4o with structured output to produce an <code>AnalysisPlan</code>. Structured output means the LLM is constrained to return a valid Pydantic object &mdash; no free-text parsing, no regex extraction, no JSON guessing.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/planner.py
+PLANNER_SYSTEM_PROMPT = """You are a data analysis planner. Given a user's
+business question and a database schema, create a structured analysis plan.
+
+Your plan should include:
+1. The original question restated clearly
+2. Sub-questions that need to be answered via SQL
+3. Which tables are required
+4. The type of analysis (trend, comparison, distribution, ranking, aggregation)
+5. Suggested visualizations (bar, line, pie, scatter, histogram)
+
+Be specific about what SQL queries are needed and what analysis to perform."""
+
+def create_planner_node(llm: ChatOpenAI):
+    def planner_node(state: AnalystState, config=None) -> dict:
+        structured_llm = llm.with_structured_output(AnalysisPlan)
+        plan = structured_llm.invoke([
+            SystemMessage(content=PLANNER_SYSTEM_PROMPT),
+            HumanMessage(content=(
+                f"Database Schema:\n{state.schema_summary}\n\n"
+                f"Question: {state.question}"
+            )),
+        ], config=config)
+        return {"plan": plan}
+    return planner_node</code></pre>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-check-circle mr-2"></i>Why structured output matters:</strong>
+                Using <code>llm.with_structured_output(AnalysisPlan)</code> forces GPT-4o to return a valid Pydantic object. This eliminates brittle regex parsing, handles edge cases automatically, and gives you compile-time type safety downstream. Every node that reads the plan knows exactly what fields are available.
+            </div>
+
+            <!-- Step 4: SQL Agent -->
+            <h3>Step 4: SQL Agent (Safe Query Generation)</h3>
+
+            <p>
+                The SQL agent is where natural language becomes executable code. Safety is enforced at three layers: a keyword blocklist before execution, a read-only database session, and a query timeout. If any check fails, the query is rejected before it touches the database.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/tools/db_query.py — Safety checks
+FORBIDDEN_KEYWORDS = {
+    "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
+    "CREATE", "TRUNCATE", "GRANT",
+}
+
+def validate_sql(sql: str) -> str | None:
+    """Return error message if SQL contains forbidden keywords."""
+    tokens = set(sql.upper().split())
+    violations = tokens & FORBIDDEN_KEYWORDS
+    if violations:
+        return f"Forbidden SQL keywords detected: {violations}"
+    return None
+
+# Connection-level safety (src/db/connection.py)
+with self._pool.connection() as conn:
+    conn.execute("SET statement_timeout = '30s'")
+    conn.execute("SET default_transaction_read_only = ON")
+    cursor = conn.execute(sql)
+    rows = cursor.fetchmany(10_000)  # Hard row limit</code></pre>
+            </div>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/sql_agent.py
+def create_sql_agent_node(llm: ChatOpenAI, pool: DatabasePool):
+    def sql_agent_node(state: AnalystState, config=None) -> dict:
+        plan = state.plan
+        messages = [
+            SystemMessage(content=SQL_AGENT_SYSTEM_PROMPT),
+            HumanMessage(content=(
+                f"Database Schema:\n{state.schema_summary}\n\n"
+                f"Question: {plan.question}\n"
+                f"Sub-questions: {plan.sub_questions}\n"
+                f"Required tables: {plan.required_tables}\n"
+                f"Analysis type: {plan.analysis_type}"
+            )),
+        ]
+        response = llm.invoke(messages, config=config)
+        sql = response.content.strip().strip("```sql").strip("```").strip()
+
+        # Validate before executing
+        error = validate_sql(sql)
+        if error:
+            return {"query_result": QueryResult(sql=sql, error=error),
+                    "errors": [error]}
+
+        # Execute safely
+        try:
+            rows, columns = pool.execute_query(sql)
+            return {"query_result": QueryResult(
+                sql=sql, columns=columns,
+                rows=rows, row_count=len(rows)
+            )}
+        except Exception as e:
+            return {"query_result": QueryResult(sql=sql, error=str(e)),
+                    "errors": [f"SQL error: {e}"]}
+    return sql_agent_node</code></pre>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-exclamation-triangle mr-2 text-amber-400"></i>Three layers of SQL safety:</strong>
+                (1) <strong>Keyword blocklist</strong> rejects queries containing INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, or GRANT before they reach the database. (2) <strong>Read-only session</strong> via <code>SET default_transaction_read_only = ON</code> prevents any writes even if a keyword slips through. (3) <strong>Statement timeout</strong> at 30 seconds prevents runaway queries from locking the database.
+            </div>
+
+            <!-- Step 5: Error Recovery -->
+            <h3>Step 5: Error Recovery (SQL Error Handler)</h3>
+
+            <p>
+                Not every query succeeds on the first attempt. Column names might be slightly off, a table might require a JOIN the LLM missed, or the syntax might not match the PostgreSQL dialect. The error handler feeds the error message back to GPT-4o along with the original plan and schema, giving it a chance to fix the query.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/graph/routing.py
+MAX_SQL_RETRIES = 2
+
+def route_after_sql(state: AnalystState) -> str:
+    """Route after SQL execution based on result state."""
+    qr = state.query_result
+
+    if qr.error:
+        if state.sql_retry_count < MAX_SQL_RETRIES:
+            return "sql_error_handler"   # retry
+        return "reporter"                # exhausted → partial report
+
+    if qr.row_count == 0:
+        return "reporter"                # no data → partial report
+
+    return "analyst"                     # success → continue pipeline</code></pre>
+            </div>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/sql_error_handler.py
+def create_error_handler_node(llm: ChatOpenAI):
+    def error_handler_node(state: AnalystState, config=None) -> dict:
+        messages = [
+            SystemMessage(content=ERROR_HANDLER_PROMPT),
+            HumanMessage(content=(
+                f"Original SQL:\n{state.query_result.sql}\n\n"
+                f"Error:\n{state.query_result.error}\n\n"
+                f"Schema:\n{state.schema_summary}\n\n"
+                f"Plan:\n{state.plan.model_dump_json()}\n\n"
+                "Please fix the SQL query."
+            )),
+        ]
+        response = llm.invoke(messages, config=config)
+        fixed_sql = response.content.strip().strip("```sql").strip("```").strip()
+
+        return {
+            "query_result": QueryResult(sql=fixed_sql),
+            "sql_retry_count": state.sql_retry_count + 1,
+        }
+    return error_handler_node</code></pre>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-info-circle mr-2 text-violet-400"></i>Graceful degradation:</strong>
+                If the SQL fails after 2 retries, the pipeline does not crash. It skips the analyst and visualiser nodes and goes straight to the reporter, which produces a partial report explaining that the query failed and suggesting what the user might try differently. This is better than a blank screen or an unhandled exception.
+            </div>
+
+            <!-- Step 6: Statistical Analyst -->
+            <h3>Step 6: Statistical Analyst</h3>
+
+            <p>
+                The analyst node is deliberately LLM-free. Statistical computations must be deterministic and reproducible. The <code>StatsToolkit</code> class wraps pandas and scipy to provide five analysis methods that are selected automatically based on the data shape.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/tools/stats_toolkit.py
+class StatsToolkit:
+    """Statistical analysis on query result DataFrames."""
+
+    def descriptive_stats(self, columns=None) -> dict[str, Any]:
+        """Mean, std, min, max, median, skewness, kurtosis."""
+
+    def correlation_matrix(self) -> dict[str, dict[str, float]]:
+        """Pairwise Pearson correlations for numeric columns."""
+
+    def t_test(self, col_a: str, col_b: str) -> dict[str, Any]:
+        """Welch's independent two-sample t-test."""
+
+    def trend_analysis(self, date_col: str, value_col: str) -> dict[str, Any]:
+        """Linear regression: slope, R², p-value, direction."""
+
+    def group_comparison(self, group_col: str, value_col: str) -> dict[str, Any]:
+        """One-way ANOVA for group comparisons."""
+
+    def full_analysis(self) -> StatsResult:
+        """Run all applicable analyses and return StatsResult."""</code></pre>
+            </div>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/analyst.py
+def analyst_node(state: AnalystState) -> dict[str, Any]:
+    """Run statistical analysis — no LLM, pure Python."""
+    qr = state.query_result
+
+    if qr.error or not qr.rows:
+        return {"analysis": AnalysisResult(
+            insights=["No data available for analysis."]
+        )}
+
+    toolkit = StatsToolkit(data=qr.rows, columns=qr.columns)
+    result = toolkit.full_analysis()
+
+    insights: list[str] = []
+    if result.summary:
+        for col, stats in result.summary.items():
+            mean = stats.get("mean")
+            std = stats.get("std")
+            if mean is not None and std is not None:
+                insights.append(
+                    f"{col}: mean={mean:.2f}, std={std:.2f}, "
+                    f"range=[{stats.get('min')}, {stats.get('max')}]"
+                )
+
+    return {"analysis": AnalysisResult(
+        summary_stats=result.summary,
+        correlations=result.correlations,
+        insights=insights,
+    )}</code></pre>
+            </div>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Analysis Method</th>
+                        <th>Library</th>
+                        <th>When Applied</th>
+                        <th>Output</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Descriptive Statistics</td>
+                        <td>pandas</td>
+                        <td>Always (numeric columns)</td>
+                        <td>Mean, std, min, max, median, skew, kurtosis</td>
+                    </tr>
+                    <tr>
+                        <td>Correlation Matrix</td>
+                        <td>pandas</td>
+                        <td>2+ numeric columns</td>
+                        <td>Pairwise Pearson r values</td>
+                    </tr>
+                    <tr>
+                        <td>Welch's t-test</td>
+                        <td>scipy</td>
+                        <td>2 numeric groups</td>
+                        <td>t-statistic, p-value, effect size</td>
+                    </tr>
+                    <tr>
+                        <td>One-way ANOVA</td>
+                        <td>scipy</td>
+                        <td>3+ groups</td>
+                        <td>F-statistic, p-value</td>
+                    </tr>
+                    <tr>
+                        <td>Trend Analysis</td>
+                        <td>scipy</td>
+                        <td>Date + value columns</td>
+                        <td>Slope, R&sup2;, p-value, direction</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Step 7: Visualizer & Reporter -->
+            <h3>Step 7: Visualizer and Reporter</h3>
+
+            <p>
+                The visualiser uses GPT-4o to recommend which chart types best represent the data, then <code>ChartBuilder</code> renders them using matplotlib, seaborn, and plotly. The reporter assembles everything into a structured markdown document.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/tools/chart_builder.py
+class ChartBuilder:
+    """Generate charts from DataFrames and save to disk."""
+
+    def bar_chart(self, df, x, y, title, name) -> ChartArtifact:
+        """Vertical or horizontal bar chart."""
+
+    def line_chart(self, df, x, y, title, name) -> ChartArtifact:
+        """Time-series or continuous line chart."""
+
+    def pie_chart(self, df, labels, values, title, name) -> ChartArtifact:
+        """Proportional pie/donut chart."""
+
+    def scatter_plot(self, df, x, y, title, name, hue=None) -> ChartArtifact:
+        """Scatter plot with optional colour grouping."""
+
+    def histogram(self, df, column, title, name, bins=30) -> ChartArtifact:
+        """Distribution histogram."""
+
+    def plotly_interactive(self, df, chart_type, x, y, title, name) -> ChartArtifact:
+        """Interactive Plotly chart saved as HTML."""</code></pre>
+            </div>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/reporter.py
+REPORTER_SYSTEM_PROMPT = """You are a business analyst writing a clear,
+actionable report. Structure your report as:
+
+1. **Executive Summary** — Key findings in 2-3 sentences
+2. **Question** — The original business question
+3. **Methodology** — How the analysis was performed
+4. **Key Findings** — Detailed findings with specific numbers
+5. **Visualizations** — Reference to generated charts
+6. **Recommendations** — Actionable next steps
+
+Use clear business language. Include specific numbers and percentages."""</code></pre>
+            </div>
+
+            <!-- Step 8: Graph Assembly -->
+            <h3>Step 8: Graph Assembly</h3>
+
+            <p>
+                With all nodes defined, assembling the LangGraph is straightforward. We add each node, wire the edges, and define the conditional routing function after <code>sql_agent</code>.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/graph/builder.py
+from langgraph.graph import StateGraph
+
+graph = StateGraph(AnalystState)
+
+# Add nodes
+graph.add_node("introspect_schema", introspect_node)
+graph.add_node("planner", planner)
+graph.add_node("sql_agent", sql_agent)
+graph.add_node("sql_error_handler", sql_error_handler)
+graph.add_node("analyst", analyst)
+graph.add_node("visualizer", visualizer)
+graph.add_node("reporter", reporter)
+
+# Linear edges
+graph.set_entry_point("introspect_schema")
+graph.add_edge("introspect_schema", "planner")
+graph.add_edge("planner", "sql_agent")
+
+# Conditional routing after SQL
+graph.add_conditional_edges(
+    "sql_agent",
+    route_after_sql,
+    {
+        "sql_error_handler": "sql_error_handler",
+        "analyst": "analyst",
+        "reporter": "reporter",
+    },
+)
+
+# Error handler loops back to sql_agent
+graph.add_edge("sql_error_handler", "sql_agent")
+
+# Linear edges for the success path
+graph.add_edge("analyst", "visualizer")
+graph.add_edge("visualizer", "reporter")
+graph.set_finish_point("reporter")
+
+# Compile
+app = graph.compile()</code></pre>
+            </div>
+
+            <!-- Step 9: Observability Stack -->
+            <h3>Step 9: Observability Stack</h3>
+
+            <p>
+                A 7-node pipeline with LLM calls, database queries, and statistical computations generates a lot of telemetry. The AI Data Analyst supports four observability providers, each with a different integration pattern.
+            </p>
+
+            <div class="svg-diagram-container">
+                <img src="images/ai-data-analyst/observability-architecture.svg" alt="Observability provider architecture showing 4 providers" loading="lazy">
+            </div>
+            <div class="svg-caption">Observability Provider Architecture &mdash; LangSmith and Langfuse are callback-based and can coexist simultaneously. Helicone and Braintrust are proxy-based (they wrap the OpenAI base URL) and are mutually exclusive. Enable any combination that fits your stack.</div>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Integration</th>
+                        <th>Coexistence</th>
+                        <th>Key Feature</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="score-green">LangSmith</span></td>
+                        <td>Callback</td>
+                        <td>Can run with Langfuse</td>
+                        <td>LangChain-native trace trees</td>
+                    </tr>
+                    <tr>
+                        <td><span class="score-cyan">Langfuse</span></td>
+                        <td>Callback</td>
+                        <td>Can run with LangSmith</td>
+                        <td>Open-source, self-hostable</td>
+                    </tr>
+                    <tr>
+                        <td><span class="score-amber">Helicone</span></td>
+                        <td>Proxy</td>
+                        <td>Exclusive with Braintrust</td>
+                        <td>Cost tracking, caching</td>
+                    </tr>
+                    <tr>
+                        <td><span class="score-red">Braintrust</span></td>
+                        <td>Proxy</td>
+                        <td>Exclusive with Helicone</td>
+                        <td>Evaluation + scoring</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                The callback lifecycle follows a 5-phase pattern: creation, injection, propagation, capture, and flush. The diagram below shows how callbacks flow from initialisation through every LLM call to final cleanup.
+            </p>
+
+            <div class="svg-diagram-container">
+                <img src="images/ai-data-analyst/callback-lifecycle.svg" alt="Callback lifecycle flow showing 5 phases" loading="lazy">
+            </div>
+            <div class="svg-caption">Callback Lifecycle Flow &mdash; Five phases: (1) Creation at startup, (2) Injection into LangGraph config, (3) Propagation through every node via RunnableConfig, (4) Capture of spans/traces by each provider, (5) Flush on shutdown to ensure all telemetry is persisted.</div>
+
+            <p>
+                Initialisation order matters. The dependency chain ensures that Settings are loaded first, then infrastructure (database pool, LLM client), then the graph, then runtime execution, and finally cleanup.
+            </p>
+
+            <div class="svg-diagram-container">
+                <img src="images/ai-data-analyst/dependency-chain.svg" alt="Dependency chain from Settings to Cleanup" loading="lazy">
+            </div>
+            <div class="svg-caption">Dependency Chain &mdash; Initialisation order: Settings &rarr; Infrastructure (DatabasePool, ChatOpenAI, Callbacks) &rarr; Graph (compile nodes + edges) &rarr; Runtime (invoke with state) &rarr; Cleanup (flush callbacks, close pool).</div>
+
+            <p>
+                Here is what a real Langfuse trace looks like for a complete pipeline run. You can see the full node execution tree, token counts per LLM call, and the JSON output of each node.
+            </p>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/langfuse-trace.png" alt="Langfuse tracing dashboard showing the complete pipeline trace" loading="lazy">
+                <div class="screenshot-caption">Langfuse Trace &mdash; A real trace from a pipeline run showing the LangGraph node execution tree, timing for each node, and the JSON output captured at every step.</div>
+            </div>
+
+            <!-- Step 10: Streamlit Dashboard -->
+            <h3>Step 10: Streamlit Dashboard Walkthrough</h3>
+
+            <p>
+                The Streamlit dashboard is the user-facing interface. It provides a query input, real-time pipeline progress, and four result tabs (Report, Charts, SQL Data, Insights). The sidebar displays the database schema so users know exactly what data is available. Let us walk through every screen.
+            </p>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-home.png" alt="AI Data Analyst home page with database schema sidebar and example questions" loading="lazy">
+                <div class="screenshot-caption">Home Page &mdash; The main interface shows the database schema in the left sidebar (tables and columns), example questions to get started, and the query input area.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-schema-expanded.png" alt="Expanded table schema showing column details" loading="lazy">
+                <div class="screenshot-caption">Schema Explorer &mdash; Expanding a table reveals column details: name, data type, and constraints. Users can see exactly which fields are available before asking their question.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-query-input.png" alt="User typing a business question" loading="lazy">
+                <div class="screenshot-caption">Query Input &mdash; The user types a plain-language question like "Top 10 products by revenue?" No SQL knowledge required.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-pipeline-running.png" alt="Pipeline progress indicators showing steps in progress" loading="lazy">
+                <div class="screenshot-caption">Pipeline in Progress &mdash; The 6-step pipeline shows real-time progress. Completed steps show green checkmarks, while in-progress steps show loading indicators.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-report-top.png" alt="Report tab showing Executive Summary, Question, and Methodology" loading="lazy">
+                <div class="screenshot-caption">Report Tab (Top) &mdash; The completed report starts with an Executive Summary, the original Question, and the Methodology used for the analysis.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-report-full.png" alt="Report tab showing Key Findings, Visualizations, and Recommendations" loading="lazy">
+                <div class="screenshot-caption">Report Tab (Full) &mdash; The report continues with Key Findings backed by specific numbers, Visualisation references, and actionable Recommendations.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-chart.png" alt="Bar chart showing Top 10 Products by Revenue" loading="lazy">
+                <div class="screenshot-caption">Charts Tab &mdash; Auto-generated bar chart showing the Top 10 Products by Revenue. Chart type is recommended by GPT-4o based on the data shape and rendered by matplotlib/seaborn.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-sql-query.png" alt="Generated SQL query with syntax highlighting" loading="lazy">
+                <div class="screenshot-caption">SQL Data Tab (Query) &mdash; The generated SQL query is displayed with syntax highlighting. Users can review exactly what SQL was executed against the database.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-data-table.png" alt="Query results data table" loading="lazy">
+                <div class="screenshot-caption">SQL Data Tab (Results) &mdash; The raw query results displayed as a data table. Users can verify the data that underpins the analysis and charts.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/ai-data-analyst/ui-insights.png" alt="Statistical insights and summary statistics" loading="lazy">
+                <div class="screenshot-caption">Insights Tab &mdash; Statistical insights computed by the pure-Python StatsToolkit, including summary statistics table (mean, std, min, max, median) for all numeric columns.</div>
+            </div>
+
+            <!-- Step 11: GitHub Link -->
+            <h3>Step 11: Get the Code</h3>
+
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-violet-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">AI Data Analyst</h3>
+                        <p class="text-gray-300 mb-4">
+                            The complete codebase including the 7-node LangGraph pipeline, safe SQL generation with keyword blocklist and read-only sessions, StatsToolkit with 5 analysis methods, ChartBuilder with 6 chart types, markdown reporter, Streamlit dashboard, and multi-provider observability stack (LangSmith, Langfuse, Helicone, Braintrust).
+                        </p>
+                        <a href="https://github.com/zubairashfaque/ai-data-analyst" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- CONCLUSION                                                    -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <p>
+                We built a production-grade AI Data Analyst that takes a plain-language business question and autonomously produces SQL, statistical analysis, charts, and a structured markdown report. The 7-node LangGraph pipeline handles the entire workflow: schema introspection gives the LLM accurate context, the planner decomposes questions into executable plans, the SQL agent generates safe read-only queries with a 3-layer safety stack, the error handler recovers gracefully from failures, the analyst runs deterministic statistics with pandas and scipy, the visualiser creates publication-quality charts, and the reporter assembles everything into a professional document.
+            </p>
+
+            <h3>Key Takeaways</h3>
+
+            <ul class="list-disc">
+                <li><strong>Safety is non-negotiable:</strong> Three layers of SQL protection (keyword blocklist, read-only sessions, statement timeout) prevent data mutation regardless of what the LLM generates.</li>
+                <li><strong>Deterministic statistics beat LLM "calculations":</strong> The analyst node uses pure pandas and scipy. No hallucinated numbers, no non-reproducible results. Mean is mean. Standard deviation is standard deviation.</li>
+                <li><strong>Graceful degradation over hard failures:</strong> If SQL fails after two retries, the system produces a partial report explaining what went wrong, rather than showing a blank screen.</li>
+                <li><strong>Observability is a first-class citizen:</strong> Four providers (LangSmith, Langfuse, Helicone, Braintrust) give full visibility into every LLM call, token count, latency, and decision path.</li>
+                <li><strong>Structured output eliminates parsing fragility:</strong> Using <code>.with_structured_output()</code> for the planner and visualiser means no regex, no JSON parsing errors, and compile-time type safety.</li>
+            </ul>
+
+            <h3>Future Work</h3>
+
+            <ul class="list-disc">
+                <li><strong>Multi-database support:</strong> Extending the schema introspector to support MySQL, SQLite, and BigQuery alongside PostgreSQL.</li>
+                <li><strong>Streaming responses:</strong> Adding token-by-token streaming for the reporter node so users see the report being written in real time.</li>
+                <li><strong>Additional chart types:</strong> Heatmaps, box plots, and geographical maps for location-based data.</li>
+                <li><strong>Conversational follow-ups:</strong> Allowing users to ask follow-up questions that build on the previous analysis context.</li>
+                <li><strong>Evaluation framework:</strong> Expanding the Braintrust evaluation suite with more scorers for SQL correctness and report quality.</li>
+            </ul>
+
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">&copy; 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-violet-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
