@@ -386,6 +386,9 @@
             border-color: #10b981;
             transform: translateX(4px);
         }
+        .screenshot-container { margin: 1.5rem 0; text-align: center; }
+        .screenshot-container img { width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .screenshot-caption { font-size: 0.875rem; color: #94a3b8; margin-top: 0.75rem; font-style: italic; }
 
         @media (max-width: 768px) {
             .blog-container { padding: 1rem; }
@@ -1600,6 +1603,22 @@ def main():
 
         # Final report
         render_final_report(final_report, all_agent_results)</code></pre>
+            </div>
+
+            <!-- Dashboard Screenshots -->
+            <div class="screenshot-container">
+                <img src="images/codesentinel/dashboard-overview.png" alt="CodeSentinel dashboard showing all 13 agents completed with sidebar status and agent finding cards" loading="lazy">
+                <div class="screenshot-caption">Dashboard Overview — All 13 agents completed. The sidebar shows real-time status (green = clean, amber = has findings). Agent cards list findings: Style & Formatting (447), Static Analysis (48), Security (34), Docs & Types (441).</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/codesentinel/final-report.png" alt="CodeSentinel final report showing REQUEST CHANGES verdict with 970 total findings" loading="lazy">
+                <div class="screenshot-caption">Final Report — The synthesis agent produces a REQUEST CHANGES verdict with 970 total findings across 7 agents, including 114 high-severity issues. The summary explains primary concerns and recommendations.</div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="images/codesentinel/agent-summaries.png" alt="CodeSentinel agent summaries with expandable sections for each specialist agent" loading="lazy">
+                <div class="screenshot-caption">Agent Summaries — Expandable summaries for each domain (Architecture, Docs & Types, Performance, Security, Static Analysis, Style & Formatting, Test Quality) with detailed breakdowns.</div>
             </div>
 
             <!-- Step 10: Testing -->
