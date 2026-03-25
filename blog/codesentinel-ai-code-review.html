@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSentinel — 13 AI Sentinels That Review Your Python Code in Parallel | Zubair Ashfaque</title>
+    <meta name="description" content="Build a 13-agent AI code review system using LangGraph, GPT-4o, and deterministic tools. Fan-out parallelism, self-correcting test pipeline, Conventional Comments, and 4-provider observability.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #10b981;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #10b981;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            margin: 3rem 0;
+        }
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #10b981;
+        }
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #34d399;
+        }
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #6ee7b7;
+        }
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a {
+            color: #10b981;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover { color: #34d399; }
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+        }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #10b981;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .highlight-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .info-box {
+            background: rgba(6, 182, 212, 0.1);
+            border-left: 4px solid #06b6d4;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+        }
+        .metric-card .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-card .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .benchmark-table th {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #6ee7b7;
+            border-bottom: 2px solid #10b981;
+        }
+        .benchmark-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        .benchmark-table tr:hover { background: rgba(16, 185, 129, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #10b981;
+            font-size: 1.5rem;
+            padding: 0.5rem 0;
+        }
+        .flow-arrow-right {
+            display: flex;
+            align-items: center;
+            color: #10b981;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .analogy-card {
+            background: rgba(6, 182, 212, 0.05);
+            border: 2px solid #06b6d4;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        .pipeline-node {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            text-align: center;
+            min-width: 130px;
+            transition: all 0.3s ease;
+        }
+        .pipeline-node:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        .pipeline-node .node-number {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .pipeline-node .node-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+        .pipeline-node .node-desc {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .pipeline-arrow {
+            color: #10b981;
+            font-size: 1.25rem;
+        }
+        .routing-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px dashed #10b981;
+            border-radius: 0.75rem;
+            min-width: 130px;
+        }
+        .agent-role-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        .agent-role-card:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+        }
+        .exec-path-row {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0;
+            transition: all 0.3s ease;
+        }
+        .exec-path-row:hover {
+            border-color: #10b981;
+            transform: translateX(4px);
+        }
+
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+            .pipeline-flow { flex-direction: column; }
+            .pipeline-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-emerald-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>CodeSentinel</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                CodeSentinel &mdash; 13 AI Sentinels That Review Your Python Code in Parallel
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                A complete guide to building a 13-agent code review system that fans out in parallel, runs deterministic tools before calling the LLM, generates and executes tests with a self-correcting retry loop, and delivers Conventional Comments with full observability
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>March 25, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>35 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm">LangGraph</span>
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm">GPT-4o</span>
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm">Code Review</span>
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm">Multi-Agent</span>
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm">Streamlit</span>
+                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm">Observability</span>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Code review is one of the most important steps in software development. Before any code reaches production, another human being reads it, checks for bugs, verifies the style, looks for security holes, evaluates performance, and decides whether the tests are good enough. The problem is that this process is slow, inconsistent, and limited by what a single reviewer can hold in their head at one time.
+            </p>
+
+            <p>
+                A typical code review takes hours or even days. The reviewer is tired, context-switching between their own work and your pull request. They might catch a SQL injection vulnerability but miss a performance bottleneck. They might notice a missing docstring but overlook a race condition hidden inside a threading import. No single human can be an expert in style, security, performance, architecture, documentation, type safety, and test coverage all at once.
+            </p>
+
+            <p>
+                What if you could replace that single overloaded reviewer with a team of 13 specialists, each focused on exactly one domain, all working at the same time? That is what CodeSentinel delivers. Thirteen AI agents fan out in parallel across your pull request. Each one runs deterministic tools first (linters, scanners, AST visitors) and only calls the LLM to summarise what the tools found. A separate test pipeline plans, generates, executes, and reports on test coverage. Everything converges into a single final report written in Conventional Comments format.
+            </p>
+
+            <p>
+                The questions this blog answers:
+            </p>
+
+            <ul class="list-disc">
+                <li>How do you orchestrate 13 agents in a single LangGraph DAG with fan-out parallelism and convergence?</li>
+                <li>How do you combine deterministic tools (ruff, bandit, mypy, AST visitors) with LLM-powered analysis?</li>
+                <li>How do you build a self-correcting test pipeline that plans, generates, runs, and retries tests automatically?</li>
+                <li>What are the 5 execution paths through the DAG, and when does each one trigger?</li>
+                <li>How do you add observability across 12 LLM calls using 4 different providers?</li>
+                <li>How do you format the final output as Conventional Comments that developers actually want to read?</li>
+            </ul>
+
+            <!-- Visual 1: Key Innovation Highlight Box -->
+            <div class="highlight-box">
+                <strong><i class="fas fa-shield-alt mr-2"></i>Key Innovation:</strong>
+                A 13-agent LangGraph DAG that fans out 7 agents in parallel, runs 14 deterministic tools and 6 AST visitors before any LLM call, generates and executes tests with a self-correcting retry loop, converges all findings through a quality bridge, and delivers a final verdict with Conventional Comments &mdash; all with full tracing across 4 observability providers.
+            </div>
+
+            <!-- Visual 2: Before/After Metric Cards -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="metric-card" style="border-color: #ef4444;">
+                    <div class="text-red-400 text-sm font-semibold mb-2"><i class="fas fa-user-clock mr-1"></i>Manual Code Review</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #ef4444;">Hours</div>
+                    <div class="metric-label">average turnaround</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-user mr-1"></i> Single reviewer, single perspective</div>
+                        <div><i class="fas fa-brain mr-1"></i> Reviewer fatigue, inconsistent coverage</div>
+                        <div><i class="fas fa-clipboard-list mr-1"></i> Tests suggested, never auto-generated</div>
+                    </div>
+                </div>
+                <div class="metric-card" style="border-color: #10b981;">
+                    <div class="text-green-400 text-sm font-semibold mb-2"><i class="fas fa-shield-alt mr-1"></i>CodeSentinel</div>
+                    <div class="metric-value" style="-webkit-text-fill-color: #10b981;">&lt; 2 min</div>
+                    <div class="metric-label">complete review</div>
+                    <div class="mt-3 text-sm text-slate-400 space-y-1">
+                        <div><i class="fas fa-users mr-1"></i> 13 specialist agents in parallel</div>
+                        <div><i class="fas fa-wrench mr-1"></i> Deterministic tools first, LLM second</div>
+                        <div><i class="fas fa-vial mr-1"></i> Tests auto-generated and executed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 3: 5 Metric Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 my-6">
+                <div class="metric-card">
+                    <div class="metric-value">13</div>
+                    <div class="metric-label">AI Agents</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">14</div>
+                    <div class="metric-label">Tools</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">6</div>
+                    <div class="metric-label">AST Visitors</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">57</div>
+                    <div class="metric-label">Tests</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4</div>
+                    <div class="metric-label">Observability Providers</div>
+                </div>
+            </div>
+
+            <!-- Visual 4: Tech Stack Grid -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Technology Stack</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-project-diagram"></i></div>
+                        <div class="text-white font-semibold text-sm">LangGraph</div>
+                        <div class="text-slate-400 text-xs mt-1">DAG orchestration, fan-out, convergence</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-brain"></i></div>
+                        <div class="text-white font-semibold text-sm">GPT-4o</div>
+                        <div class="text-slate-400 text-xs mt-1">12 LLM calls across agents</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-2xl mb-2"><i class="fas fa-shield-alt"></i></div>
+                        <div class="text-white font-semibold text-sm">Pydantic</div>
+                        <div class="text-slate-400 text-xs mt-1">State model + structured output</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-2xl mb-2"><i class="fas fa-broom"></i></div>
+                        <div class="text-white font-semibold text-sm">ruff + black</div>
+                        <div class="text-slate-400 text-xs mt-1">Style and formatting checks</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #ef4444;">
+                        <div class="text-red-400 text-2xl mb-2"><i class="fas fa-lock"></i></div>
+                        <div class="text-white font-semibold text-sm">bandit + pip-audit</div>
+                        <div class="text-slate-400 text-xs mt-1">Security scanning</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-2xl mb-2"><i class="fas fa-spell-check"></i></div>
+                        <div class="text-white font-semibold text-sm">mypy + pylint</div>
+                        <div class="text-slate-400 text-xs mt-1">Type checking + static analysis</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #d946ef;">
+                        <div class="text-fuchsia-400 text-2xl mb-2"><i class="fas fa-sitemap"></i></div>
+                        <div class="text-white font-semibold text-sm">6 AST Visitors</div>
+                        <div class="text-slate-400 text-xs mt-1">Function length, docstrings, race conditions</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-desktop"></i></div>
+                        <div class="text-white font-semibold text-sm">Streamlit</div>
+                        <div class="text-slate-400 text-xs mt-1">Live DAG + streaming dashboard</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-eye"></i></div>
+                        <div class="text-white font-semibold text-sm">4 Observability Providers</div>
+                        <div class="text-slate-400 text-xs mt-1">LangSmith, Langfuse, Helicone, Braintrust</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 5: GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-emerald-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">CodeSentinel</h3>
+                        <p class="text-gray-300 mb-4">
+                            Complete codebase: 13-agent LangGraph DAG, 14 deterministic tools, 6 AST visitors, self-correcting test pipeline, Conventional Comments output, Streamlit dashboard with live DAG, and 4-provider observability stack. 57 tests, production-ready.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/CodeSentinel" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is building a multi-agent system where 13 agents work together safely, without stepping on each other, without hallucinating results, and without losing visibility into what happened. Five interconnected problems make this hard:
+            </p>
+
+            <ol class="list-decimal">
+                <li><strong>Parallelism without race conditions</strong> &mdash; Seven agents write to the same shared state object at the same time. If two agents try to overwrite the same dictionary key, one agent's work disappears. You need a merge strategy that combines parallel writes safely.</li>
+                <li><strong>LLM hallucination in tool-based domains</strong> &mdash; Asking GPT-4o "does this code have security vulnerabilities?" produces plausible but unreliable answers. Bandit and pip-audit give deterministic, verifiable results. The challenge is running tools first and only using the LLM to summarise what the tools found.</li>
+                <li><strong>Test generation that actually works</strong> &mdash; An LLM can generate test code, but that code might have syntax errors or import failures. You need a self-correcting loop: generate, execute, check for errors, and retry with the error message fed back to the LLM.</li>
+                <li><strong>Five execution paths through a single DAG</strong> &mdash; Not every pull request follows the same route. Draft PRs should short-circuit. Oversized PRs should skip detailed analysis. Test failures might need retries. Low-quality test scores should trigger escalation. The DAG must handle all five paths with conditional routing.</li>
+                <li><strong>Observability across 12 LLM calls</strong> &mdash; When the final report looks wrong, you need to trace back through 13 agents and 12 LLM invocations to find exactly which one produced the bad output. Without tracing, debugging a multi-agent system is like finding a needle in a haystack.</li>
+            </ol>
+
+            <!-- Visual 6: Before/After Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Naive AI Review<br/>
+                        <span class="text-base font-normal text-slate-400">(Single LLM prompt)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Single prompt tries to cover all domains</li>
+                        <li>LLM "finds" security issues by guessing</li>
+                        <li>No deterministic tool verification</li>
+                        <li>Tests are suggested, never generated or run</li>
+                        <li>No retry logic &mdash; one shot, one chance</li>
+                        <li>No tracing &mdash; black box when output is wrong</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>CodeSentinel<br/>
+                        <span class="text-base font-normal text-slate-400">(13-agent DAG)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>13 specialist agents, each focused on one domain</li>
+                        <li>Bandit + pip-audit run first, LLM summarises results</li>
+                        <li>14 tools + 6 AST visitors provide ground truth</li>
+                        <li>Tests planned, generated, executed, and reported</li>
+                        <li>Self-correcting retry loop (up to 2 retries)</li>
+                        <li>4 observability providers trace every LLM call</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFY THE PROBLEM                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucify the Problem</h2>
+
+            <p>
+                Imagine a city government needs to inspect a newly constructed building before it can be occupied. They do not send one inspector who knows a little about everything. They send a team of specialists.
+            </p>
+
+            <!-- Visual 7: Analogy Card -->
+            <div class="analogy-card">
+                <h4 class="text-cyan-400 font-bold mb-4"><i class="fas fa-building mr-2"></i>The Building Inspection Analogy</h4>
+                <p class="text-slate-300 mb-4">
+                    The city sends six specialists simultaneously: an <strong>electrical inspector</strong> checks wiring and circuits (that is our <em>security agent</em> running bandit and pip-audit). A <strong>plumbing inspector</strong> checks pipes and water flow (that is the <em>performance agent</em> looking for bottlenecks using AST visitors). A <strong>structural engineer</strong> checks load-bearing walls and foundations (that is the <em>architecture agent</em> evaluating design patterns). A <strong>fire safety inspector</strong> checks exits and sprinklers (that is the <em>static analysis agent</em> running ruff and pylint). An <strong>energy auditor</strong> checks insulation and efficiency (that is the <em>style/formatting agent</em> running black and ruff format checks). An <strong>accessibility inspector</strong> checks ramps, elevators, and signage (that is the <em>docs/types agent</em> checking docstrings with mypy and AST visitors).
+                </p>
+                <p class="text-slate-300 mb-4">
+                    All six fan out through the building at the same time &mdash; they do not wait for each other. Meanwhile, a separate <strong>stress-test team</strong> works sequentially: first they <em>plan</em> which tests to run (test planner), then they <em>set up</em> the test equipment (test generator), then they <em>run the tests</em> (test executor), and finally they <em>write up the results</em> (test reporter). If the equipment fails on the first try, they recalibrate and retry (self-correcting loop).
+                </p>
+                <p class="text-slate-300 mb-4">
+                    Once all six specialists and the stress-test team have finished, a <strong>quality bridge inspector</strong> (test quality agent) checks that the stress tests meet the minimum standard. Then the <strong>lead inspector</strong> (review synthesis agent) reads every specialist's report, weights the findings by severity, and writes a single unified verdict: approve the building, request changes, or escalate to a higher authority.
+                </p>
+                <p class="text-slate-300 mb-0">
+                    <strong>Where the analogy breaks down:</strong> a building inspection takes weeks. CodeSentinel completes this entire workflow in under two minutes, and its "inspectors" never get tired, never skip a checklist item, and log every observation for a full audit trail across four different record-keeping systems (observability providers).
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: LUCIFY THE JARGON                                  -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book-open mr-3"></i>Lucify the Jargon</h2>
+
+            <p>
+                Before we look at the architecture, let us define six key concepts. Each one gets a definition, a simple example, and a real-world analogy so the idea sticks.
+            </p>
+
+            <!-- Visual 8: Concept Card - DAG -->
+            <div class="concept-card">
+                <h4 class="text-emerald-400 font-bold mb-2"><i class="fas fa-project-diagram mr-2"></i>Directed Acyclic Graph (DAG)</h4>
+                <p class="mb-2"><strong>Definition:</strong> A graph where every connection has a direction (A goes to B, not the other way around) and there are no loops that bring you back to where you started. "Directed" means one-way arrows. "Acyclic" means no circles.</p>
+                <p class="mb-2"><strong>Simple Example:</strong> Think of a recipe. You crack eggs, then whisk them, then pour into the pan, then cook. You never go backwards from cooking to cracking eggs. Each step feeds forward to the next. Some steps can happen in parallel (chopping vegetables while heating the pan), but you never revisit a completed step.</p>
+                <p class="mb-0"><strong>Analogy:</strong> A recipe with parallel prep steps that always moves forward and never goes backwards. CodeSentinel's 13 agents are arranged in exactly this pattern: intake first, then 7 agents in parallel, then convergence, then synthesis, then done.</p>
+            </div>
+
+            <!-- Visual 9: Concept Card - Fan-out / Convergence -->
+            <div class="concept-card">
+                <h4 class="text-emerald-400 font-bold mb-2"><i class="fas fa-code-branch mr-2"></i>Fan-out / Convergence</h4>
+                <p class="mb-2"><strong>Definition:</strong> Fan-out means one node triggers multiple nodes to run at the same time. Convergence means all of those parallel nodes must finish before the next single node can start. Together, they let you parallelise work and then collect the results.</p>
+                <p class="mb-2"><strong>Simple Example:</strong> In CodeSentinel, after PR Intake finishes, 7 agents start simultaneously (fan-out). Once all 7 complete, the Test Quality agent starts (convergence). This is like a relay race where the baton splits into 7 copies, each runner completes their leg, and the next runner waits until all 7 batons arrive.</p>
+                <p class="mb-0"><strong>Analogy:</strong> A restaurant kitchen. The head chef calls out the order (PR Intake). Seven stations &mdash; grill, saut&eacute;, fry, salad, sauce, pastry, garnish &mdash; all work on their component simultaneously (fan-out). The expeditor (Test Quality) waits until every plate is ready before assembling the final dish and sending it out (convergence).</p>
+            </div>
+
+            <!-- Visual 10: Concept Card - SAST -->
+            <div class="concept-card">
+                <h4 class="text-emerald-400 font-bold mb-2"><i class="fas fa-search-plus mr-2"></i>Static Application Security Testing (SAST)</h4>
+                <p class="mb-2"><strong>Definition:</strong> Analysing source code for security vulnerabilities without actually running the program. The tool reads the code text, matches known dangerous patterns (like <code>eval()</code>, hardcoded passwords, or SQL injection sinks), and reports findings with severity levels.</p>
+                <p class="mb-2"><strong>Simple Example:</strong> CodeSentinel runs <strong>bandit</strong> on every changed Python file. Bandit reads the code and flags patterns like <code>subprocess.call(shell=True)</code> as a HIGH severity command injection risk. It also runs <strong>pip-audit</strong> to check if any installed package has a known CVE (publicly disclosed vulnerability).</p>
+                <p class="mb-0"><strong>Analogy:</strong> Airport security scanning your luggage with an X-ray machine. They do not open your bag and test each item &mdash; they look at the structure and flag anything suspicious. Bandit does the same thing with code: it scans the structure and flags dangerous patterns without running a single line.</p>
+            </div>
+
+            <!-- Visual 11: Concept Card - AST -->
+            <div class="concept-card">
+                <h4 class="text-emerald-400 font-bold mb-2"><i class="fas fa-sitemap mr-2"></i>Abstract Syntax Tree (AST)</h4>
+                <p class="mb-2"><strong>Definition:</strong> A tree-shaped representation of your code's structure. Python's built-in <code>ast</code> module parses source code into a tree where each node represents a language construct: functions, classes, loops, imports, assignments, and so on. You can walk this tree to find specific patterns.</p>
+                <p class="mb-2"><strong>Simple Example:</strong> CodeSentinel has 6 AST visitors: <code>check_function_length</code> finds functions longer than 50 lines, <code>check_docstrings</code> finds public functions without documentation, <code>check_perf_patterns</code> finds membership tests on list comprehensions (should use sets), <code>check_race_conditions</code> finds threading without locks, <code>check_global_mutable_state</code> finds mutable module-level variables, and <code>check_circular_imports</code> finds imports inside functions.</p>
+                <p class="mb-0"><strong>Analogy:</strong> A grammar diagram of a sentence. "The cat sat on the mat" becomes a tree: sentence &rarr; subject ("the cat") &rarr; verb ("sat") &rarr; prepositional phrase ("on the mat"). An AST does the same thing for code. CodeSentinel walks this tree looking for structural problems that no amount of text-matching could reliably find.</p>
+            </div>
+
+            <!-- Visual 12: Concept Card - Conventional Comments -->
+            <div class="concept-card">
+                <h4 class="text-emerald-400 font-bold mb-2"><i class="fas fa-comments mr-2"></i>Conventional Comments</h4>
+                <p class="mb-2"><strong>Definition:</strong> A standard format for code review comments that starts with a label (suggestion, issue, nitpick, praise, thought, todo) followed by a severity level and the actual feedback. This makes it instantly clear whether a comment is blocking or informational.</p>
+                <p class="mb-2"><strong>Simple Example:</strong> Instead of writing "maybe change this?", CodeSentinel produces: <code>issue (high): src/auth.py:42 &mdash; SQL injection risk via string concatenation. Use parameterized queries instead.</code> Or: <code>nitpick (info): src/utils.py:15 &mdash; Public function 'parse_data' missing docstring. Add a docstring explaining the return type.</code></p>
+                <p class="mb-0"><strong>Analogy:</strong> A teacher grading papers with a colour-coded pen system. Red pen (issue) means "this must be fixed". Blue pen (suggestion) means "consider changing this". Green pen (praise) means "nice work here". Yellow pen (nitpick) means "minor style point". The student knows at a glance which comments are blocking and which are optional.</p>
+            </div>
+
+            <!-- Visual 13: Concept Card - Structured Output -->
+            <div class="concept-card">
+                <h4 class="text-emerald-400 font-bold mb-2"><i class="fas fa-th-list mr-2"></i>Structured Output (Pydantic State)</h4>
+                <p class="mb-2"><strong>Definition:</strong> Instead of letting each agent return free-form text, every agent writes to a shared Pydantic model (<code>ReviewState</code>) with typed fields. This means every piece of data has a known structure &mdash; no JSON parsing, no regex extraction, no guessing what format the output is in.</p>
+                <p class="mb-2"><strong>Simple Example:</strong> The <code>ReviewState</code> model has fields like <code>agent_findings: dict[str, AgentFindings]</code> where each agent writes to its own key. The <code>Finding</code> model has typed fields: <code>agent</code>, <code>severity</code>, <code>category</code>, <code>file</code>, <code>line</code>, <code>message</code>, <code>suggestion</code>. Every finding from every agent follows exactly the same structure.</p>
+                <p class="mb-0"><strong>Analogy:</strong> The difference between a tax form and a blank piece of paper. A tax form has specific boxes for income, deductions, and credits &mdash; the structure tells you exactly what goes where. A blank piece of paper is free-form text where anything could be anywhere. Pydantic state models are the tax form: every agent knows exactly which box to fill in.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: MAKE THE BLUEPRINT                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Make the Blueprint</h2>
+
+            <p>
+                CodeSentinel is a 13-node LangGraph DAG. Each node is a specialised agent that reads from and writes to a shared <code>ReviewState</code> Pydantic model. The DAG has two parallel tracks &mdash; six analysis agents (Track A) and a four-stage test pipeline (Track B) &mdash; that converge at a quality bridge before the final synthesis. Here is the full architecture:
+            </p>
+
+            <!-- Visual 14: Full DAG Architecture Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">CodeSentinel DAG Architecture</h4>
+
+                <!-- Row 1: PR Intake -->
+                <div class="flex justify-center mb-4">
+                    <div class="pipeline-node" style="border: 2px solid #06b6d4; min-width: 200px;">
+                        <div class="node-number text-cyan-400">1</div>
+                        <div class="node-name">PR Intake</div>
+                        <div class="node-desc">Parse diff, extract metadata, detect config</div>
+                    </div>
+                </div>
+
+                <!-- Routing -->
+                <div class="flex justify-center mb-4">
+                    <div class="routing-branch" style="min-width: 250px;">
+                        <div class="text-xs text-emerald-400 font-bold">CONDITIONAL ROUTING</div>
+                        <div class="text-xs text-slate-400">Draft PR or LOC &gt; 400 &rarr; short-circuit to Synthesis</div>
+                        <div class="text-xs text-slate-400">Otherwise &rarr; fan-out to 7 agents</div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Fan-out - 7 parallel agents -->
+                <div class="mb-2 text-center text-xs text-emerald-400 font-bold">TRACK A: 6 Analysis Agents (Parallel)</div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">2</div>
+                        <div class="node-name">Style / Format</div>
+                        <div class="node-desc">ruff + black</div>
+                    </div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">3</div>
+                        <div class="node-name">Docs / Types</div>
+                        <div class="node-desc">mypy + AST docstrings</div>
+                    </div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">4</div>
+                        <div class="node-name">Static Analysis</div>
+                        <div class="node-desc">pylint + AST visitors</div>
+                    </div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">5</div>
+                        <div class="node-name">Security</div>
+                        <div class="node-desc">bandit + pip-audit</div>
+                    </div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">6</div>
+                        <div class="node-name">Performance</div>
+                        <div class="node-desc">AST perf patterns</div>
+                    </div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="node-number text-emerald-400">7</div>
+                        <div class="node-name">Architecture</div>
+                        <div class="node-desc">Design pattern analysis</div>
+                    </div>
+                </div>
+
+                <!-- Track B: Test Pipeline -->
+                <div class="mb-2 text-center text-xs text-violet-400 font-bold">TRACK B: Test Pipeline (Sequential)</div>
+                <div class="pipeline-flow mb-4">
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">8</div>
+                        <div class="node-name">Test Planner</div>
+                        <div class="node-desc">Plan test cases</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">9</div>
+                        <div class="node-name">Test Generator</div>
+                        <div class="node-desc">Generate pytest code</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="routing-branch" style="border-color: #8b5cf6;">
+                        <div class="text-xs text-violet-400 font-bold">RETRY LOOP</div>
+                        <div class="text-xs text-slate-400">syntax error &rarr; retry (max 2)</div>
+                        <div class="text-xs text-slate-400">clean &rarr; execute</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">10</div>
+                        <div class="node-name">Test Executor</div>
+                        <div class="node-desc">Run pytest (no LLM)</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">11</div>
+                        <div class="node-name">Test Reporter</div>
+                        <div class="node-desc">Summarise results</div>
+                    </div>
+                </div>
+
+                <!-- Convergence -->
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <div class="flex justify-center mb-4">
+                    <div class="pipeline-node" style="border: 2px solid #f59e0b; min-width: 250px;">
+                        <div class="node-number text-amber-400">12</div>
+                        <div class="node-name">Test Quality Bridge</div>
+                        <div class="node-desc">Convergence point &mdash; all 7 paths must complete</div>
+                    </div>
+                </div>
+
+                <!-- Final Synthesis -->
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <div class="flex justify-center">
+                    <div class="pipeline-node" style="border: 2px solid #06b6d4; min-width: 250px;">
+                        <div class="node-number text-cyan-400">13</div>
+                        <div class="node-name">Review Synthesis</div>
+                        <div class="node-desc">Verdict + Conventional Comments &rarr; END</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 15: 13 Agent Role Cards -->
+            <h3>The 13 Agents</h3>
+            <p>
+                Each agent has a specific role, a set of tools it runs, and an LLM call (or not). Here is every agent in the system:
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-4 my-6">
+                <div class="agent-role-card">
+                    <div class="text-cyan-400 font-bold text-sm mb-1"><i class="fas fa-inbox mr-1"></i> 1. PR Intake</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: git diff, file reader | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Parses the pull request diff, extracts metadata (LOC, files changed, author), reads file contents, and detects project configuration (pyproject.toml, pre-commit hooks).</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-emerald-400 font-bold text-sm mb-1"><i class="fas fa-paint-brush mr-1"></i> 2. Style / Formatting</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: ruff, black --check | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Runs ruff linter and black formatter on changed files. LLM summarises style violations and suggests fixes.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-emerald-400 font-bold text-sm mb-1"><i class="fas fa-file-alt mr-1"></i> 3. Docs / Types</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: mypy, AST docstring checker | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Runs mypy for type errors and AST visitors for missing docstrings on public functions and classes.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-emerald-400 font-bold text-sm mb-1"><i class="fas fa-microscope mr-1"></i> 4. Static Analysis</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: pylint, AST visitors | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Runs pylint for code quality issues and AST visitors for function length, global mutable state, and circular import risks.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-emerald-400 font-bold text-sm mb-1"><i class="fas fa-lock mr-1"></i> 5. Security</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: bandit, pip-audit | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Runs bandit for SAST vulnerabilities and pip-audit for known CVEs in dependencies. LLM classifies risk and recommends mitigations.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-emerald-400 font-bold text-sm mb-1"><i class="fas fa-tachometer-alt mr-1"></i> 6. Performance</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: AST perf patterns, AST race conditions | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">AST visitors detect membership tests on list comprehensions, string concatenation in loops, and threading without locks.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-emerald-400 font-bold text-sm mb-1"><i class="fas fa-cubes mr-1"></i> 7. Architecture</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: file structure analysis | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Evaluates design patterns, module organisation, dependency structure, and adherence to SOLID principles.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-violet-400 font-bold text-sm mb-1"><i class="fas fa-clipboard-list mr-1"></i> 8. Test Planner</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: code analysis | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Analyses changed code and produces a TestPlan with test cases, target functions, test types (unit, integration, edge case), and coverage targets.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-violet-400 font-bold text-sm mb-1"><i class="fas fa-code mr-1"></i> 9. Test Generator</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: code writer | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Takes the TestPlan and generates actual pytest code. If execution fails with a syntax error, the LLM receives the error and retries (up to 2 times).</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-violet-400 font-bold text-sm mb-1"><i class="fas fa-play mr-1"></i> 10. Test Executor</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: pytest runner | <span class="text-red-400">No LLM</span></div>
+                    <div class="text-sm text-slate-300">The only agent that uses no LLM. Runs the generated test file with pytest, captures pass/fail counts, errors, coverage percentage, and output.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-violet-400 font-bold text-sm mb-1"><i class="fas fa-chart-bar mr-1"></i> 11. Test Reporter</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: result analyser | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Takes raw pytest output and produces a diagnostic report: failure analysis, root causes, and recommendations for improving test quality.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-amber-400 font-bold text-sm mb-1"><i class="fas fa-check-double mr-1"></i> 12. Test Quality Bridge</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: quality scorer | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Convergence point. Waits for all 7 paths (6 analysis + test reporter). Scores test quality. If quality_score &lt; 0.4, escalates to synthesis.</div>
+                </div>
+                <div class="agent-role-card">
+                    <div class="text-cyan-400 font-bold text-sm mb-1"><i class="fas fa-gavel mr-1"></i> 13. Review Synthesis</div>
+                    <div class="text-xs text-slate-400 mb-2">Tools: finding aggregator | <span class="text-cyan-300">LLM</span></div>
+                    <div class="text-sm text-slate-300">Reads all agent findings, groups by severity, determines verdict (approve / request_changes / escalate), and writes Conventional Comments.</div>
+                </div>
+            </div>
+
+            <!-- Visual 16: Test Pipeline Flow -->
+            <h3>The Self-Correcting Test Pipeline</h3>
+            <p>
+                The test pipeline is the only sequential track in the DAG. Four agents work in order, with a retry loop between the generator and executor:
+            </p>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">Test Pipeline Detail</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">8</div>
+                        <div class="node-name">Test Planner</div>
+                        <div class="node-desc">Analyse code &rarr; TestPlan</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">9</div>
+                        <div class="node-name">Test Generator</div>
+                        <div class="node-desc">TestPlan &rarr; pytest code</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">10</div>
+                        <div class="node-name">Test Executor</div>
+                        <div class="node-desc">pytest run (no LLM)</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">11</div>
+                        <div class="node-name">Test Reporter</div>
+                        <div class="node-desc">Results &rarr; diagnostic report</div>
+                    </div>
+                </div>
+                <div class="info-box" style="margin-top: 1rem;">
+                    <strong><i class="fas fa-sync-alt mr-2 text-cyan-400"></i>Retry Loop:</strong> If the Test Generator produces code with syntax errors, the <code>route_after_test_gen</code> function sends it back to the generator with the error message. Maximum 2 retries. If it still fails, execution continues to the reporter with whatever output is available.
+                </div>
+            </div>
+
+            <!-- Visual 17: 5 Execution Paths -->
+            <h3>Five Execution Paths</h3>
+            <p>
+                Not every pull request takes the same route through the DAG. There are five distinct paths, each triggered by different conditions:
+            </p>
+
+            <div class="my-6">
+                <div class="exec-path-row">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-cyan-400 font-bold text-lg">Path 1</span>
+                        <span class="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded text-xs font-semibold">HAPPY PATH</span>
+                    </div>
+                    <div class="text-sm text-slate-300">PR Intake &rarr; 7 agents fan-out &rarr; Test Pipeline (plan &rarr; generate &rarr; execute &rarr; report) &rarr; Test Quality &rarr; Review Synthesis &rarr; END</div>
+                    <div class="text-xs text-slate-500 mt-1">When: Normal PR, LOC &le; 400, not draft, tests pass, quality score &ge; 0.4</div>
+                </div>
+
+                <div class="exec-path-row">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-amber-400 font-bold text-lg">Path 2</span>
+                        <span class="px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded text-xs font-semibold">SHORT-CIRCUIT</span>
+                    </div>
+                    <div class="text-sm text-slate-300">PR Intake &rarr; Review Synthesis &rarr; END</div>
+                    <div class="text-xs text-slate-500 mt-1">When: Draft PR or total LOC (added + removed) exceeds 400. Skips all analysis.</div>
+                </div>
+
+                <div class="exec-path-row">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-violet-400 font-bold text-lg">Path 3</span>
+                        <span class="px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded text-xs font-semibold">TEST RETRY</span>
+                    </div>
+                    <div class="text-sm text-slate-300">PR Intake &rarr; 7 agents &rarr; Test Generator &rarr; <strong>retry (1-2x)</strong> &rarr; Test Executor &rarr; Test Reporter &rarr; Test Quality &rarr; Synthesis &rarr; END</div>
+                    <div class="text-xs text-slate-500 mt-1">When: Generated test code has syntax errors. Generator retries up to 2 times with error feedback.</div>
+                </div>
+
+                <div class="exec-path-row">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-red-400 font-bold text-lg">Path 4</span>
+                        <span class="px-2 py-0.5 bg-red-500/20 text-red-300 rounded text-xs font-semibold">ESCALATION</span>
+                    </div>
+                    <div class="text-sm text-slate-300">PR Intake &rarr; 7 agents &rarr; Test Pipeline &rarr; Test Quality (score &lt; 0.4) &rarr; Review Synthesis (verdict: escalate) &rarr; END</div>
+                    <div class="text-xs text-slate-500 mt-1">When: Test quality score falls below 0.4 threshold. Synthesis marks verdict as "escalate" for human review.</div>
+                </div>
+
+                <div class="exec-path-row">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-emerald-400 font-bold text-lg">Path 5</span>
+                        <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-xs font-semibold">CLEAN APPROVAL</span>
+                    </div>
+                    <div class="text-sm text-slate-300">PR Intake &rarr; 7 agents (all clean) &rarr; Test Pipeline (all pass) &rarr; Test Quality (high score) &rarr; Synthesis (verdict: approve) &rarr; END</div>
+                    <div class="text-xs text-slate-500 mt-1">When: No critical/high findings, tests pass, quality score is high. Verdict is "approve".</div>
+                </div>
+            </div>
+
+            <!-- Visual 18: State Flow Diagram -->
+            <h3>The ReviewState Model</h3>
+            <p>
+                Every agent reads from and writes to a single <code>ReviewState</code> Pydantic model. This is the contract that holds the entire system together. Here is how data flows through the state:
+            </p>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">State Flow Through the DAG</h4>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 font-bold text-sm mb-2">Inputs</div>
+                        <div class="text-xs text-slate-400 text-left space-y-1">
+                            <div><code>pr_url</code> &mdash; GitHub PR URL</div>
+                            <div><code>repo_path</code> &mdash; Local repo path</div>
+                            <div><code>metadata</code> &mdash; PRMetadata</div>
+                            <div><code>diff</code> &mdash; DiffContext</div>
+                            <div><code>project_config</code> &mdash; ProjectConfig</div>
+                        </div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 font-bold text-sm mb-2">Agent Findings</div>
+                        <div class="text-xs text-slate-400 text-left space-y-1">
+                            <div><code>agent_findings</code> &mdash; dict with _merge_dicts reducer</div>
+                            <div><code>test_plan</code> &mdash; TestPlan</div>
+                            <div><code>generated_test_code</code> &mdash; str</div>
+                            <div><code>executor_results</code> &mdash; ExecutorResults</div>
+                            <div><code>test_diagnostic</code> &mdash; TestDiagnosticReport</div>
+                        </div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 font-bold text-sm mb-2">Final Output</div>
+                        <div class="text-xs text-slate-400 text-left space-y-1">
+                            <div><code>final_report</code> &mdash; FinalReport</div>
+                            <div><code>verdict</code> &mdash; approve / request_changes / escalate</div>
+                            <div><code>conventional_comments</code> &mdash; list</div>
+                            <div><code>errors</code> &mdash; list (operator.add reducer)</div>
+                            <div><code>escalations</code> &mdash; list (operator.add reducer)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tip-box" style="margin-top: 1rem;">
+                    <strong><i class="fas fa-key mr-2"></i>Key Design Pattern:</strong> The <code>agent_findings</code> field uses a custom <code>_merge_dicts</code> reducer so that when 7 agents write to it in parallel, each agent's dictionary entry is merged safely instead of one overwriting another. The <code>errors</code> and <code>escalations</code> fields use <code>operator.add</code> to concatenate lists from parallel agents.
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: EXECUTE THE BLUEPRINT                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Execute the Blueprint</h2>
+
+            <p>
+                Now we walk through the actual code that powers each component. Every snippet comes directly from the CodeSentinel repository.
+            </p>
+
+            <!-- Step 1: State Model -->
+            <h3>Step 1: The State Model</h3>
+
+            <p>
+                The <code>ReviewState</code> is the shared contract between all 13 agents. Two reducer patterns make parallel writes safe: <code>_merge_dicts</code> for the agent findings dictionary, and <code>operator.add</code> for error and escalation lists.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/graph/state.py
+from pydantic import BaseModel, Field
+from typing import Annotated
+import operator
+
+def _merge_dicts(left: dict, right: dict) -> dict:
+    """Merge two dicts, with right overwriting overlapping keys."""
+    merged = left.copy()
+    merged.update(right)
+    return merged
+
+class ReviewState(BaseModel):
+    """Main state flowing through the LangGraph review pipeline."""
+
+    # Input
+    pr_url: str = ""
+    repo_path: str = ""
+
+    # PR Intake output
+    metadata: PRMetadata = Field(default_factory=PRMetadata)
+    diff: DiffContext = Field(default_factory=DiffContext)
+    project_config: ProjectConfig = Field(default_factory=ProjectConfig)
+
+    # Agent findings (each agent writes to unique key; reducer merges parallel writes)
+    agent_findings: Annotated[dict[str, AgentFindings], _merge_dicts] = Field(
+        default_factory=dict
+    )
+
+    # Test pipeline
+    test_plan: TestPlan = Field(default_factory=TestPlan)
+    generated_test_code: str = ""
+    executor_results: ExecutorResults = Field(default_factory=ExecutorResults)
+    test_gen_retries: int = 0
+
+    # Final output
+    final_report: FinalReport = Field(default_factory=FinalReport)
+
+    # Error and escalation tracking (reducer pattern for LangGraph)
+    errors: Annotated[list[str], operator.add] = Field(default_factory=list)
+    escalations: Annotated[list[Escalation], operator.add] = Field(
+        default_factory=list
+    )</code></pre>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-info-circle mr-2 text-cyan-400"></i>Why _merge_dicts matters:</strong>
+                When 7 agents run in parallel and each writes <code>{"agent_findings": {"security": ...}}</code>, LangGraph needs a way to combine these dictionaries. The <code>_merge_dicts</code> reducer merges them key-by-key so no agent's work is lost. Without this, the last agent to finish would overwrite all previous findings.
+            </div>
+
+            <!-- Step 2: Building the Graph -->
+            <h3>Step 2: Building the Graph</h3>
+
+            <p>
+                The <code>build_graph</code> function wires all 13 nodes together. The critical piece is the fan-out after PR Intake: a conditional edge function that returns a list of 7 target nodes for parallel execution, or a single <code>"review_synthesis"</code> node for short-circuit.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/graph/builder.py
+from langgraph.graph import END, StateGraph
+
+def build_graph(settings, obs_manager=None):
+    graph = StateGraph(ReviewState)
+
+    # Add all 13 nodes
+    graph.add_node("pr_intake", pr_intake)
+    graph.add_node("style_formatting", style_formatting)
+    graph.add_node("docs_types", docs_types)
+    graph.add_node("static_analysis", static_analysis)
+    graph.add_node("security", security)
+    graph.add_node("performance", performance)
+    graph.add_node("architecture", architecture)
+    graph.add_node("test_planner", test_planner)
+    graph.add_node("test_generator", test_generator)
+    graph.add_node("test_executor", test_executor)
+    graph.add_node("test_reporter", test_reporter)
+    graph.add_node("test_quality", test_quality)
+    graph.add_node("review_synthesis", review_synthesis)
+
+    graph.set_entry_point("pr_intake")
+
+    # Fan-out: 7 agents in parallel OR short-circuit
+    def _fan_out_after_intake(state: ReviewState) -> list[str]:
+        result = route_after_intake(state)
+        if result == "short_circuit":
+            return ["review_synthesis"]
+        return [
+            "style_formatting", "docs_types", "static_analysis",
+            "security", "performance", "architecture", "test_planner",
+        ]
+
+    graph.add_conditional_edges("pr_intake", _fan_out_after_intake, [
+        "style_formatting", "docs_types", "static_analysis",
+        "security", "performance", "architecture",
+        "test_planner", "review_synthesis",
+    ])
+
+    # Test pipeline: sequential
+    graph.add_edge("test_planner", "test_generator")
+    graph.add_conditional_edges("test_generator", route_after_test_gen, {
+        "retry": "test_generator",
+        "execute": "test_executor",
+    })
+    graph.add_edge("test_executor", "test_reporter")
+
+    # Convergence: all 7 paths feed into test_quality
+    for agent in ["style_formatting", "docs_types", "static_analysis",
+                   "security", "performance", "architecture", "test_reporter"]:
+        graph.add_edge(agent, "test_quality")
+
+    # Quality gate: escalate or synthesise
+    graph.add_conditional_edges("test_quality", route_after_quality, {
+        "escalate": "review_synthesis",
+        "synthesize": "review_synthesis",
+    })
+
+    graph.add_edge("review_synthesis", END)
+    return graph.compile()</code></pre>
+            </div>
+
+            <!-- Step 3: Routing -->
+            <h3>Step 3: The Three Routing Functions</h3>
+
+            <p>
+                Three routing functions control the five execution paths. Each one inspects the current state and returns a string that tells LangGraph which edge to follow.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/graph/routing.py
+
+def route_after_intake(state: ReviewState) -> str:
+    """Route after PR intake: short-circuit if LOC > max or draft PR."""
+    total_loc = state.metadata.loc_added + state.metadata.loc_removed
+    if state.metadata.is_draft:
+        return "short_circuit"
+    if total_loc > 400:
+        return "short_circuit"
+    return "continue"
+
+def route_after_test_gen(state: ReviewState) -> str:
+    """Route after test generation: retry if syntax errors (max 2 retries)."""
+    if state.executor_results.syntax_error and state.test_gen_retries < 2:
+        return "retry"
+    return "execute"
+
+def route_after_quality(state: ReviewState) -> str:
+    """Route after test quality: escalate if confidence too low."""
+    if state.test_assessment.quality_score < 0.4:
+        return "escalate"
+    return "synthesize"</code></pre>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-exclamation-triangle mr-2 text-amber-400"></i>Short-circuit threshold:</strong>
+                The 400-LOC threshold for short-circuiting is configurable. Very large PRs are sent directly to synthesis with a message saying "this PR is too large for automated review &mdash; please break it into smaller PRs." Draft PRs are also short-circuited because they are not ready for detailed analysis.
+            </div>
+
+            <!-- Step 4: Analysis Agent (Security) -->
+            <h3>Step 4: An Analysis Agent (Security)</h3>
+
+            <p>
+                Every analysis agent follows the same pattern: run deterministic tools first, then call the LLM to summarise the tool output. Here is the security agent as a representative example:
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/security.py
+
+SECURITY_SYSTEM_PROMPT = (
+    """You are a security reviewer. Given the findings from """
+    """bandit (SAST) and pip-audit (dependency vulnerabilities), """
+    """provide a security assessment. Classify each finding by """
+    """risk level and recommend mitigations. Be concise."""
+)
+
+def create_security_node(llm, settings):
+    def security_node(state: ReviewState, config=None) -> dict:
+        repo_path = state.repo_path
+        changed_files = state.metadata.files_changed
+
+        # Step 1: Run deterministic tools
+        bandit_findings = run_bandit(repo_path, changed_files=changed_files)
+        pip_findings = run_pip_audit(repo_path)
+        all_findings = bandit_findings + pip_findings
+
+        # Step 2: LLM summarises tool output (not the other way around)
+        summary = ""
+        if all_findings:
+            findings_text = "\n".join(
+                f"- [{f.severity.value}] {f.file}:{f.line} {f.message}"
+                for f in all_findings[:20]
+            )
+            response = llm.invoke([
+                SystemMessage(content=SECURITY_SYSTEM_PROMPT),
+                HumanMessage(content=f"Security findings:\n{findings_text}"),
+            ], config=config)
+            summary = response.content or ""
+
+        return {"agent_findings": {
+            **state.agent_findings,
+            "security": AgentFindings(
+                agent_name="security",
+                findings=all_findings,
+                summary=summary,
+                confidence=0.85,
+            )
+        }}
+    return security_node</code></pre>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-check-circle mr-2"></i>Tools first, LLM second:</strong>
+                Notice the pattern: bandit and pip-audit run first to produce verifiable findings. The LLM only sees the tool output and writes a human-readable summary. This means the findings list contains deterministic, reproducible data. The LLM adds readability but cannot hallucinate findings that the tools did not detect.
+            </div>
+
+            <!-- Step 5: AST Visitors -->
+            <h3>Step 5: AST Visitors</h3>
+
+            <p>
+                The 6 AST visitors use Python's built-in <code>ast</code> module to walk the syntax tree and find structural patterns. Here are two of the most interesting ones:
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/tools/ast_visitors.py
+import ast
+from pathlib import Path
+
+def check_perf_patterns(file_path: str) -> list[Finding]:
+    """Check for common performance anti-patterns."""
+    tree = _parse_file(file_path)
+    if tree is None:
+        return []
+
+    findings = []
+    for node in ast.walk(tree):
+        # Membership test on list comprehension (should use set)
+        if isinstance(node, ast.Compare):
+            for op, comparator in zip(node.ops, node.comparators, strict=False):
+                if isinstance(op, ast.In) and isinstance(comparator, ast.ListComp):
+                    findings.append(Finding(
+                        agent="ast_visitor", severity=Severity.MEDIUM,
+                        category="perf-pattern", file=file_path, line=node.lineno,
+                        message="Membership test on list comprehension — use set",
+                        suggestion="Convert to set comprehension for O(1) lookup",
+                    ))
+
+        # String concatenation in loop
+        if isinstance(node, ast.For):
+            for child in ast.walk(node):
+                if isinstance(child, ast.AugAssign) and isinstance(child.op, ast.Add):
+                    findings.append(Finding(
+                        agent="ast_visitor", severity=Severity.LOW,
+                        category="perf-pattern", file=file_path, line=child.lineno,
+                        message="String concatenation in loop",
+                        suggestion="Use list + join or io.StringIO",
+                    ))
+    return findings
+
+def check_race_conditions(file_path: str) -> list[Finding]:
+    """Check for potential race condition patterns."""
+    tree = _parse_file(file_path)
+    source = Path(file_path).read_text(encoding="utf-8")
+
+    has_threading = "import threading" in source or "from threading" in source
+    has_lock = "Lock()" in source or "RLock()" in source
+
+    if has_threading and not has_lock:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module == "threading":
+                findings.append(Finding(
+                    agent="ast_visitor", severity=Severity.HIGH,
+                    category="race-condition", file=file_path, line=node.lineno,
+                    message="Threading used without Lock/RLock",
+                    suggestion="Add synchronization primitives for shared state",
+                ))
+    return findings</code></pre>
+            </div>
+
+            <!-- Step 6: Test Executor -->
+            <h3>Step 6: The Test Executor (No LLM)</h3>
+
+            <p>
+                The Test Executor is unique: it is the only agent in the system that does not use an LLM. It simply runs pytest on the generated test file and captures the results. No interpretation, no summarisation &mdash; just raw execution.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/test_executor.py
+
+def create_test_executor_node(settings):
+    """Create a test executor node (no LLM required)."""
+
+    def test_executor_node(state: ReviewState, config=None) -> dict:
+        test_path = str(
+            Path(state.repo_path) / "tests" / "generated" / "test_generated.py"
+        )
+        try:
+            results = run_pytest(
+                test_path=test_path,
+                repo_path=state.repo_path,
+                randomly=False,
+                coverage=True,
+            )
+        except Exception as e:
+            results = ExecutorResults(output=f"Execution error: {e}")
+
+        return {"executor_results": results}
+
+    return test_executor_node</code></pre>
+            </div>
+
+            <!-- Step 7: Review Synthesis -->
+            <h3>Step 7: Review Synthesis and Conventional Comments</h3>
+
+            <p>
+                The synthesis agent is the final decision-maker. It reads all findings from all agents, groups them by severity, determines the verdict, and produces Conventional Comments for every significant finding.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/agents/review_synthesis.py
+
+def create_review_synthesis_node(llm, settings):
+    def review_synthesis_node(state: ReviewState, config=None) -> dict:
+        # Collect all findings from all agents
+        all_findings = []
+        agent_summaries = {}
+        for name, af in state.agent_findings.items():
+            all_findings.extend(af.findings)
+            agent_summaries[name] = af.summary
+
+        # Group by severity
+        findings_by_severity = {}
+        for f in all_findings:
+            sev = f.severity.value
+            findings_by_severity.setdefault(sev, []).append(f)
+
+        # Determine verdict
+        has_critical = len(findings_by_severity.get("critical", [])) > 0
+        has_high = len(findings_by_severity.get("high", [])) > 0
+        has_escalations = len(state.escalations) > 0
+
+        if has_escalations:
+            verdict = Verdict.ESCALATE
+        elif has_critical or has_high:
+            verdict = Verdict.REQUEST_CHANGES
+        else:
+            verdict = Verdict.APPROVE
+
+        # Build Conventional Comments from top findings
+        comments = []
+        for f in sorted(all_findings,
+                        key=lambda x: list(Severity).index(x.severity))[:20]:
+            label = "issue" if f.severity in (Severity.CRITICAL, Severity.HIGH) \
+                    else "suggestion"
+            if f.severity == Severity.INFO:
+                label = "nitpick"
+            comments.append(ConventionalComment(
+                label=label, severity=f.severity,
+                file=f.file, line=f.line,
+                body=f"{f.message}. {f.suggestion}" if f.suggestion else f.message,
+            ))
+
+        # LLM writes the summary narrative
+        response = llm.invoke([
+            SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+            HumanMessage(content=f"Verdict: {verdict.value}\n..."
+        )], config=config)
+
+        return {"final_report": FinalReport(
+            verdict=verdict,
+            summary=response.content,
+            findings_by_severity=findings_by_severity,
+            conventional_comments=comments,
+            total_findings=len(all_findings),
+            agent_summaries=agent_summaries,
+        )}
+    return review_synthesis_node</code></pre>
+            </div>
+
+            <!-- Step 8: Observability -->
+            <h3>Step 8: Four Observability Providers</h3>
+
+            <p>
+                CodeSentinel supports four observability providers. Two are callback-based (can run simultaneously) and two are proxy-based (mutually exclusive). Each traces every LLM call with token counts, latencies, and full prompt/response pairs.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/observability/providers.py
+
+def setup_langsmith(settings):
+    """Callback-based: sets env vars for automatic LangChain tracing."""
+    os.environ["LANGCHAIN_TRACING_V2"] = str(settings.tracing_v2).lower()
+    os.environ["LANGCHAIN_API_KEY"] = settings.api_key
+    os.environ["LANGCHAIN_PROJECT"] = settings.project
+
+def setup_langfuse(settings, session_id=None, user_id=None):
+    """Callback-based: returns a CallbackHandler for Langfuse."""
+    from langfuse.callback import CallbackHandler as LangfuseCallbackHandler
+    return LangfuseCallbackHandler(
+        public_key=settings.public_key,
+        secret_key=settings.secret_key,
+        host=settings.host,
+    )
+
+def setup_helicone(settings):
+    """Proxy-based: returns base_url and auth headers."""
+    return {
+        "base_url": "https://oai.helicone.ai/v1",
+        "default_headers": {"Helicone-Auth": f"Bearer {settings.api_key}"},
+    }
+
+def setup_braintrust(settings):
+    """Proxy-based: returns base_url and auth headers."""
+    return {
+        "base_url": "https://api.braintrust.dev/v1/proxy",
+        "default_headers": {"Authorization": f"Bearer {settings.api_key}"},
+    }</code></pre>
+            </div>
+
+            <!-- Visual 20: Observability Architecture -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">Observability Architecture</h4>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 font-bold text-sm mb-2">Callback-Based (Can Run Together)</div>
+                        <div class="grid grid-cols-2 gap-3 mt-3">
+                            <div class="text-center">
+                                <div class="text-emerald-300 text-lg"><i class="fas fa-link"></i></div>
+                                <div class="text-white text-xs font-semibold">LangSmith</div>
+                                <div class="text-slate-400 text-xs">Env vars auto-trace</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-emerald-300 text-lg"><i class="fas fa-broadcast-tower"></i></div>
+                                <div class="text-white text-xs font-semibold">Langfuse</div>
+                                <div class="text-slate-400 text-xs">CallbackHandler</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 font-bold text-sm mb-2">Proxy-Based (Mutually Exclusive)</div>
+                        <div class="grid grid-cols-2 gap-3 mt-3">
+                            <div class="text-center">
+                                <div class="text-amber-300 text-lg"><i class="fas fa-satellite-dish"></i></div>
+                                <div class="text-white text-xs font-semibold">Helicone</div>
+                                <div class="text-slate-400 text-xs">Proxy base_url</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-amber-300 text-lg"><i class="fas fa-brain"></i></div>
+                                <div class="text-white text-xs font-semibold">Braintrust</div>
+                                <div class="text-slate-400 text-xs">Proxy base_url</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9: Dashboard -->
+            <h3>Step 9: Streamlit Dashboard with Live DAG</h3>
+
+            <p>
+                The Streamlit dashboard provides a real-time view of the review process. As each agent completes, the DAG updates, agent cards appear with findings, and the progress bar advances. Here is the core streaming loop:
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/streamlit_app/app.py
+
+def main():
+    st.title("CodeSentinel")
+
+    repo_path = st.text_input("Local Repository Path")
+    pr_url = st.text_input("GitHub PR URL")
+
+    if st.button("Start Review", type="primary"):
+        settings = get_settings()
+        obs_manager = configure_observability(settings)
+        graph = build_graph(settings, obs_manager)
+
+        initial_state = ReviewState(repo_path=repo_path, pr_url=pr_url)
+        config = {"callbacks": get_callbacks(obs_manager)}
+
+        node_status = {n: "inactive" for n in ALL_NODES}
+        node_status["pr_intake"] = "running"
+
+        # Streaming loop: process events as agents complete
+        for event in graph.stream(initial_state, config=config):
+            node_name = list(event.keys())[0]
+            node_output = event[node_name]
+
+            # Update status, render DAG, show agent card
+            _update_node_status(node_name, node_output, node_status, seen_keys)
+            render_dag(node_status)       # Live DAG visualisation
+            render_agent_card(key, af)    # Agent findings card
+
+            # Update progress bar
+            progress_pct = min(completed_count / total_nodes, 1.0)
+            st.progress(progress_pct, text=f"Completed: {display_name}")
+
+        # Final report
+        render_final_report(final_report, all_agent_results)</code></pre>
+            </div>
+
+            <!-- Step 10: Testing -->
+            <h3>Step 10: Test Suite (57 Tests)</h3>
+
+            <p>
+                CodeSentinel is tested with 57 unit tests covering the state model, routing functions, AST visitors, tool runners, and agent logic. Here is the test output:
+            </p>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>pytest output</div>
+                <pre class="terminal-body">$ poetry run pytest tests/unit/ -v --tb=short
+
+========================= test session starts ==========================
+collected 57 items
+
+tests/unit/test_state.py::test_review_state_defaults          PASSED
+tests/unit/test_state.py::test_merge_dicts_reducer            PASSED
+tests/unit/test_state.py::test_severity_enum                  PASSED
+tests/unit/test_state.py::test_verdict_enum                   PASSED
+tests/unit/test_routing.py::test_route_intake_draft           PASSED
+tests/unit/test_routing.py::test_route_intake_large_loc       PASSED
+tests/unit/test_routing.py::test_route_intake_continue        PASSED
+tests/unit/test_routing.py::test_route_test_gen_retry         PASSED
+tests/unit/test_routing.py::test_route_test_gen_execute       PASSED
+tests/unit/test_routing.py::test_route_quality_escalate       PASSED
+tests/unit/test_routing.py::test_route_quality_synthesize     PASSED
+tests/unit/test_ast_visitors.py::test_function_length         PASSED
+tests/unit/test_ast_visitors.py::test_missing_docstrings      PASSED
+tests/unit/test_ast_visitors.py::test_perf_patterns           PASSED
+tests/unit/test_ast_visitors.py::test_race_conditions         PASSED
+tests/unit/test_ast_visitors.py::test_global_mutable_state    PASSED
+tests/unit/test_ast_visitors.py::test_circular_imports        PASSED
+...
+========================= 57 passed in 4.23s ===========================</pre>
+            </div>
+
+            <!-- Visual 19: Tools Matrix Table -->
+            <h3>Agent-Tool Matrix</h3>
+
+            <p>
+                The table below shows which tools and capabilities each agent uses. Notice that only one agent (Test Executor) operates without an LLM call:
+            </p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Deterministic Tools</th>
+                        <th>AST Visitors</th>
+                        <th>LLM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1. PR Intake</strong></td>
+                        <td>git diff, file reader</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2. Style / Formatting</strong></td>
+                        <td>ruff, black --check</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3. Docs / Types</strong></td>
+                        <td>mypy</td>
+                        <td>check_docstrings</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4. Static Analysis</strong></td>
+                        <td>pylint</td>
+                        <td>check_function_length, check_global_mutable_state, check_circular_imports</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>5. Security</strong></td>
+                        <td>bandit, pip-audit</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>6. Performance</strong></td>
+                        <td>&mdash;</td>
+                        <td>check_perf_patterns, check_race_conditions</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>7. Architecture</strong></td>
+                        <td>file structure analysis</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>8. Test Planner</strong></td>
+                        <td>code analysis</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>9. Test Generator</strong></td>
+                        <td>code writer</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>10. Test Executor</strong></td>
+                        <td>pytest runner</td>
+                        <td>&mdash;</td>
+                        <td class="score-red">None</td>
+                    </tr>
+                    <tr>
+                        <td><strong>11. Test Reporter</strong></td>
+                        <td>result analyser</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>12. Test Quality Bridge</strong></td>
+                        <td>quality scorer</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                    <tr>
+                        <td><strong>13. Review Synthesis</strong></td>
+                        <td>finding aggregator</td>
+                        <td>&mdash;</td>
+                        <td class="score-cyan">GPT-4o</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7: CONCLUSION                                         -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <p>
+                CodeSentinel demonstrates that multi-agent AI systems are not just theoretical &mdash; they work in practice when you combine deterministic tools with LLM intelligence, enforce safe parallelism through reducer patterns, and build self-correcting loops for unreliable operations like code generation. The result is a system that reviews Python code faster, more consistently, and more thoroughly than any single human reviewer could.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-list-check mr-2"></i>Key Takeaways:</strong>
+                <ul class="list-disc mt-3" style="margin-bottom: 0;">
+                    <li><strong>Deterministic tools first, LLM second:</strong> Run bandit, ruff, mypy, and AST visitors to produce verifiable findings. Use the LLM only to summarise what the tools found. This eliminates hallucinated security vulnerabilities and fabricated lint errors.</li>
+                    <li><strong>Dict reducer for parallel writes:</strong> The <code>_merge_dicts</code> reducer and <code>operator.add</code> for lists let 7 agents write to the same state object simultaneously without data loss. Each agent writes to its own dictionary key.</li>
+                    <li><strong>Self-correcting test pipeline:</strong> Generated tests often fail on the first try. The retry loop feeds error messages back to the LLM and gives it up to 2 chances to fix syntax errors before proceeding.</li>
+                    <li><strong>Short-circuit for edge cases:</strong> Draft PRs and oversized PRs skip the full analysis pipeline and go straight to synthesis. This saves compute and avoids meaningless reviews.</li>
+                    <li><strong>Conventional Comments for readability:</strong> Every finding gets a label (issue, suggestion, nitpick, praise), a severity, and a specific file/line reference. Developers know at a glance which comments are blocking.</li>
+                    <li><strong>Observability as a first-class citizen:</strong> Four providers (LangSmith, Langfuse, Helicone, Braintrust) trace every LLM call. Callback-based and proxy-based providers can run simultaneously for maximum coverage.</li>
+                </ul>
+            </div>
+
+            <h3>Future Work</h3>
+
+            <ul class="list-disc">
+                <li><strong>Multi-language support:</strong> Extending agents to review JavaScript, TypeScript, Go, and Rust codebases alongside Python.</li>
+                <li><strong>GitHub Actions integration:</strong> Running CodeSentinel as a GitHub Action that automatically comments on pull requests with Conventional Comments.</li>
+                <li><strong>Caching layer:</strong> Caching tool results (ruff, bandit, mypy) for unchanged files to reduce review time on incremental PRs.</li>
+                <li><strong>Human-in-the-loop:</strong> Adding an approval step where a human reviewer can accept, reject, or modify the AI's findings before they are posted.</li>
+                <li><strong>Fine-tuned models:</strong> Training specialised models for each agent domain to reduce cost and latency compared to using GPT-4o for all 12 LLM calls.</li>
+            </ul>
+
+            <!-- Final GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-emerald-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">CodeSentinel</h3>
+                        <p class="text-gray-300 mb-4">
+                            Full source code: 13-agent LangGraph DAG, 14 tools, 6 AST visitors, self-correcting test pipeline, Conventional Comments, Streamlit dashboard, and 4-provider observability. 57 passing tests. Production-ready.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/CodeSentinel" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">&copy; 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-emerald-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-emerald-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
