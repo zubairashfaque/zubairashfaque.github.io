@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAlign-RLHF: Building a Medical AI from Scratch — SFT, DPO, RAG, and Quantization on Free GPUs | Zubair Ashfaque</title>
+    <meta name="description" content="A complete guide to post-training a 7B medical LLM through QLoRA SFT, DPO preference alignment, hybrid RAG with cross-encoder reranking, and GGUF quantization with medical imatrix — all on free Kaggle GPUs and a consumer laptop.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            margin: 3rem 0;
+        }
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #3b82f6;
+        }
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #60a5fa;
+        }
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #93c5fd;
+        }
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover { color: #60a5fa; }
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .highlight-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        .metric-card .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-card .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .benchmark-table th {
+            background: rgba(59, 130, 246, 0.2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #93c5fd;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .benchmark-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        .benchmark-table tr:hover { background: rgba(59, 130, 246, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 1.5rem;
+            padding: 0.5rem 0;
+        }
+        .flow-arrow-right {
+            display: flex;
+            align-items: center;
+            color: #3b82f6;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .analogy-card {
+            background: rgba(59, 130, 246, 0.05);
+            border: 2px solid #3b82f6;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .screenshot-container { margin: 1.5rem 0; text-align: center; }
+        .screenshot-container img { width: 100%; border-radius: 0.75rem; border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .screenshot-caption { font-size: 0.875rem; color: #94a3b8; margin-top: 0.75rem; font-style: italic; }
+        .pipeline-node {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+        .pipeline-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+        .swim-lane {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .swim-lane-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+        }
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .mapping-table th {
+            background: rgba(59, 130, 246, 0.15);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #93c5fd;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .mapping-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+            vertical-align: top;
+        }
+        .mapping-table tr:hover { background: rgba(59, 130, 246, 0.05); }
+
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-blue-400 to-violet-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-blue-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>MedAlign-RLHF: Medical LLM Pipeline</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                MedAlign-RLHF: Building a Medical AI from Scratch &mdash; SFT, DPO, RAG, and Quantization on Free GPUs
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                A complete guide to post-training a 7B medical LLM through supervised fine-tuning, preference alignment, hybrid retrieval, and quantized deployment &mdash; all on free Kaggle GPUs and a consumer laptop.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>April 10, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>45 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">Medical AI</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">QLoRA</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">DPO</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">RAG</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">GGUF</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">Mistral-7B</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">LLM Fine-tuning</span>
+                <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">Quantization</span>
+            </div>
+
+            <!-- Hero Pipeline Graphic -->
+            <div class="architecture-diagram mt-8">
+                <h4 class="text-center text-white font-bold mb-6">The 9-Stage Pipeline</h4>
+                <div class="flex flex-wrap justify-center items-center gap-2">
+                    <div class="pipeline-node" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-xl mb-1"><i class="fas fa-database"></i></div>
+                        <div class="text-white text-xs font-semibold">Data Prep</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #6366f1;">
+                        <div class="text-indigo-400 text-xl mb-1"><i class="fas fa-filter"></i></div>
+                        <div class="text-white text-xs font-semibold">Dedup</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-xl mb-1"><i class="fas fa-brain"></i></div>
+                        <div class="text-white text-xs font-semibold">SFT</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #a855f7;">
+                        <div class="text-purple-400 text-xl mb-1"><i class="fas fa-balance-scale"></i></div>
+                        <div class="text-white text-xs font-semibold">DPO Pairs</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #d946ef;">
+                        <div class="text-fuchsia-400 text-xl mb-1"><i class="fas fa-crosshairs"></i></div>
+                        <div class="text-white text-xs font-semibold">DPO Align</div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap justify-center items-center gap-2 mt-4">
+                    <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-xl mb-1"><i class="fas fa-search"></i></div>
+                        <div class="text-white text-xs font-semibold">RAG Index</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-xl mb-1"><i class="fas fa-compress-arrows-alt"></i></div>
+                        <div class="text-white text-xs font-semibold">GGUF Quant</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-xl mb-1"><i class="fas fa-chart-bar"></i></div>
+                        <div class="text-white text-xs font-semibold">Benchmark</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #ef4444;">
+                        <div class="text-red-400 text-xl mb-1"><i class="fas fa-rocket"></i></div>
+                        <div class="text-white text-xs font-semibold">Serve</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="section-divider"></div>
+
+        <!-- Main Article Content -->
+        <article>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Modern LLMs like ChatGPT and Claude go through a sophisticated post-training pipeline before they become useful: supervised fine-tuning on instructions, alignment through human preferences, retrieval-augmented generation for grounding, and optimization for deployment. This pipeline &mdash; pioneered by InstructGPT and refined by Llama-3 &mdash; is the engine behind every AI assistant you use today.
+            </p>
+
+            <p>
+                The problem? Most tutorials teach you one step. A blog post on LoRA fine-tuning. A video on RAG pipelines. A notebook on GGUF quantization. You learn fragments but never see how the pieces connect into a working system. You certainly never build the entire pipeline yourself, on hardware you actually have.
+            </p>
+
+            <p>
+                What if you could build the full InstructGPT-shape pipeline &mdash; data curation, supervised fine-tuning, preference alignment, retrieval augmentation, quantization, and deployment &mdash; for a medical domain, using only free GPUs and a consumer laptop? That is not a hypothetical. That is what MedAlign-RLHF delivers.
+            </p>
+
+            <p>
+                Why medical? Because medicine is the domain where every design choice earns its keep:
+            </p>
+
+            <ul class="list-disc">
+                <li><strong>SFT visibly helps</strong> &mdash; a general LLM struggles with USMLE questions; a fine-tuned one passes them.</li>
+                <li><strong>Alignment matters</strong> &mdash; a wrong dosage suggestion is dangerous, not just inconvenient.</li>
+                <li><strong>RAG is necessary</strong> &mdash; no 7B model can memorize every drug interaction and clinical guideline.</li>
+                <li><strong>Evaluation is well-defined</strong> &mdash; PubMedQA and MedQA-USMLE provide standardized benchmarks.</li>
+            </ul>
+
+            <p>The questions this blog answers:</p>
+            <ul class="list-disc">
+                <li>How do you fine-tune a 7B model on a free 16 GB GPU?</li>
+                <li>How does DPO teach a model which answers are safer without a reward model?</li>
+                <li>How do you combine dense and sparse retrieval for medical queries?</li>
+                <li>How does domain-specific quantization preserve drug names while shrinking the model to 4.4 GB?</li>
+                <li>How do you prove each pipeline stage actually improved the model?</li>
+                <li>How do you run all of this with zero paid compute?</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-stethoscope mr-2"></i>Key Innovation:</strong>
+                A 9-stage pipeline (Data Prep &rarr; Dedup &rarr; SFT &rarr; DPO Pairs &rarr; DPO Align &rarr; RAG Index &rarr; GGUF Quant &rarr; Benchmark &rarr; Serve) replicating the shape of InstructGPT/Llama post-training at 7B scale, running entirely on free Kaggle T4x2 GPUs and a consumer laptop. Total cost: ~$5 in API calls.
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
+                <div class="metric-card">
+                    <div class="metric-value">9</div>
+                    <div class="metric-label">Pipeline Stages</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">18,146</div>
+                    <div class="metric-label">Training Samples</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">~$5</div>
+                    <div class="metric-label">Total API Cost</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4.4 GB</div>
+                    <div class="metric-label">Final Model Size</div>
+                </div>
+            </div>
+
+            <!-- Single Step vs Full Lifecycle -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Most Tutorials<br/>
+                        <span class="text-base font-normal text-slate-400">(Single step in isolation)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Teach one technique (LoRA OR RAG OR quant)</li>
+                        <li>No connection between stages</li>
+                        <li>Require expensive GPUs (A100, H100)</li>
+                        <li>No evaluation of end-to-end quality</li>
+                        <li>No deployment or serving story</li>
+                        <li>Academic toy examples, not production</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>MedAlign-RLHF<br/>
+                        <span class="text-base font-normal text-slate-400">(Full lifecycle pipeline)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>All 9 stages connected end-to-end</li>
+                        <li>Artifacts flow between stages via HF Hub</li>
+                        <li>Runs on free Kaggle T4x2 (16 GB each)</li>
+                        <li>Monotonic improvement: Base &lt; SFT &lt; DPO &lt; DPO+RAG</li>
+                        <li>FastAPI + Gradio + Docker + HF Spaces</li>
+                        <li>Production-grade with CI, tests, YAML configs</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tech Stack -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Technology Stack</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-2xl mb-2"><i class="fas fa-robot"></i></div>
+                        <div class="text-white font-semibold text-sm">Mistral-7B-Instruct-v0.3</div>
+                        <div class="text-slate-400 text-xs mt-1">Base model (32k context)</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-2xl mb-2"><i class="fas fa-brain"></i></div>
+                        <div class="text-white font-semibold text-sm">TRL + PEFT + bitsandbytes</div>
+                        <div class="text-slate-400 text-xs mt-1">QLoRA SFT + DPO training</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                        <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-vector-square"></i></div>
+                        <div class="text-white font-semibold text-sm">BGE-large + FAISS + BM25</div>
+                        <div class="text-slate-400 text-xs mt-1">Hybrid retrieval + RRF</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-compress-arrows-alt"></i></div>
+                        <div class="text-white font-semibold text-sm">llama.cpp + imatrix</div>
+                        <div class="text-slate-400 text-xs mt-1">GGUF quantization (5 levels)</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                        <div class="text-amber-400 text-2xl mb-2"><i class="fas fa-chart-bar"></i></div>
+                        <div class="text-white font-semibold text-sm">RAGAS + GPT-4o-mini Judge</div>
+                        <div class="text-slate-400 text-xs mt-1">Multi-level evaluation</div>
+                    </div>
+                    <div class="architecture-box" style="border: 2px solid #ef4444;">
+                        <div class="text-red-400 text-2xl mb-2"><i class="fas fa-server"></i></div>
+                        <div class="text-white font-semibold text-sm">FastAPI + Gradio + Docker</div>
+                        <div class="text-slate-400 text-xs mt-1">Dual-interface serving</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-blue-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">MedAlign-RLHF</h3>
+                        <p class="text-gray-300 mb-4">
+                            Complete end-to-end medical LLM pipeline: QLoRA SFT, DPO alignment with PEFT memory trick, hybrid RAG (FAISS + BM25 + cross-encoder), GGUF quantization with medical imatrix, FastAPI + Gradio serving, and multi-level evaluation.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/medalign-rlhf" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is that building a medical LLM that is both accurate and safe requires solving <strong>six interconnected problems simultaneously</strong>. Solving any one in isolation produces a system that fails in practice.
+            </p>
+
+            <!-- Challenge Cards -->
+            <div class="grid md:grid-cols-2 gap-4 my-8">
+                <div class="architecture-box" style="border: 2px solid #3b82f6;">
+                    <div class="text-blue-400 text-2xl mb-2"><i class="fas fa-brain"></i></div>
+                    <div class="text-white font-semibold mb-2">1. Teaching Medicine to a General LLM</div>
+                    <div class="text-slate-400 text-sm">Mistral-7B knows some medicine from pre-training, but not enough to pass USMLE questions. Full fine-tuning needs ~80 GB VRAM. You have 16 GB.</div>
+                </div>
+                <div class="architecture-box" style="border: 2px solid #8b5cf6;">
+                    <div class="text-violet-400 text-2xl mb-2"><i class="fas fa-balance-scale"></i></div>
+                    <div class="text-white font-semibold mb-2">2. Preference, Not Just Imitation</div>
+                    <div class="text-slate-400 text-sm">SFT teaches the model to imitate answers. It does not teach it to prefer safe answers over plausible-but-dangerous ones. Full RLHF (PPO + reward model) needs 4x the memory.</div>
+                </div>
+                <div class="architecture-box" style="border: 2px solid #06b6d4;">
+                    <div class="text-cyan-400 text-2xl mb-2"><i class="fas fa-shield-alt"></i></div>
+                    <div class="text-white font-semibold mb-2">3. Hallucinated Medical Facts</div>
+                    <div class="text-slate-400 text-sm">A fine-tuned model still invents drug names and dosages. Pure semantic search misses exact jargon. Pure keyword search misses paraphrases. You need both.</div>
+                </div>
+                <div class="architecture-box" style="border: 2px solid #10b981;">
+                    <div class="text-emerald-400 text-2xl mb-2"><i class="fas fa-compress-arrows-alt"></i></div>
+                    <div class="text-white font-semibold mb-2">4. Shrinking 14 GB to 4 GB</div>
+                    <div class="text-slate-400 text-sm">Naive quantization treats "metformin" and "football" weights equally. Medical accuracy lives in specific weight matrices that get destroyed first.</div>
+                </div>
+                <div class="architecture-box" style="border: 2px solid #f59e0b;">
+                    <div class="text-amber-400 text-2xl mb-2"><i class="fas fa-chart-line"></i></div>
+                    <div class="text-white font-semibold mb-2">5. Proving Each Step Helped</div>
+                    <div class="text-slate-400 text-sm">"My model is better" means nothing without numbers. You need monotonic improvement on standardized benchmarks: Base &lt; SFT &lt; DPO &lt; DPO+RAG.</div>
+                </div>
+                <div class="architecture-box" style="border: 2px solid #ef4444;">
+                    <div class="text-red-400 text-2xl mb-2"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="text-white font-semibold mb-2">6. Zero-Budget Infrastructure</div>
+                    <div class="text-slate-400 text-sm">Training needs GPUs (Kaggle). Embedding 211k passages needs GPU. Quantization and serving need CPU. Artifacts must flow between environments for free.</div>
+                </div>
+            </div>
+
+            <!-- Challenge-to-Stage Mapping -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">How Challenges Map to Pipeline Stages</h4>
+                <div class="grid md:grid-cols-3 gap-3">
+                    <div class="text-center">
+                        <div class="text-blue-400 font-semibold text-sm mb-2">Challenges 1 &amp; 2</div>
+                        <div class="text-slate-400 text-xs">Teaching medicine + Preference</div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                            <div class="text-violet-400 text-sm font-semibold">SFT + DPO</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-cyan-400 font-semibold text-sm mb-2">Challenge 3</div>
+                        <div class="text-slate-400 text-xs">Hallucinated facts</div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                            <div class="text-cyan-400 text-sm font-semibold">Hybrid RAG</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-emerald-400 font-semibold text-sm mb-2">Challenge 4</div>
+                        <div class="text-slate-400 text-xs">Model compression</div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="pipeline-node" style="border: 2px solid #10b981;">
+                            <div class="text-emerald-400 text-sm font-semibold">GGUF + imatrix</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3 mt-4">
+                    <div class="text-center">
+                        <div class="text-amber-400 font-semibold text-sm mb-2">Challenge 5</div>
+                        <div class="text-slate-400 text-xs">Proving improvement</div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                            <div class="text-amber-400 text-sm font-semibold">Benchmarks + LLM Judge</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-red-400 font-semibold text-sm mb-2">Challenge 6</div>
+                        <div class="text-slate-400 text-xs">Free infrastructure</div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="pipeline-node" style="border: 2px solid #ef4444;">
+                            <div class="text-red-400 text-sm font-semibold">Kaggle + HF Hub + Laptop</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFY THE PROBLEM                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucify the Problem</h2>
+
+            <h3>The Medical Resident Analogy</h3>
+
+            <p>
+                The entire MedAlign pipeline is like the process a hospital uses to train a medical resident &mdash; from a smart general-science graduate into a board-certified physician who works in a real clinic.
+            </p>
+
+            <div class="analogy-card">
+                <h4 class="text-white font-bold mb-4"><i class="fas fa-user-md mr-2 text-blue-400"></i>The Resident's Journey</h4>
+
+                <p>
+                    <strong class="text-blue-300">The Graduate (Base Mistral-7B):</strong> Imagine a bright university graduate who speaks English fluently and can follow instructions. They know some medicine from reading Wikipedia, but you would not trust them with a patient. That is our base model &mdash; good at following instructions, vague on medical specifics.
+                </p>
+                <p>
+                    <strong class="text-blue-300">The Textbook (Data Preparation):</strong> The hospital's curriculum committee gathers 20,178 case studies from two medical schools. Before binding the textbook, they notice many cases are near-copies &mdash; "A 23-year-old presents with chest pain..." appears dozens of times with minor wording changes. They run a plagiarism detector (MinHash LSH) and remove 2,032 near-duplicates, keeping 18,146 unique cases. No point making the resident memorize the same case five times.
+                </p>
+                <p>
+                    <strong class="text-blue-300">Medical School (SFT QLoRA):</strong> The resident reads all 18,146 case studies twice (2 epochs). But we do not rewrite their entire brain &mdash; that would require an operating room the size of a warehouse (80 GB VRAM). Instead, we give them a small notebook (LoRA adapters, 41M parameters, 0.58% of their total knowledge) where they write medical-specific notes. Everything else they already know stays intact. To fit in a small classroom (16 GB T4), their general knowledge is compressed using shorthand (4-bit NF4).
+                </p>
+                <p>
+                    <strong class="text-blue-300">Mock Exams (DPO Pair Generation):</strong> After medical school, the hospital runs a mock exam. For each question, the resident writes two answers: one careful and conservative (T=0.3, the textbook answer) and one more creative but risky (T=0.9). An attending physician (GPT-4o-mini) reads both and marks which one they would trust with a real patient. Result: 2,000 graded comparison pairs.
+                </p>
+                <p>
+                    <strong class="text-blue-300">Mentoring (DPO Alignment):</strong> The resident sits with the 2,000 graded pairs and internalizes the attending's preferences. "When I was conservative, I was usually right. When I improvised, I sometimes got the dosage wrong." The learning is gentle (40x lower learning rate than medical school) because we do not want to overwrite what they learned &mdash; just nudge their judgment. The clever part: normally you need two residents in the room (a policy and a reference). The PEFT-DPO trick uses one resident who toggles between "notebook open" (policy) and "notebook closed" (reference). Saves a whole extra person (14 GB of VRAM).
+                </p>
+                <p>
+                    <strong class="text-blue-300">The Reference Library (RAG Index):</strong> The hospital builds a library of 211,000 PubMed abstracts, organized two ways &mdash; by topic (FAISS dense embeddings, like a catalog by subject) and by keyword (BM25, like an alphabetical index at the back of a textbook). When the resident gets a question, they check both systems, merge the results (RRF), then have a senior librarian (cross-encoder reranker) re-read the top 20 papers and pick the best 5.
+                </p>
+                <p>
+                    <strong class="text-blue-300">Packing for the Rural Clinic (GGUF Quantization):</strong> Graduation day. The resident's full knowledge (14 GB) is too large for a rural clinic with limited resources. They compress it into a field manual (GGUF). But which knowledge to keep at full precision? An importance exam (imatrix) is administered &mdash; but tested specifically on drugs, anatomy, and dosages. Weights that fire on "metformin" and "myocardial infarction" keep full precision; weights that fire on "football scores" get compressed more aggressively. Result: a 4.4 GB manual that fits in a backpack.
+                </p>
+                <p>
+                    <strong class="text-blue-300">Board Exams (Benchmarking):</strong> The resident takes certification exams at four stages &mdash; before school, after school, after mentoring, and with the library open. We expect monotonic improvement: each stage should score higher than the last.
+                </p>
+                <p>
+                    <strong class="text-blue-300">Opening the Clinic (Serving):</strong> FastAPI is the back-office phone line (other systems send JSON queries). Gradio is the walk-in reception desk (patients type questions into a form). Both doors lead to the same doctor (shared <code>answer_fn</code>). Docker wraps the clinic into a portable shipping container.
+                </p>
+            </div>
+
+            <!-- Mapping Table -->
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-hospital mr-2"></i>Hospital Term</th>
+                        <th><i class="fas fa-microchip mr-2"></i>ML Term</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Smart graduate</td><td>Mistral-7B-Instruct-v0.3 (base model)</td></tr>
+                    <tr><td>Plagiarism detector</td><td>MinHash LSH dedup (Jaccard &ge; 0.85)</td></tr>
+                    <tr><td>Medical school notebook</td><td>LoRA adapters (41M params, 0.58%)</td></tr>
+                    <tr><td>Small classroom</td><td>Kaggle T4x2 (16 GB VRAM each)</td></tr>
+                    <tr><td>Mock exam + attending</td><td>Dual-temp sampling + GPT-4o-mini judge</td></tr>
+                    <tr><td>Gentle mentoring</td><td>DPO alignment (lr=5e-6, &beta;=0.1)</td></tr>
+                    <tr><td>One resident, two roles</td><td>PEFT-DPO trick (ref_model=None)</td></tr>
+                    <tr><td>Library by topic + keyword</td><td>FAISS (dense) + BM25 (sparse) + RRF</td></tr>
+                    <tr><td>Senior librarian</td><td>Cross-encoder reranker</td></tr>
+                    <tr><td>Medical packing list</td><td>imatrix on medical calibration corpus</td></tr>
+                    <tr><td>Board certification exams</td><td>PubMedQA + MedQA-USMLE benchmarks</td></tr>
+                    <tr><td>Clinic (phone + walk-in)</td><td>FastAPI + Gradio (shared answer_fn)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-exclamation-triangle mr-2"></i>Where the Analogy Breaks Down:</strong>
+                <ul class="list-disc mt-2" style="font-size: 0.95rem;">
+                    <li>Real medical residents learn from patients over years. Our "resident" trains for 3-6 hours per stage.</li>
+                    <li>Real preference learning involves thousands of cases over a career. Ours uses 2,000 preference pairs.</li>
+                    <li>A real hospital library is curated by domain experts. Ours is automatically indexed from PubMedQA synthetic passages.</li>
+                    <li>A real resident integrates learning across their whole career. DPO is a one-shot adjustment &mdash; no ongoing learning at inference time.</li>
+                </ul>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: LUCIFY THE JARGON                                  -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book mr-3"></i>Lucify the Jargon</h2>
+
+            <p>
+                Before we dive into the architecture, let's lucify the eight key technical concepts you will encounter throughout this pipeline. Each term gets a formal definition, a concrete example, and a real-world analogy.
+            </p>
+
+            <!-- Concept Card 1: QLoRA -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-sticky-note mr-2 text-blue-400"></i>1. QLoRA (Quantized Low-Rank Adaptation)</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> A technique that freezes a large model in 4-bit precision (saving ~75% memory) and trains only small "adapter" matrices on top. Combines quantization (Q) with Low-Rank Adaptation (LoRA).</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> Mistral-7B has 7.28 billion parameters. Full fine-tuning updates all of them and needs ~80 GB VRAM. QLoRA freezes them in 4-bit (~4 GB) and trains only 41.9 million adapter parameters (0.58%) &mdash; fitting on a 16 GB GPU.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> You have a 1,000-page encyclopedia. Full fine-tuning means reprinting the entire encyclopedia with corrections &mdash; expensive, and you need a massive printing press. QLoRA means writing corrections on sticky notes placed on top of a compressed microfilm version of the encyclopedia. The sticky notes are small, cheap to produce, and you can swap them out for different topics.</p>
+            </div>
+
+            <!-- Concept Card 2: DPO -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-balance-scale mr-2 text-violet-400"></i>2. DPO (Direct Preference Optimization)</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> An alignment method that teaches a model to prefer one answer over another using paired examples, without needing a separate reward model or reinforcement learning loop. Mathematically equivalent to RLHF with KL constraints (Rafailov et al. 2023).</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> Given a medical question, the model generates two answers. A judge picks the better one. DPO trains the model to make "better" answers more likely and "worse" answers less likely, relative to a frozen reference copy of itself. Our setup: &beta;=0.1 (KL pressure), lr=5e-6, 1 epoch, ~2,000 preference pairs.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> A student submits two essay drafts to a teacher. The teacher marks "Draft A is better" &mdash; no score, no rubric, just a comparison. The student does not need a grading system (reward model) or repeated rounds of feedback (PPO). DPO is the mathematical shortcut that directly adjusts the student's writing style from the comparison alone.</p>
+            </div>
+
+            <!-- Concept Card 3: PEFT-DPO Trick -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-chess mr-2 text-purple-400"></i>3. PEFT-DPO Memory Trick (ref_model=None)</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> A technique that eliminates the need for two full model copies during DPO training by toggling LoRA adapters on and off. Adapters on = "policy" (student learning). Adapters off = "reference" (frozen baseline). One model, two roles.</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> Normal DPO loads 2 copies of a 7B model = 28 GB VRAM. Won't fit on a T4. PEFT-DPO loads 1 copy, toggles adapters = 14 GB saved. In TRL: set <code>ref_model=None</code> and it handles the toggling automatically.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> A chess player normally needs two practice partners &mdash; one to play against (policy) and one to observe as a baseline (reference). The PEFT trick: one partner plays with their strategy notebook open (adapters on), then closes the notebook (adapters off) to serve as the baseline. Same person, two roles, half the chairs needed.</p>
+            </div>
+
+            <!-- Concept Card 4: MinHash LSH -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-fingerprint mr-2 text-indigo-400"></i>4. MinHash LSH (Locality-Sensitive Hashing)</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> A probabilistic algorithm for finding near-duplicate documents in sublinear time. It hashes documents into compact "signatures" that collide with probability proportional to their Jaccard similarity.</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> We start with 20,178 medical Q&A pairs. Many are near-copies ("A 23-year-old presents..." repeated with minor wording changes). MinHash LSH at threshold 0.85 identifies and removes ~2,032 near-duplicates in seconds, keeping 18,146 unique samples.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> You have 20,000 recipes. Some are nearly identical (same dish, different author). Reading every pair to check would take 200 million comparisons. MinHash is like creating a 10-ingredient "fingerprint" for each recipe. Recipes with 8+ matching fingerprint ingredients (85% overlap) are flagged as duplicates. You only need to read the flagged pairs, not all 200 million.</p>
+            </div>
+
+            <!-- Concept Card 5: Hybrid RAG -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-search-plus mr-2 text-cyan-400"></i>5. Hybrid RAG (Dense + Sparse + RRF + Reranker)</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> A retrieval strategy combining semantic search (dense embeddings via BGE-large), keyword search (BM25), Reciprocal Rank Fusion for merging results, and a cross-encoder reranker for fine-grained relevance scoring.</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> Query: "What are the contraindications of metformin?" Dense retrieval finds passages about "diabetes medication side effects" (meaning match). BM25 finds passages containing the exact word "metformin" (keyword match). RRF merges both ranked lists without score calibration. Cross-encoder reads the top 20 (query, passage) pairs jointly and picks the 5 most relevant.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> You are searching for a book in a huge library. Librarian A (dense/BGE) understands what you mean even if you use different words, but sometimes misses books with exact technical terms. Librarian B (sparse/BM25) only matches exact words but never misses a specific drug name. You combine their suggestions (RRF = take turns picking from each list). Then a senior librarian (cross-encoder) quickly reads the top 20 book summaries alongside your question and picks the best 5.</p>
+            </div>
+
+            <!-- Concept Card 6: GGUF + imatrix -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-file-archive mr-2 text-emerald-400"></i>6. GGUF Quantization with imatrix</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> GGUF is a single-file format for storing and running LLMs (weights + tokenizer + chat template baked in). imatrix (importance matrix) is a calibration step that records which weights are most active for a specific domain, so the quantizer allocates more bits to important weights and fewer to irrelevant ones.</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> A 14 GB fp16 model is quantized to Q4_K_M (4.4 GB). Without imatrix, accuracy drops ~5%. With imatrix calibrated on 4,000 medical text chunks, accuracy drops only ~2% because drug-name weights keep their precision.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> You are packing for a trip and can only bring a carry-on bag (4.4 GB). Without guidance (no imatrix), you pack randomly and forget your medication. With a packing list tailored to a medical conference (medical imatrix), you prioritize your stethoscope and reference cards, and leave the beach gear behind.</p>
+            </div>
+
+            <!-- Concept Card 7: RRF -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-layer-group mr-2 text-amber-400"></i>7. Reciprocal Rank Fusion (RRF)</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> A simple rank-combination algorithm. For each document appearing in any ranked list, compute <code>score = &Sigma; 1/(k + rank)</code> across all lists. Higher scores mean the document was ranked highly by more retrievers. No score calibration needed &mdash; works purely on ranks.</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> Document #42 is ranked 1st by BM25 and 5th by FAISS. With k=60: score = 1/(60+1) + 1/(60+5) = 0.0164 + 0.0154 = 0.0318. Document #99 is ranked 3rd by BM25 but absent from FAISS top-50: score = 1/(60+3) = 0.0159. Document #42 wins.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> Two movie critics rank their top 10 films. Instead of averaging their scores (which might be on different scales), you give points based purely on position: 1st place = 10 points, 2nd = 9, and so on. Films appearing in both lists get points from both critics. The combined ranking naturally favors films that both critics liked.</p>
+            </div>
+
+            <!-- Concept Card 8: Dual-Temperature Sampling -->
+            <div class="concept-card">
+                <h4 class="text-blue-300 font-bold mb-3"><i class="fas fa-thermometer-half mr-2 text-fuchsia-400"></i>8. Dual-Temperature Sampling for Preference Pairs</h4>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Definition:</strong> A technique for generating DPO training pairs by sampling two answers from the same model at different temperatures. Low temperature (T=0.3) produces conservative, high-probability text. High temperature (T=0.9) produces diverse, exploratory text. A judge picks the better answer.</p>
+                <p style="margin-bottom: 0.75rem;"><strong class="text-white">Simple Example:</strong> Question: "Dosage for amoxicillin in pediatric otitis media?" T=0.3 answer: safe boilerplate from the textbook. T=0.9 answer: might include creative details or might hallucinate a dosage. GPT-4o-mini picks the winner. This contrast creates the preference signal DPO needs.</p>
+                <p style="margin-bottom: 0;"><strong class="text-white">Analogy:</strong> An improv comedy class exercise: each student performs the same scene twice &mdash; once "playing it safe" (T=0.3) and once "going wild" (T=0.9). The director watches both and picks which performance was better. Sometimes the safe version wins (accurate facts). Sometimes the wild version is brilliant (richer explanation). The student learns their own range.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: MAKE THE BLUEPRINT                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-compass mr-3"></i>Make the Blueprint</h2>
+
+            <p>
+                Let's map out the full architecture. The pipeline spans three environments &mdash; your laptop (CPU), Kaggle T4x2 GPUs, and HuggingFace Hub as the artifact bridge between them.
+            </p>
+
+            <!-- 3-Lane Swim-Lane Architecture -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-6">Infrastructure Architecture: Laptop &harr; HF Hub &harr; Kaggle</h4>
+
+                <!-- Kaggle Lane -->
+                <div class="swim-lane">
+                    <span class="swim-lane-label bg-violet-500/20 text-violet-300">Kaggle T4x2 (GPU)</span>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                            <div class="text-violet-400 text-sm"><i class="fas fa-brain"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">SFT QLoRA</div>
+                            <div class="text-slate-500 text-xs">3-6h</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #a855f7;">
+                            <div class="text-purple-400 text-sm"><i class="fas fa-balance-scale"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">DPO Pairs</div>
+                            <div class="text-slate-500 text-xs">2-4h</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #d946ef;">
+                            <div class="text-fuchsia-400 text-sm"><i class="fas fa-crosshairs"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">DPO Align</div>
+                            <div class="text-slate-500 text-xs">3-6h</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                            <div class="text-cyan-400 text-sm"><i class="fas fa-search"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">RAG Index</div>
+                            <div class="text-slate-500 text-xs">10-20m</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HF Hub Lane -->
+                <div class="swim-lane mt-2">
+                    <span class="swim-lane-label bg-amber-500/20 text-amber-300">HuggingFace Hub (Artifact Bridge)</span>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <div class="px-3 py-1.5 bg-slate-700/50 rounded-lg text-xs text-slate-300 border border-slate-600">
+                            <i class="fas fa-database mr-1 text-blue-400"></i>medalign-sft <span class="text-slate-500">(18k rows)</span>
+                        </div>
+                        <div class="px-3 py-1.5 bg-slate-700/50 rounded-lg text-xs text-slate-300 border border-slate-600">
+                            <i class="fas fa-puzzle-piece mr-1 text-violet-400"></i>sft-adapters <span class="text-slate-500">(~50 MB)</span>
+                        </div>
+                        <div class="px-3 py-1.5 bg-slate-700/50 rounded-lg text-xs text-slate-300 border border-slate-600">
+                            <i class="fas fa-balance-scale mr-1 text-purple-400"></i>dpo-pairs <span class="text-slate-500">(~2k rows)</span>
+                        </div>
+                        <div class="px-3 py-1.5 bg-slate-700/50 rounded-lg text-xs text-slate-300 border border-slate-600">
+                            <i class="fas fa-puzzle-piece mr-1 text-fuchsia-400"></i>dpo-adapters <span class="text-slate-500">(~50 MB)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laptop Lane -->
+                <div class="swim-lane mt-2">
+                    <span class="swim-lane-label bg-emerald-500/20 text-emerald-300">Laptop (CPU)</span>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="pipeline-node" style="border: 2px solid #3b82f6;">
+                            <div class="text-blue-400 text-sm"><i class="fas fa-database"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">Data Prep</div>
+                            <div class="text-slate-500 text-xs">15m</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #10b981;">
+                            <div class="text-emerald-400 text-sm"><i class="fas fa-compress-arrows-alt"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">GGUF Quant</div>
+                            <div class="text-slate-500 text-xs">1-2h</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                            <div class="text-amber-400 text-sm"><i class="fas fa-chart-bar"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">Benchmarks</div>
+                            <div class="text-slate-500 text-xs">30m</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #ef4444;">
+                            <div class="text-red-400 text-sm"><i class="fas fa-rocket"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">Serve</div>
+                            <div class="text-slate-500 text-xs">&infin;</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tip-box mt-4">
+                    <strong><i class="fas fa-lightbulb mr-2"></i>Key Insight:</strong> Artifacts flow Laptop &rarr; Hub &rarr; Kaggle &rarr; Hub &rarr; Laptop. The Hub is the free, persistent bridge between GPU training and CPU deployment. The entire pipeline fits within Kaggle's 30 hrs/week free GPU quota.
+                </div>
+            </div>
+
+            <!-- The 11 Blueprint Steps -->
+            <h3>The 11-Step Blueprint</h3>
+
+            <div class="blueprint-box">
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">1</div>
+                        <div><strong class="text-white">Environment Setup</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop &bull; 10 min</span><br/><span class="text-slate-400 text-sm">Poetry install, HF Hub login, OpenAI key for judge. Pin all deps via poetry.lock for reproducibility.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">2</div>
+                        <div><strong class="text-white">Download + Deduplicate Datasets</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop &bull; 15 min</span><br/><span class="text-slate-400 text-sm">Concatenate medalpaca medqa (10,178) + wikidoc (10,000). MinHash LSH dedup at Jaccard 0.85 &rarr; 18,146 unique rows.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">3</div>
+                        <div><strong class="text-white">Format as Mistral ChatML + Push</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop &bull; 5 min</span><br/><span class="text-slate-400 text-sm">Wrap each Q&A in <code>&lt;|im_start|&gt;system/user/assistant&lt;|im_end|&gt;</code> tags. Push to Zubairash/medalign-sft.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(139, 92, 246, 0.2); color: #a855f7;">4</div>
+                        <div><strong class="text-white">SFT QLoRA Training</strong> <span class="text-xs px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full ml-2">Kaggle &bull; 3-6h</span><br/><span class="text-slate-400 text-sm">Load Mistral-7B in 4-bit NF4. Inject LoRA on all 7 projections (r=16, &alpha;=32). Train 2 epochs. Push adapters to Hub.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(139, 92, 246, 0.2); color: #a855f7;">5</div>
+                        <div><strong class="text-white">Generate DPO Preference Pairs</strong> <span class="text-xs px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full ml-2">Kaggle &bull; 2-4h</span><br/><span class="text-slate-400 text-sm">Sample each prompt at T=0.3 and T=0.9. GPT-4o-mini judge picks winner. Push (prompt, chosen, rejected) triples to Hub.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(139, 92, 246, 0.2); color: #a855f7;">6</div>
+                        <div><strong class="text-white">DPO Alignment</strong> <span class="text-xs px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full ml-2">Kaggle &bull; 3-6h</span><br/><span class="text-slate-400 text-sm">Attach SFT adapters as trainable. DPOTrainer with ref_model=None (PEFT trick). Train 1 epoch at lr=5e-6. Push to Hub.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(6, 182, 212, 0.2); color: #06b6d4;">7</div>
+                        <div><strong class="text-white">Build RAG Index</strong> <span class="text-xs px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full ml-2">Kaggle &bull; 10-20 min</span><br/><span class="text-slate-400 text-sm">BGE-large embeds 211k PubMedQA passages. Build FAISS IndexFlatIP + BM25 pickle + metadata JSONL. Pull to laptop.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">8</div>
+                        <div><strong class="text-white">Build Medical Calibration Corpus</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop &bull; 5 min</span><br/><span class="text-slate-400 text-sm">Combine 2k PubMedQA + 2k MedQA chunks &rarr; calibration_medical.txt for imatrix quantization.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">9</div>
+                        <div><strong class="text-white">Merge Adapters + GGUF Quantization</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop &bull; 1-2h</span><br/><span class="text-slate-400 text-sm">merge_and_unload() bakes LoRA into base. Convert to fp16 GGUF. Compute imatrix on medical corpus. Quantize at 5 levels.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">10</div>
+                        <div><strong class="text-white">Benchmark</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop &bull; 30 min</span><br/><span class="text-slate-400 text-sm">PubMedQA + MedQA-USMLE, 200 samples each. Substring match + optional GPT-4o-mini judge + RAGAS metrics.</span></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">11</div>
+                        <div><strong class="text-white">Serve</strong> <span class="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full ml-2">Laptop / Docker / HF Spaces</span><br/><span class="text-slate-400 text-sm">FastAPI POST /ask + Gradio UI. Shared answer_fn. ChatML prompt with optional RAG context. Docker for portability.</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Design Decisions Table -->
+            <h3>Key Design Decisions</h3>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Decision</th>
+                        <th>Why This</th>
+                        <th>Alternative</th>
+                        <th>Trade-off</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Mistral-7B-Instruct-v0.3</strong></td>
+                        <td>Fits T4 in 4-bit, instruction-tuned, 32k context</td>
+                        <td>Llama-3-8B, BioMistral</td>
+                        <td>Smaller than frontier 70B+</td>
+                    </tr>
+                    <tr>
+                        <td><strong>QLoRA (all 7 projections)</strong></td>
+                        <td>Full FT needs 80 GB; QLoRA ~4 GB, within 1% quality</td>
+                        <td>Full FT, attention-only LoRA</td>
+                        <td>MLP layers hold domain knowledge</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DPO over PPO</strong></td>
+                        <td>One loss, no reward model, mathematically equivalent to KL-RLHF</td>
+                        <td>PPO (4x memory), KTO, IPO</td>
+                        <td>DPO sensitive to bad preference pairs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hybrid RAG (dense+sparse+RRF)</strong></td>
+                        <td>Dense catches semantics, sparse catches jargon, RRF needs no calibration</td>
+                        <td>Dense only, BM25 only</td>
+                        <td>Three indices to maintain</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GGUF via llama.cpp</strong></td>
+                        <td>Single mmap file, portable (CPU/Metal/CUDA), advanced quantization</td>
+                        <td>vLLM, TGI, ONNX</td>
+                        <td>Ecosystem moves fast</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medical imatrix</strong></td>
+                        <td>Preserves drug-name weights during quantization</td>
+                        <td>Uniform quant, generic Wikitext</td>
+                        <td>One extra 10-20 min calibration step</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kaggle + HF Hub</strong></td>
+                        <td>Free GPU (30h/week) + free artifact registry</td>
+                        <td>Colab (worse limits), Lambda (paid)</td>
+                        <td>12h session cap per phase</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: EXECUTE THE BLUEPRINT                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Execute the Blueprint</h2>
+
+            <!-- Step 1: Data Preparation -->
+            <h3>Step 1: Data Preparation &mdash; Download, Deduplicate, Format</h3>
+
+            <p>
+                The first step is assembling the training corpus. We pull from two medalpaca datasets &mdash; 10,178 USMLE-style MCQ from <code>medical_meadow_medqa</code> and 10,000 open-ended Q&A from <code>medical_meadow_wikidoc</code>.
+            </p>
+
+            <p>
+                There is a subtle bug here. The medalpaca datasets store a constant template string in the <code>instruction</code> column ("Please answer with one of the option in the bracket") and the actual question in the <code>input</code> column. If you deduplicate on <code>instruction</code> alone, you get 2 unique rows instead of 18,000. The fix: concatenate <code>instruction + input</code> before deduplication.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># scripts/prepare_sft_data.py
+
+SOURCES = [
+    ("medalpaca/medical_meadow_medqa", "instruction", "input", "output"),
+    ("medalpaca/medical_meadow_wikidoc", "instruction", "input", "output"),
+]
+
+def load_all() -> Dataset:
+    parts = []
+    for repo, instr_col, input_col, resp_col in SOURCES:
+        ds = load_dataset(repo, split="train")
+        ds = ds.map(
+            lambda ex: {
+                "instruction": (
+                    f"{ex[instr_col].strip()}\n\n{ex[input_col].strip()}"
+                    if ex.get(input_col)
+                    else ex[instr_col]
+                ),
+                "response": ex[resp_col],
+            },
+            remove_columns=ds.column_names,
+        )
+        parts.append(ds)
+    return concatenate_datasets(parts)</code></pre>
+            </div>
+
+            <p>The deduplication and ChatML formatting are handled by two compact functions:</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># src/medalign/data/format.py
+
+def to_chatml(instruction: str, response: str, system: str | None = None) -> str:
+    sys = system or "You are a careful medical assistant. Be accurate and cite uncertainty."
+    return (
+        f"&lt;|im_start|&gt;system\n{sys}&lt;|im_end|&gt;\n"
+        f"&lt;|im_start|&gt;user\n{instruction.strip()}&lt;|im_end|&gt;\n"
+        f"&lt;|im_start|&gt;assistant\n{response.strip()}&lt;|im_end|&gt;"
+    )
+
+def dedup_minhash(texts: Iterable[str], threshold: float = 0.85) -> list[int]:
+    """Return indices of texts to keep after near-duplicate removal."""
+    lsh = MinHashLSH(threshold=threshold, num_perm=128)
+    keep: list[int] = []
+    for i, t in enumerate(texts):
+        mh = _minhash(t)
+        if not lsh.query(mh):
+            lsh.insert(str(i), mh)
+            keep.append(i)
+    return keep</code></pre>
+            </div>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>Data Preparation Output</div>
+                <pre class="terminal-body">$ poetry run python scripts/prepare_sft_data.py --hub-repo Zubairash/medalign-sft
+Loaded 20178 raw samples
+After dedup + cap: 18146
+Saved to data/sft
+Pushed to Zubairash/medalign-sft</pre>
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-bug mr-2"></i>Lesson Learned:</strong> Always inspect your data columns before deduplicating. The most dangerous bugs are silent &mdash; dedup collapsing to 2 rows does not throw an error, it just produces a terrible model.
+            </div>
+
+            <!-- Step 2: SFT Configuration -->
+            <h3>Step 2: SFT Configuration</h3>
+
+            <p>Every hyperparameter lives in a YAML config file. This makes iteration easy &mdash; you change a number in a text file, not in Python code.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-yaml"># configs/sft.yaml
+model:
+  base_model: mistralai/Mistral-7B-Instruct-v0.3
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_compute_dtype: bfloat16
+
+lora:
+  r: 16               # Rank: empirical sweet spot for 7B
+  alpha: 32            # Scaling: alpha/r = 2.0
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+training:
+  num_train_epochs: 2
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8   # Effective batch = 2 * 8 * 2 GPUs = 32
+  learning_rate: 2.0e-4            # High because LoRA matrices are small
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  max_seq_length: 2048
+  bf16: true
+  optim: paged_adamw_8bit          # Offloads optimizer states to CPU</code></pre>
+            </div>
+
+            <!-- LoRA Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Attention-Only LoRA<br/>
+                        <span class="text-base font-normal text-slate-400">(4 modules, ~16M params)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Only adapts q_proj, k_proj, v_proj, o_proj</li>
+                        <li>Misses MLP layers where domain knowledge lives</li>
+                        <li>Lower memory cost (~16M trainable params)</li>
+                        <li>Common in tutorials but leaves quality on the table</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>Full-Coverage LoRA<br/>
+                        <span class="text-base font-normal text-slate-400">(7 modules, ~41M params)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Adapts all 7 projections including gate, up, down</li>
+                        <li>MLP layers store drug names, dosage patterns</li>
+                        <li>Slightly higher memory (~41M params, still &lt;1%)</li>
+                        <li>Measurably better medical accuracy</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 3: SFT Training -->
+            <h3>Step 3: SFT Training Entrypoint</h3>
+
+            <p>The training entrypoint is a single function designed to be called from a Kaggle notebook. It handles the full sequence: load tokenizer, quantize model, inject LoRA, train, and push.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># src/medalign/training/sft.py
+
+def run_sft(config_path: str, hub_repo: str | None = None) -> str:
+    import torch
+    # Force single-GPU: prevent Trainer from wrapping in DataParallel
+    # (4-bit bnb tensors can't be replicated across devices)
+    torch.cuda.device_count = lambda: 1
+
+    cfg = yaml.safe_load(Path(config_path).read_text())
+    m, l, t, d = cfg["model"], cfg["lora"], cfg["training"], cfg["data"]
+
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=m["load_in_4bit"],
+        bnb_4bit_quant_type=m["bnb_4bit_quant_type"],
+        bnb_4bit_compute_dtype=getattr(torch, m["bnb_4bit_compute_dtype"]),
+        bnb_4bit_use_double_quant=True,
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained(m["base_model"], use_fast=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        m["base_model"], quantization_config=bnb,
+        device_map={"": 0}, torch_dtype=torch.bfloat16,
+    )
+    model = prepare_model_for_kbit_training(model)
+
+    peft_cfg = LoraConfig(
+        r=l["r"], lora_alpha=l["alpha"], lora_dropout=l["dropout"],
+        target_modules=l["target_modules"], bias="none", task_type="CAUSAL_LM",
+    )
+    model = get_peft_model(model, peft_cfg)
+    model.print_trainable_parameters()
+
+    dataset = load_dataset(d["dataset_id"], split="train")
+
+    args = SFTConfig(
+        output_dir=t["output_dir"], num_train_epochs=t["num_train_epochs"],
+        per_device_train_batch_size=t["per_device_train_batch_size"],
+        gradient_accumulation_steps=t["gradient_accumulation_steps"],
+        learning_rate=t["learning_rate"], lr_scheduler_type=t["lr_scheduler_type"],
+        warmup_ratio=t["warmup_ratio"], bf16=t["bf16"],
+        logging_steps=t["logging_steps"], save_steps=t["save_steps"],
+        optim=t["optim"], report_to="none",
+        dataset_text_field="text", max_length=t["max_seq_length"], packing=False,
+    )
+
+    trainer = SFTTrainer(model=model, args=args, train_dataset=dataset,
+                         processing_class=tokenizer)
+    trainer.train()
+
+    if hub_repo:
+        model.push_to_hub(hub_repo, private=False)
+        tokenizer.push_to_hub(hub_repo)</code></pre>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-info-circle mr-2"></i>Three Critical Lines:</strong>
+                <ul class="list-disc mt-2" style="font-size: 0.95rem;">
+                    <li><code>torch.cuda.device_count = lambda: 1</code> &mdash; Prevents DataParallel wrapping. 4-bit bnb tensors cannot be replicated across GPUs.</li>
+                    <li><code>packing=False</code> &mdash; One example per sequence. Loss computed on assistant tokens only, not the padding.</li>
+                    <li><code>optim="paged_adamw_8bit"</code> &mdash; Offloads optimizer states to CPU when GPU VRAM is tight.</li>
+                </ul>
+            </div>
+
+            <!-- Step 4: DPO Pair Generation -->
+            <h3>Step 4: DPO Preference Pair Generation</h3>
+
+            <p>After SFT, the model can imitate medical answers. But imitation is not alignment &mdash; it does not know which of two plausible answers is safer. To teach preference, we generate comparison pairs using dual-temperature sampling.</p>
+
+            <ol class="list-decimal">
+                <li>Load the SFT model (base + adapters).</li>
+                <li>For each of 2,000 medical prompts, generate two answers:
+                    <ul class="list-disc ml-4">
+                        <li><strong>Answer A</strong> at T=0.3 (conservative, high-probability, textbook-safe)</li>
+                        <li><strong>Answer B</strong> at T=0.9 (creative, diverse, sometimes wrong)</li>
+                    </ul>
+                </li>
+                <li>Send both to GPT-4o-mini: "You are a board-certified physician. Pick the more accurate, safe, and complete answer."</li>
+                <li>Build DPO triples: <code>(prompt, chosen, rejected)</code>.</li>
+            </ol>
+
+            <!-- DPO Pair Generation Flow Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">DPO Pair Generation Flow</h4>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                    <div class="pipeline-node" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-lg"><i class="fas fa-question-circle"></i></div>
+                        <div class="text-white text-xs font-semibold mt-1">Medical Prompt</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="flex flex-col gap-2">
+                        <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                            <div class="text-cyan-400 text-xs font-semibold">T=0.3 (Safe)</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                            <div class="text-amber-400 text-xs font-semibold">T=0.9 (Creative)</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-lg"><i class="fas fa-gavel"></i></div>
+                        <div class="text-white text-xs font-semibold mt-1">GPT-4o-mini Judge</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-lg"><i class="fas fa-check-double"></i></div>
+                        <div class="text-white text-xs font-semibold mt-1">(chosen, rejected)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-dollar-sign mr-2"></i>Cost:</strong> ~$5-10 total for 2,000 pairs with GPT-4o-mini. Full GPT-4 would cost 20x more for ~5% quality improvement. The judge is the quality bottleneck &mdash; better judges produce better preference pairs, which produce better alignment.
+            </div>
+
+            <!-- Step 5: DPO Alignment -->
+            <h3>Step 5: DPO Alignment Training</h3>
+
+            <p>DPO is where the model learns <em>preference</em>, not just <em>imitation</em>. The training loop is deceptively simple &mdash; but three lines of code carry all the architectural weight.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># src/medalign/training/dpo.py
+
+def run_dpo(config_path: str, hub_repo: str | None = None) -> str:
+    import torch
+    torch.cuda.device_count = lambda: 1
+
+    cfg = yaml.safe_load(Path(config_path).read_text())
+    m, dpo_c, t, d = cfg["model"], cfg["dpo"], cfg["training"], cfg["data"]
+
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True, bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained(m["base_model"], use_fast=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    base = AutoModelForCausalLM.from_pretrained(
+        m["base_model"], quantization_config=bnb,
+        device_map={"": 0}, torch_dtype=torch.bfloat16,
+    )
+    # CRITICAL: is_trainable=True attaches SFT adapters as the trainable policy
+    policy = PeftModel.from_pretrained(base, m["sft_adapter_repo"], is_trainable=True)
+
+    dataset = load_dataset(d["dataset_id"], split="train")
+
+    args = DPOConfig(
+        output_dir=t["output_dir"], num_train_epochs=t["num_train_epochs"],
+        per_device_train_batch_size=t["per_device_train_batch_size"],
+        gradient_accumulation_steps=t["gradient_accumulation_steps"],
+        learning_rate=t["learning_rate"],   # 5e-6: 40x LOWER than SFT!
+        lr_scheduler_type=t["lr_scheduler_type"],
+        warmup_ratio=t["warmup_ratio"],     # 0.1: longer warmup than SFT
+        bf16=t["bf16"], logging_steps=t["logging_steps"],
+        save_steps=t["save_steps"], optim=t["optim"],
+        beta=dpo_c["beta"],                 # 0.1: KL pressure from DPO paper
+        loss_type=dpo_c["loss_type"],       # sigmoid: original DPO
+        max_length=dpo_c["max_length"],
+        max_prompt_length=dpo_c["max_prompt_length"],
+        report_to="none",
+    )
+
+    trainer = DPOTrainer(
+        model=policy,
+        ref_model=None,  # PEFT trick: TRL toggles adapters for reference
+        args=args, train_dataset=dataset, processing_class=tokenizer,
+    )
+    trainer.train()</code></pre>
+            </div>
+
+            <!-- Naive DPO vs PEFT-DPO -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Naive DPO<br/>
+                        <span class="text-base font-normal text-slate-400">(2 full model copies)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Load policy model: 14 GB (fp16)</li>
+                        <li>Load reference model: 14 GB (fp16)</li>
+                        <li>Total VRAM: ~28 GB minimum</li>
+                        <li>Won't fit on Kaggle T4 (16 GB)</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>PEFT-DPO Trick<br/>
+                        <span class="text-base font-normal text-slate-400">(Adapter toggle, ref_model=None)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Load base in 4-bit: ~4 GB</li>
+                        <li>Adapters on = policy (~40 MB extra)</li>
+                        <li>Adapters off = reference (0 extra)</li>
+                        <li>Saves 14 GB &mdash; fits on free T4</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-exclamation-triangle mr-2"></i>DPO is Fragile:</strong> If your learning rate is too high, the model collapses. If your preference pairs are bad, DPO learns the wrong preferences. Start with the paper defaults (&beta;=0.1, lr=5e-6) and only change one thing at a time.
+            </div>
+
+            <!-- Step 6: Hybrid RAG -->
+            <h3>Step 6: Hybrid RAG Index + Retrieval</h3>
+
+            <p>A fine-tuned model still hallucinates facts it never memorized. RAG grounds the model's answers in real medical literature. Our hybrid approach combines two retrieval paradigms to cover both semantic and keyword search.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># src/medalign/rag/hybrid.py
+
+def reciprocal_rank_fusion(rankings: list[list[int]], k: int = 60) -> list[tuple[int, float]]:
+    scores: dict[int, float] = {}
+    for rank_list in rankings:
+        for rank, doc_id in enumerate(rank_list):
+            scores[doc_id] = scores.get(doc_id, 0.0) + 1.0 / (k + rank + 1)
+    return sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+class HybridRetriever:
+    def search(self, query: str) -> list[dict]:
+        r = self.cfg["retrieval"]
+        # Stage 1: Dense retrieval (BGE-large embeddings + FAISS)
+        q_emb = self.embedder.encode([query], normalize_embeddings=True)
+        _, dense_ids = self.faiss.search(np.array(q_emb, dtype="float32"), r["top_k_dense"])
+        dense_list = dense_ids[0].tolist()
+
+        # Stage 2: Sparse retrieval (BM25 keyword matching)
+        bm25_scores = self.bm25.get_scores(query.lower().split())
+        sparse_list = np.argsort(bm25_scores)[::-1][: r["top_k_sparse"]].tolist()
+
+        # Stage 3: RRF fusion (merge without score calibration)
+        fused = reciprocal_rank_fusion([dense_list, sparse_list], k=r["rrf_k"])
+        candidate_ids = [doc_id for doc_id, _ in fused[: max(20, r["final_top_k"] * 4)]]
+        candidates = [self.meta[i] for i in candidate_ids]
+
+        # Stage 4: Cross-encoder reranking (joint query+doc scoring)
+        if self.reranker is not None:
+            pairs = [(query, c["text"]) for c in candidates]
+            scores = self.reranker.predict(pairs)
+            order = np.argsort(scores)[::-1][: r["final_top_k"]]
+            return [candidates[i] for i in order]
+        return candidates[: r["final_top_k"]]</code></pre>
+            </div>
+
+            <!-- Retrieval Pipeline Flow -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">4-Stage Retrieval Pipeline</h4>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-3">
+                    <div class="pipeline-node" style="border: 2px solid #3b82f6;">
+                        <div class="text-blue-400 text-lg"><i class="fas fa-question-circle"></i></div>
+                        <div class="text-white text-xs font-semibold mt-1">Query</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="text-center">
+                        <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                            <div class="text-cyan-400 text-xs font-semibold">BGE Dense: Top 50</div>
+                        </div>
+                        <div class="text-slate-500 text-xs my-1">+</div>
+                        <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                            <div class="text-amber-400 text-xs font-semibold">BM25 Sparse: Top 50</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                        <div class="text-violet-400 text-xs font-semibold">RRF Fusion</div>
+                        <div class="text-slate-500 text-xs">~20 candidates</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-xs font-semibold">Cross-Encoder</div>
+                        <div class="text-slate-500 text-xs">Final Top 5</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dense vs Hybrid Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Dense-Only Retrieval<br/>
+                        <span class="text-base font-normal text-slate-400">(Semantic embedding search)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Catches meaning: "chest pain" &asymp; "thoracic discomfort"</li>
+                        <li>Misses exact jargon: drug names, ICD codes</li>
+                        <li>"Metformin" and "diabetes medication" may not match</li>
+                        <li>No keyword fallback when semantic fails</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>Hybrid RAG<br/>
+                        <span class="text-base font-normal text-slate-400">(Dense + Sparse + RRF + Reranker)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Dense catches meaning, Sparse catches exact terms</li>
+                        <li>RRF merges without score calibration</li>
+                        <li>"Metformin" found by BM25 even if BGE misses it</li>
+                        <li>Cross-encoder reranker gives final precision boost</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 7: GGUF Quantization -->
+            <h3>Step 7: Medical Calibration + GGUF Quantization</h3>
+
+            <p>Before quantizing, we build a calibration corpus that tells the quantizer which weights matter most. Instead of generic Wikipedia text, we use 4,000 medical-domain chunks:</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># scripts/build_calibration.py
+
+def main(out_path: str = "data/calibration_medical.txt", n_samples: int = 2000):
+    pubmed = load_dataset("qiaojin/PubMedQA", "pqa_artificial", split="train")
+    medqa = load_dataset("medalpaca/medical_meadow_medqa", split="train")
+
+    chunks = []
+    for row in pubmed.select(range(min(n_samples, len(pubmed)))):
+        ctx = row.get("context")
+        if isinstance(ctx, dict):
+            ctx = " ".join(ctx.get("contexts", []))
+        if ctx:
+            chunks.append(ctx)
+    for row in medqa.select(range(min(n_samples, len(medqa)))):
+        chunks.append(f"Q: {row['instruction']}\nA: {row['output']}")
+
+    Path(out_path).write_text("\n\n".join(chunks))
+    print(f"Wrote {len(chunks)} chunks -> {out_path}")</code></pre>
+            </div>
+
+            <p>The quantization pipeline merges LoRA adapters into the base model, converts to GGUF, computes the importance matrix, and quantizes at five levels:</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># scripts/quantize_gguf.py (simplified)
+
+def merge_adapter(base_model, adapter_repo, out_dir):
+    base = AutoModelForCausalLM.from_pretrained(base_model, torch_dtype=torch.float16)
+    merged = PeftModel.from_pretrained(base, adapter_repo).merge_and_unload()
+    merged.save_pretrained(out_dir, safe_serialization=True)
+
+# Pipeline: merge -> convert -> imatrix -> quantize x5
+# 1. merge_adapter(base, dpo_adapters, "outputs/merged")
+# 2. convert_hf_to_gguf.py -> model-f16.gguf (~14 GB)
+# 3. llama-imatrix -m model-f16.gguf -f calibration_medical.txt
+# 4. for level in [Q8_0, Q6_K, Q5_K_M, Q4_K_M, Q4_K_S]:
+#        llama-quantize --imatrix imatrix.dat model-f16.gguf model-{level}.gguf</code></pre>
+            </div>
+
+            <!-- Generic vs Medical imatrix -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-times-circle mr-2"></i>Generic imatrix (Wikitext)<br/>
+                        <span class="text-base font-normal text-slate-400">(Calibrated on Wikipedia)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Preserves weights that fire on general knowledge</li>
+                        <li>"Football" and "metformin" get equal bit budgets</li>
+                        <li>Drug names and dosages degraded first</li>
+                        <li>~5% accuracy drop at Q4_K_M</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>Medical imatrix<br/>
+                        <span class="text-base font-normal text-slate-400">(Calibrated on PubMedQA + MedQA)</span>
+                    </h4>
+                    <ul class="comparison-list">
+                        <li>Preserves weights that fire on medical text</li>
+                        <li>"Metformin" weights keep full precision</li>
+                        <li>General knowledge compressed more aggressively</li>
+                        <li>~2% accuracy drop at Q4_K_M</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quantization Levels Table -->
+            <h4>Quantization Levels (Pareto Trade-off)</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Level</th><th>Bits/Weight</th><th>File Size (7B)</th><th>Quality</th><th>Use Case</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>Q8_0</strong></td><td>8.5</td><td>~7.7 GB</td><td class="score-green">Near-lossless</td><td>Reference / quality ceiling</td></tr>
+                    <tr><td><strong>Q6_K</strong></td><td>6.6</td><td>~5.9 GB</td><td class="score-green">Indistinguishable from fp16</td><td>Best quality to ship</td></tr>
+                    <tr><td><strong>Q5_K_M</strong></td><td>5.7</td><td>~5.1 GB</td><td class="score-cyan">&lt;1% perplexity hit</td><td>Good balance</td></tr>
+                    <tr><td><strong>Q4_K_M</strong></td><td>4.8</td><td><strong>~4.4 GB</strong></td><td class="score-amber">~2% perplexity hit</td><td><strong>Default (sweet spot)</strong></td></tr>
+                    <tr><td><strong>Q4_K_S</strong></td><td>4.6</td><td>~4.1 GB</td><td class="score-red">~3% perplexity hit</td><td>Smallest (8 GB RAM systems)</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Step 8: Benchmarking -->
+            <h3>Step 8: Benchmarking</h3>
+
+            <p>The whole point of a multi-stage pipeline is monotonic improvement. Each stage should score higher than the last on standardized benchmarks. We evaluate with three levels of rigor:</p>
+
+            <ol class="list-decimal">
+                <li><strong>Substring match</strong> &mdash; fast, deterministic, noisy (is the gold label literally in the output?)</li>
+                <li><strong>GPT-4o-mini judge</strong> &mdash; 4-dimension rubric scoring (accuracy, safety, completeness, citations)</li>
+                <li><strong>RAGAS metrics</strong> &mdash; faithfulness, answer relevancy, context precision, context recall</li>
+            </ol>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># src/medalign/eval/llm_judge.py
+
+JUDGE_SYSTEM = (
+    "You are a board-certified physician evaluating an AI medical assistant. "
+    "Score the answer from 1-5 on each rubric. Output ONLY valid JSON with keys: "
+    "accuracy, safety, completeness, citations, rationale."
+)
+
+@dataclass
+class JudgeScore:
+    accuracy: float
+    safety: float
+    completeness: float
+    citations: float | None
+    rationale: str
+
+def score_answer(question: str, reference: str, candidate: str,
+                 model: str = "gpt-4o-mini") -> JudgeScore:
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    resp = client.chat.completions.create(
+        model=model,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": JUDGE_SYSTEM},
+            {"role": "user", "content": JUDGE_USER.format(
+                question=question, reference=reference, candidate=candidate)},
+        ],
+        temperature=0.0,
+    )
+    data = json.loads(resp.choices[0].message.content)
+    return JudgeScore(
+        accuracy=float(data["accuracy"]),
+        safety=float(data["safety"]),
+        completeness=float(data["completeness"]),
+        citations=None if data.get("citations") in (None, "null")
+                  else float(data["citations"]),
+        rationale=str(data.get("rationale", "")),
+    )</code></pre>
+            </div>
+
+            <!-- Expected Results Table -->
+            <h4>Expected Pipeline Stage Comparison</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Variant</th><th>PubMedQA</th><th>MedQA-USMLE</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Base (Mistral-7B-Instruct)</td><td class="score-red">Baseline</td><td class="score-red">Baseline</td><td>No medical fine-tuning</td></tr>
+                    <tr><td>+ SFT (QLoRA on 18k samples)</td><td class="score-amber">Better</td><td class="score-amber">Better</td><td>Domain-adapted vocabulary</td></tr>
+                    <tr><td>+ DPO (2k preference pairs)</td><td class="score-cyan">Better yet</td><td class="score-cyan">Better yet</td><td>Safer, more accurate answers</td></tr>
+                    <tr><td>+ DPO + RAG (211k PubMed)</td><td class="score-green">Best</td><td class="score-green">Best</td><td>Grounded in retrieved evidence</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong><i class="fas fa-chart-line mr-2"></i>Monotonic Improvement:</strong> The expected pattern is Base &lt; SFT &lt; DPO &lt; DPO+RAG. If any stage makes things worse, it signals a bug in the data, hyperparameters, or evaluation &mdash; not a fundamental limitation of the approach.
+            </div>
+
+            <!-- Step 9: Serving -->
+            <h3>Step 9: Serving &mdash; FastAPI + Gradio</h3>
+
+            <p>The serving architecture uses a shared <code>answer_fn</code> that powers both the REST API and the web UI. One bug fix, one improvement, one function.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-python"># scripts/serve.py
+
+def build_app(gguf_path: str, use_rag: bool):
+    from fastapi import FastAPI
+    from llama_cpp import Llama
+
+    llm = Llama(model_path=gguf_path, n_ctx=4096, n_gpu_layers=0)
+    retriever = None
+    if use_rag:
+        from medalign.rag.hybrid import HybridRetriever
+        retriever = HybridRetriever(yaml.safe_load(Path("configs/rag.yaml").read_text()))
+
+    app = FastAPI(title="MedAlign")
+
+    def answer(question: str) -> dict:
+        sources = []
+        prompt = f"&lt;|im_start|&gt;user\n{question}&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n"
+        if retriever is not None:
+            docs = retriever.search(question)
+            sources = [d["text"][:200] for d in docs]
+            ctx = "\n".join(f"[{i+1}] {d['text']}" for i, d in enumerate(docs))
+            prompt = (
+                "&lt;|im_start|&gt;system\nAnswer using ONLY the context. Cite as [#].&lt;|im_end|&gt;\n"
+                f"&lt;|im_start|&gt;user\nContext:\n{ctx}\n\nQuestion: {question}&lt;|im_end|&gt;\n"
+                "&lt;|im_start|&gt;assistant\n"
+            )
+        out = llm(prompt, max_tokens=512, temperature=0.2, stop=["&lt;|im_end|&gt;"])
+        return {"answer": out["choices"][0]["text"], "sources": sources}
+
+    @app.post("/ask")
+    def ask(q: Query):
+        return answer(q.question)
+
+    return app, answer</code></pre>
+            </div>
+
+            <!-- Serving Architecture Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-center text-white font-bold mb-4">Serving Architecture</h4>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                    <div class="flex flex-col gap-2">
+                        <div class="pipeline-node" style="border: 2px solid #3b82f6;">
+                            <div class="text-blue-400 text-sm"><i class="fas fa-code"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">POST /ask</div>
+                            <div class="text-slate-500 text-xs">FastAPI (JSON)</div>
+                        </div>
+                        <div class="pipeline-node" style="border: 2px solid #8b5cf6;">
+                            <div class="text-violet-400 text-sm"><i class="fas fa-window-maximize"></i></div>
+                            <div class="text-white text-xs font-semibold mt-1">Gradio UI</div>
+                            <div class="text-slate-500 text-xs">Web form</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="pipeline-node" style="border: 2px solid #10b981;">
+                        <div class="text-emerald-400 text-lg"><i class="fas fa-cog"></i></div>
+                        <div class="text-white text-xs font-semibold mt-1">answer_fn()</div>
+                        <div class="text-slate-500 text-xs">Shared logic</div>
+                    </div>
+                    <div class="flow-arrow-right hidden md:flex"><i class="fas fa-arrow-right"></i></div>
+                    <div class="flow-arrow md:hidden"><i class="fas fa-arrow-down"></i></div>
+                    <div class="flex flex-col gap-2">
+                        <div class="pipeline-node" style="border: 2px solid #06b6d4;">
+                            <div class="text-cyan-400 text-xs font-semibold">HybridRetriever</div>
+                            <div class="text-slate-500 text-xs">(optional RAG)</div>
+                        </div>
+                        <div class="flow-arrow"><i class="fas fa-arrow-down text-sm"></i></div>
+                        <div class="pipeline-node" style="border: 2px solid #f59e0b;">
+                            <div class="text-amber-400 text-xs font-semibold">llama.cpp (GGUF)</div>
+                            <div class="text-slate-500 text-xs">Q4_K_M inference</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>Testing the API</div>
+                <pre class="terminal-body">$ poetry run python scripts/serve.py --gguf outputs/gguf/model-Q4_K_M.gguf --use-rag
+
+$ curl -X POST localhost:8000/ask -H 'content-type: application/json' \
+  -d '{"question": "What are first-line treatments for type 2 diabetes?"}'
+
+{
+  "answer": "First-line treatment for type 2 diabetes is metformin [1]...",
+  "sources": ["Metformin is recommended as initial pharmacologic...", ...]
+}</pre>
+            </div>
+
+            <!-- Step 10: Docker + HF Spaces -->
+            <h3>Step 10: Docker + HF Spaces Deployment</h3>
+
+            <p>The Dockerfile wraps the entire serving stack into a portable container:</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000); })">Copy</button>
+                <pre><code class="language-docker">FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential git curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+COPY configs/ ./configs/
+COPY scripts/ ./scripts/
+
+RUN pip install --no-cache-dir poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --only main --no-interaction --no-ansi
+
+EXPOSE 8000
+CMD ["python", "scripts/serve.py", "--gguf", "/models/model-Q4_K_M.gguf", \
+     "--use-rag", "--port", "8000"]</code></pre>
+            </div>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>Docker Deployment</div>
+                <pre class="terminal-body">$ docker build -t medalign .
+$ docker run -p 8000:8000 -v $PWD/outputs/gguf:/models medalign
+# Model loaded, API ready at http://localhost:8000</pre>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-cloud mr-2"></i>HF Spaces:</strong> The Q4_K_M GGUF runs on HuggingFace Spaces' free CPU tier (16 GB RAM). Upload a 3-line Gradio wrapper + GGUF file. Speed: ~5-10 tokens/sec on CPU, which is usable for demo purposes.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7: CONCLUSION                                         -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <h3>Key Takeaways</h3>
+
+            <ol class="list-decimal">
+                <li><strong>The full post-training pipeline is reproducible on free hardware.</strong> Kaggle T4x2 for GPU stages, consumer laptop for CPU stages, HF Hub for artifact flow. Total cost: ~$5 (GPT-4o-mini API).</li>
+                <li><strong>QLoRA on ALL 7 projection layers matters.</strong> MLP layers (gate_proj, up_proj, down_proj) hold domain knowledge. Skipping them leaves measurable accuracy on the table.</li>
+                <li><strong>The PEFT-DPO trick makes alignment feasible on consumer GPUs.</strong> <code>ref_model=None</code> saves 14 GB by toggling adapters instead of maintaining two model copies.</li>
+                <li><strong>DPO is simpler than PPO but fragile.</strong> 40x lower learning rate than SFT. Bad preference pairs teach bad preferences. The GPT-4o-mini judge is the quality bottleneck.</li>
+                <li><strong>Hybrid RAG is worth the complexity.</strong> Dense catches semantics, sparse catches jargon, the cross-encoder reranker catches the rest. Medical queries need all three.</li>
+                <li><strong>Domain-specific imatrix preserves what matters during quantization.</strong> Generic calibration preserves "football" weights. Medical calibration preserves "metformin" weights.</li>
+                <li><strong>Shared answer_fn architecture prevents logic drift.</strong> FastAPI and Gradio calling the same function means one bug fix fixes both. Simple but critical.</li>
+            </ol>
+
+            <!-- Summary Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 my-8">
+                <div class="metric-card">
+                    <div class="metric-value">9</div>
+                    <div class="metric-label">Stages</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">18k</div>
+                    <div class="metric-label">Samples</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">~$5</div>
+                    <div class="metric-label">Cost</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4.4 GB</div>
+                    <div class="metric-label">Model</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.58%</div>
+                    <div class="metric-label">Trainable</div>
+                </div>
+            </div>
+
+            <h3>Future Work</h3>
+
+            <ul class="list-disc">
+                <li>Scale to 13B/70B with multi-GPU QLoRA and DeepSpeed ZeRO-3</li>
+                <li>Replace GPT-4o-mini judge with a trained reward model for preference pairs</li>
+                <li>Add MedMCQA benchmark (dataset loader exists, not yet wired into evaluation)</li>
+                <li>Continuous pre-training on medical literature before SFT (two-stage domain adaptation)</li>
+                <li>Online DPO/RLHF with human feedback collected from the Gradio demo</li>
+                <li>Extend RAG corpus beyond PubMedQA (UpToDate, clinical practice guidelines)</li>
+            </ul>
+
+            <!-- Final GitHub Card -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl text-blue-400">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">MedAlign-RLHF</h3>
+                        <p class="text-gray-300 mb-4">
+                            The complete codebase: 9-stage pipeline from data curation to deployment, YAML-driven configuration, unit tests, CI/CD, Docker support, and comprehensive documentation. Clone it, run it, extend it.
+                        </p>
+                        <a href="https://github.com/zubairashfaque/medalign-rlhf" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+            &copy; 2026 Zubair Ashfaque. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+</body>
+</html>
