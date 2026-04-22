@@ -566,6 +566,245 @@
                 Those judgment calls are the most important part of training. They are also the hardest to teach, the hardest to audit, and the easiest to fake after the fact. Anyone can write a tidy-looking post-mortem once a run has finished. The question almost no benchmark answers is: <em>did the person actually make those decisions in the moment, based on evidence they could see at the time?</em>
             </p>
 
+            <h3><i class="fas fa-book-reader mr-2 text-amber-400"></i>The Engineer&rsquo;s Invisible Playbook</h3>
+
+            <p>
+                Go and sit behind any senior ML engineer while they train a model. What you will see is not a person writing clever PyTorch code. What you will see is a person <strong>reading logs</strong>. They are watching training loss tick down, val loss tick sideways, gradient norms drift up. They are running a checklist in their head that nobody ever wrote down &mdash; a checklist with rules like:
+            </p>
+
+            <ul>
+                <li>&ldquo;If val loss stops improving for 5 epochs, stop or decay the learning rate.&rdquo;</li>
+                <li>&ldquo;If gradients are exploding, clip them and drop the LR.&rdquo;</li>
+                <li>&ldquo;If half my neurons are dead, swap ReLU for LeakyReLU.&rdquo;</li>
+                <li>&ldquo;If train accuracy is capped and gradients are clean, I need more capacity.&rdquo;</li>
+                <li>&ldquo;If batch size is too small, gradients are too noisy &mdash; make the batch bigger.&rdquo;</li>
+                <li>&ldquo;If training is memorising the data, regularise or simplify.&rdquo;</li>
+            </ul>
+
+            <p>
+                That checklist is a <strong>knowledge base</strong>. Senior engineers carry it around as tacit knowledge. It is the thing that separates a good run from a mediocre one. It is the thing that is hardest to pass on in a textbook, because the value is not in the rule itself &mdash; the value is in <em>applying the right rule at the right moment, looking at the right signal</em>.
+            </p>
+
+            <!-- Visual: the engineer's loop -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-rotate mr-2"></i>The Senior Engineer&rsquo;s Training Loop &mdash; the Thing the Loss Curve Does Not Show</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="border: 1px solid #f59e0b;">
+                        <div class="node-number text-amber-400">1</div>
+                        <div class="node-name">Observe</div>
+                        <div class="node-desc">Loss, val acc, grad norm, dead neurons</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #f43f5e;">
+                        <div class="node-number text-rose-400">2</div>
+                        <div class="node-name">Diagnose</div>
+                        <div class="node-desc">Which rule is firing?</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #06b6d4;">
+                        <div class="node-number text-cyan-400">3</div>
+                        <div class="node-name">Prescribe</div>
+                        <div class="node-desc">Playbook remedy for that rule</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #10b981;">
+                        <div class="node-number text-emerald-400">4</div>
+                        <div class="node-name">Action</div>
+                        <div class="node-desc">Drop LR, swap activation, early stop, ...</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #8b5cf6;">
+                        <div class="node-number text-violet-400">5</div>
+                        <div class="node-name">Resume</div>
+                        <div class="node-desc">Watch the next few epochs</div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400 text-center mt-3">Every 1&ndash;3 epochs, the engineer runs this loop. Over a 40-epoch run that is <strong>20+ judgment calls</strong>. The model improves because the decisions are good, not because the loop is clever.</p>
+            </div>
+
+            <h3><i class="fas fa-list-check mr-2 text-amber-400"></i>Seven Rules, Seven Real Scenarios</h3>
+
+            <p>
+                In env_rl, this tacit knowledge gets <strong>written down</strong>. Seven rules cover the levers that matter most during training. Each one has a symptom you can measure from the live model, a cause you can attribute, and a remedy you can execute. Let us walk through each rule with a concrete scenario you might have lived through.
+            </p>
+
+            <!-- R1 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R1</span>Learning Rate &mdash; &ldquo;Loss is bouncing around like a pinball&rdquo;</h4>
+                <p><strong>What you see at epoch 7:</strong> train loss went 1.4 &rarr; 2.3 &rarr; 1.1 &rarr; 2.8 &rarr; 1.0. Val loss did the same. The <em>update-to-parameter ratio</em> EMA is 5&times;10&#8315;&sup2; &mdash; ten times what stable training needs.</p>
+                <p><strong>Playbook remedy:</strong> drop LR by 3&times; to 10&times;. &ldquo;When the step size is too big, the optimizer keeps overshooting; shrink the step and stability returns.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>hyperparameter_change</code>, <code>cites=["R1"]</code>, <code>remedy_direction="decrease_lr"</code>, <code>lr_new=current_lr/3</code>.</p>
+            </div>
+
+            <!-- R2 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R2</span>Batch Size &mdash; &ldquo;Gradients are too noisy to trust&rdquo;</h4>
+                <p><strong>What you see at epoch 4:</strong> the <em>gradient noise scale</em> has sat at 12 for three epochs. Your band of healthy is 50&ndash;5000. The optimizer is being steered by one weird sample at a time; you are essentially training on pure variance.</p>
+                <p><strong>Playbook remedy:</strong> double the batch size. If you are VRAM-bound, use gradient accumulation. &ldquo;Bigger batches average out per-sample noise; gradients become a cleaner signal.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>hyperparameter_change</code>, <code>cites=["R2"]</code>, <code>remedy_direction="increase_batch_size"</code>.</p>
+            </div>
+
+            <!-- R3 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R3</span>Early Stopping &mdash; &ldquo;Train is still improving; val is flat&rdquo;</h4>
+                <p><strong>What you see at epoch 22:</strong> train loss has gone from 0.9 to 0.85 to 0.81 over five epochs. Val loss has stayed at 1.15 the whole time. The model is memorising things that do not help it generalise.</p>
+                <p><strong>Playbook remedy:</strong> stop. Save the best-seen checkpoint. &ldquo;Once val stops improving by min_delta over patience epochs, further training hurts.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>hyperparameter_change</code>, <code>cites=["R3"]</code>, <code>remedy_direction="stop"</code>.</p>
+            </div>
+
+            <!-- R4 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R4</span>Depth / Capacity &mdash; &ldquo;I have hit a wall and it is not gradients&rdquo;</h4>
+                <p><strong>What you see at epoch 18:</strong> train accuracy has been stuck between 70% and 71% for four epochs. Gradients are healthy (R6 and R7 silent). Activations are healthy (R5 silent). The only interpretation left is <em>the model lacks the representational power to go further</em>.</p>
+                <p><strong>Playbook remedy:</strong> add a residual block, or widen channels. &ldquo;You cannot fit what you cannot represent. Give it more parameters, and do so without breaking stability.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>architecture_change</code>, <code>cites=["R4"]</code>, <code>remedy_direction="add_capacity"</code>, <code>edit={"op": "add_block"}</code>.</p>
+            </div>
+
+            <!-- R5 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R5</span>Activations &mdash; &ldquo;Half my ReLUs are stuck at zero&rdquo;</h4>
+                <p><strong>What you see at epoch 3:</strong> the monitor measured <code>dead_relu_fraction = 0.68</code> for three epochs running. Two thirds of your neurons are producing exactly zero. Gradients cannot flow back through them &mdash; they are dead code.</p>
+                <p><strong>Playbook remedy:</strong> swap the affected activations from ReLU to LeakyReLU, GELU, or PReLU. &ldquo;LeakyReLU cannot kill a neuron outright; the signal keeps flowing.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>architecture_change</code>, <code>cites=["R5"]</code>, <code>edit={"op": "swap_activation", "to": "leaky_relu"}</code>.</p>
+            </div>
+
+            <!-- R6 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R6</span>Vanishing Gradients &mdash; &ldquo;Layer 1 is frozen&rdquo;</h4>
+                <p><strong>What you see at epoch 5:</strong> the grad norm for layer 1 has been 1&times;10&#8315;&#8310; for three epochs, while the last layer is at 0.5. No signal is making it back to the early layers; they are not learning at all.</p>
+                <p><strong>Playbook remedy:</strong> add BatchNorm at the suspect depth, or introduce a residual connection, or switch to a gradient-friendly activation. &ldquo;Give the gradient a highway to travel through.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>architecture_change</code>, <code>cites=["R6"]</code>, <code>remedy_direction="add_bn_or_residual"</code>.</p>
+            </div>
+
+            <!-- R7 scenario -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold"><span class="rule-chip">R7</span>Exploding Gradients &mdash; &ldquo;My loss just went to NaN&rdquo;</h4>
+                <p><strong>What you see at epoch 3:</strong> max layer gradient norm was 14.2 for three consecutive epochs, and then on epoch 4 the loss printed <code>nan</code>. The optimizer took a step so big the weights went to infinity.</p>
+                <p><strong>Playbook remedy:</strong> drop LR by 10&times;, add gradient clipping at <code>max_norm=1.0</code>, reinitialise if needed. &ldquo;Stability beats everything else; fix explosion before doing anything else.&rdquo;</p>
+                <p><strong>Decision logged:</strong> <code>hyperparameter_change</code>, <code>cites=["R7"]</code>, <code>remedy_direction="decrease_lr"</code>, <code>lr_new=current_lr/10</code>. (R7 has the <em>highest</em> precedence; if any other rule fires at the same epoch, it waits.)</p>
+            </div>
+
+            <h3><i class="fas fa-arrows-rotate mr-2 text-amber-400"></i>Strategy Revamp After N Epochs</h3>
+
+            <p>
+                A good engineer does not just apply one rule once. They re-evaluate the whole strategy at key checkpoints &mdash; often every 5 or 10 epochs. &ldquo;Am I still on the right track? Is this the same problem as ten epochs ago? Has the remedy I applied actually worked, or is there a new bottleneck now?&rdquo; This is <em>strategy revamp</em>, and it is what separates a plodding run from a patient, converging one.
+            </p>
+
+            <!-- Visual: strategy revamp cycle -->
+            <div class="analogy-card">
+                <h4 class="text-rose-400 font-bold mb-4"><i class="fas fa-compass mr-2"></i>The Revamp Cycle &mdash; When the Playbook Re-opens</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="border: 1px dashed #f59e0b;">
+                        <div class="node-number text-amber-400">ep 0&ndash;5</div>
+                        <div class="node-name">Phase 1: Stabilize</div>
+                        <div class="node-desc">R7, R6 concerns first. Get gradients flowing cleanly.</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px dashed #06b6d4;">
+                        <div class="node-number text-cyan-400">ep 5&ndash;15</div>
+                        <div class="node-name">Phase 2: Capacity</div>
+                        <div class="node-desc">R4, R5 concerns. Fix dead activations; grow when stuck.</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px dashed #10b981;">
+                        <div class="node-number text-emerald-400">ep 15&ndash;35</div>
+                        <div class="node-name">Phase 3: Tune</div>
+                        <div class="node-desc">R1, R2 concerns. LR schedules, batch-size adjustments.</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px dashed #8b5cf6;">
+                        <div class="node-number text-violet-400">ep 35+</div>
+                        <div class="node-name">Phase 4: Process</div>
+                        <div class="node-desc">R3 concerns. Val plateau &rarr; save best &amp; stop.</div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400 mt-3">The same rules operate throughout, but the <em>dominant concern</em> shifts with training phase. The precedence order <code>stability &gt; capacity &gt; tuning &gt; process</code> is not accidental &mdash; it roughly tracks which phase you should be in.</p>
+            </div>
+
+            <h3><i class="fas fa-brain mr-2 text-amber-400"></i>Enter the LLM &mdash; the Brain That Watches the Logs</h3>
+
+            <p>
+                Now the key move. What if <strong>instead of a senior engineer reading the logs</strong>, you had an LLM doing it? The LLM has read thousands of training papers. It knows what a dead ReLU is. It knows what a plateau looks like. It can read a playbook, interpret a diagnostic, and pick an action. It can do this in seconds, not minutes. And unlike a human engineer, it does not get tired at epoch 20 and miss the signal at epoch 21.
+            </p>
+
+            <p>
+                So: at every epoch, the monitor hands the LLM the current diagnostic state and any fired rules. The LLM returns a structured JSON decision: <em>"here is the event type, here is the rule I am citing, here is my remedy direction, here is my justification"</em>. The harness applies the remedy. Training resumes. The LLM has just taken one of the hundreds of judgment calls a senior engineer would have taken &mdash; except every one of its decisions is logged in a tamper-evident record.
+            </p>
+
+            <!-- Visual: engineer -> LLM replacement -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h4 class="text-red-400 font-bold mb-3"><i class="fas fa-user-tie mr-2"></i>Senior Engineer at the Terminal</h4>
+                    <ul class="comparison-list">
+                        <li>Tacit knowledge, no two engineers agree</li>
+                        <li>Post-hoc notes, reconstructed from memory</li>
+                        <li>Gets tired; misses signals late in a run</li>
+                        <li>Cannot scale to many parallel experiments</li>
+                        <li>Decisions are invisible to a benchmark</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 class="text-emerald-400 font-bold mb-3"><i class="fas fa-robot mr-2"></i>LLM Behind Env-RL</h4>
+                    <ul class="comparison-list">
+                        <li>Reads the explicit playbook; same rules every run</li>
+                        <li>Decisions logged live, hash-chained, auditable</li>
+                        <li>Consistent at epoch 1 and epoch 40</li>
+                        <li>Trivially parallel; one run = one \$0.01 in tokens</li>
+                        <li>Every decision scored by the judge&rsquo;s 11-step audit</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Visual: full Monitor -> LLM -> Judge loop -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-diagram-project mr-2"></i>The Full Loop &mdash; Monitor, LLM, Judge</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="border: 1px solid #f59e0b; background: rgba(245, 158, 11, 0.1);">
+                        <div class="node-number text-amber-400">During</div>
+                        <div class="node-name">Monitor</div>
+                        <div class="node-desc">Measures live diagnostics via PyTorch hooks, fires rules canonically</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #f43f5e; background: rgba(244, 63, 94, 0.1);">
+                        <div class="node-number text-rose-400">During</div>
+                        <div class="node-name">LLM (brain)</div>
+                        <div class="node-desc">Reads playbook + fired rules &rarr; structured decision (event_type, cites, remedy)</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+                        <div class="node-number text-violet-400">During</div>
+                        <div class="node-name">Harness</div>
+                        <div class="node-desc">Applies remedy (LR change, activation swap); logs through monitor API</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #06b6d4; background: rgba(6, 182, 212, 0.1);">
+                        <div class="node-number text-cyan-400">After</div>
+                        <div class="node-name">Judge</div>
+                        <div class="node-desc">11-step audit: integrity, replay, live sanity, rule coverage, defensibility &rarr; two scores</div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400 mt-3">
+                    <strong>During the run:</strong> monitor measures, LLM decides, harness executes. <strong>After the run:</strong> judge reconstructs the whole story from the logs and emits two decoupled scores. The LLM is never the judge; the judge is never the LLM. Their independence is the point.
+                </p>
+            </div>
+
+            <p>
+                This is why the project is called <em>env_rl</em>. It is an <strong>environment</strong> in the RL sense: a world that presents observations to an agent, accepts the agent&rsquo;s actions, and hands back a reward. The observations are live diagnostics. The actions are playbook decisions. The reward is two-axis (accuracy + process). The agent, today, is an OpenAI model operating in an in-context self-refine loop. Future work could train a real RL policy on top &mdash; but the environment half, the hard part, is what this repo is.
+            </p>
+
+            <p>
+                The questions this post answers, now with full context:
+            </p>
+
+            <ul>
+                <li>How do you make the engineer&rsquo;s invisible playbook <em>explicit</em> and <em>auditable</em>?</li>
+                <li>How do you take live diagnostic measurements so the LLM (or engineer) cannot fudge them?</li>
+                <li>How do you log decisions in a way that even a motivated adversary cannot rewrite after the fact?</li>
+                <li>How do you score &ldquo;did the run reach the target&rdquo; <em>independently</em> from &ldquo;did the decisions follow the playbook&rdquo;?</li>
+                <li>How do you then let a real OpenAI model play the role of the engineer, and show iterative improvement without ever changing its weights?</li>
+                <li>And importantly &mdash; why this is <strong>iterative self-refine</strong>, not reinforcement learning, and why that distinction matters?</li>
+            </ul>
+
             <p>
                 <strong>Env-RL</strong> is built to close that gap. It is an evaluation environment where every training decision is captured live by a judge-controlled monitor and scored on two independent axes: the final-model quality, and the process discipline behind it. Neither axis can be traded for the other. You cannot sacrifice one for the other. You train honestly and log through the monitor exactly as specified &mdash; or you walk away with a zero.
             </p>
@@ -595,19 +834,6 @@
                     </ul>
                 </div>
             </div>
-
-            <p>
-                The questions this post answers:
-            </p>
-
-            <ul class="list-disc">
-                <li>How do you make an agent's training decisions <em>auditable</em> when the agent owns the workspace?</li>
-                <li>How do you stop the agent from forging logs, fabricating trajectories, or swapping architectures after the fact?</li>
-                <li>How do you define "did a rule fire?" in a way that leaves no room for subjective interpretation?</li>
-                <li>How do you score process discipline <em>independently</em> from accuracy, so sloppy training can never buy more accuracy?</li>
-                <li>How do you then plug a real OpenAI model in as the decision-maker, and have it actually <em>improve</em> across attempts?</li>
-                <li>And importantly &mdash; why this is <strong>iterative self-refine</strong>, not reinforcement learning, and why that distinction matters?</li>
-            </ul>
 
             <div class="highlight-box">
                 <strong><i class="fas fa-shield-halved mr-2"></i>Key Innovation:</strong>
