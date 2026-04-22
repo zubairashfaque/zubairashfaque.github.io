@@ -1510,7 +1510,247 @@ def compute_scores(*, hard_fail: bool, test_accuracy: float, target_acc: float,
             </div>
 
             <!-- ============================================================ -->
-            <!-- SECTION 7: THIS IS NOT RL                                     -->
+            <!-- SECTION 7: A REAL RUN IN THREE ACTS (Case Study)              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-film mr-3"></i>A Real Run in Three Acts</h2>
+
+            <p>
+                Let us now follow what actually happens when you turn this loose on real CIFAR-10 for 20 epochs with <code>gpt-4o-mini</code> as the decision-maker. No synthetic shortcuts. No curated example. Just the raw <code>training_trace.jsonl</code> from one run &mdash; the story has a distinct three-act structure.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-terminal mr-2"></i>Command:</strong>
+                <code>poetry run python examples/run_llm_agent.py --attempts 1 --epochs 20 --batch-size 128 --lr 0.05 --model gpt-4o-mini --target-acc 0.70</code>
+            </div>
+
+            <!-- Final scores at a glance -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
+                <div class="metric-card">
+                    <div class="metric-value">0.627</div>
+                    <div class="metric-label">Test accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.895</div>
+                    <div class="metric-label">Accuracy score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.627</div>
+                    <div class="metric-label">Process score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">51</div>
+                    <div class="metric-label">Decisions logged</div>
+                </div>
+            </div>
+
+            <!-- Accuracy chart -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>The Climb &mdash; Training and Validation Accuracy</h4>
+                <pre class="mermaid">
+xychart-beta
+    title "Train vs Val Accuracy (%) across 20 epochs"
+    x-axis [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    y-axis "Accuracy %" 30 --> 70
+    line [34.9, 47.8, 55.0, 58.0, 59.9, 61.1, 62.1, 62.8, 63.8, 64.1, 65.0, 65.4, 65.7, 66.0, 66.3, 66.5, 66.8, 67.1, 67.1, 67.4]
+    line [39.3, 47.2, 47.9, 49.2, 51.6, 48.1, 51.7, 54.2, 55.5, 59.3, 57.3, 57.0, 57.3, 57.0, 60.2, 60.6, 57.6, 53.4, 55.5, 57.6]
+                </pre>
+                <p class="text-sm text-slate-400 mt-3">Upper line: train accuracy (monotonic climb 35% &rarr; 67%). Lower line: val accuracy, peaks at <strong>60.6% at epoch 15</strong>, test set scores <strong>62.7%</strong>.</p>
+            </div>
+
+            <!-- ==================== ACT I ==================== -->
+            <h3><i class="fas fa-skull-crossbones mr-2 text-rose-400"></i>Act I &mdash; Half-Dead on Arrival (epochs 0&ndash;1)</h3>
+
+            <p>
+                The CNN starts with <strong>ReLU activations and a learning rate of 0.05</strong>. One forward pass through the un-trained model and the monitor flags the first number worth reading: <strong>53% of neurons are already dead</strong>. Half the model cannot send a gradient back through itself. By epoch 1, the dead fraction is up to <strong>59%</strong>.
+            </p>
+
+            <p>
+                And yet the model is still learning. Train accuracy climbs from 35% to 48%. Val from 39% to 47%. The half that is alive is doing the work of the whole. But this is unstable &mdash; a random gradient step at any point could push more neurons into the dead zone permanently.
+            </p>
+
+            <div class="info-box">
+                <strong><i class="fas fa-clock mr-2"></i>Why no rule fires yet:</strong> Every rule requires the signal to be above (or below) threshold for <strong>three consecutive epochs</strong>. Two epochs in, the monitor has a growing concern but will not trigger until it has enough evidence to be sure. The warning is visible in the data; the verdict is still waiting.
+            </div>
+
+            <!-- Dead-ReLU chart -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-skull-crossbones mr-2"></i>Dead-ReLU Fraction &mdash; The Cliff of Recovery</h4>
+                <pre class="mermaid">
+xychart-beta
+    title "Dead-ReLU fraction (%) across 20 epochs"
+    x-axis [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    y-axis "Dead fraction %" 0 --> 80
+    bar [53, 59, 68, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                </pre>
+                <p class="text-sm text-slate-400 mt-3">53% &rarr; 72% climb through epochs 0&ndash;3, then a cliff to <strong>0%</strong> at epoch 4 &mdash; one epoch after the LLM&rsquo;s R5 remedy took effect. LeakyReLU cannot produce exactly-zero outputs, so the fraction drops to zero and stays there.</p>
+            </div>
+
+            <!-- ==================== ACT II ==================== -->
+            <h3><i class="fas fa-gavel mr-2 text-amber-400"></i>Act II &mdash; The Verdict and the Reanimation (epochs 2&ndash;5)</h3>
+
+            <p>
+                At <strong>epoch 2</strong> three rules fire at once. The monitor is now certain, on all three of:
+            </p>
+
+            <ul>
+                <li><strong>R1</strong> (learning rate) &mdash; update-to-param ratio out of band</li>
+                <li><strong>R2</strong> (batch size) &mdash; gradient noise scale stuck below 50</li>
+                <li><strong>R5</strong> (dead activations) &mdash; 68% of neurons still zero</li>
+            </ul>
+
+            <p>
+                The monitor hands the LLM a single decision request: <em>&ldquo;Rule(s) fired: R1, R2, R5. Action the highest-precedence rule.&rdquo;</em> Precedence is <code>stability &gt; capacity &gt; tuning &gt; process</code>. Neither R6 nor R7 fired, so capacity (R5) wins &mdash; and the LLM makes the right call.
+            </p>
+
+            <!-- Dramatic moment: the epoch-2 decision -->
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="concept-card">
+                    <h4 class="text-amber-400 font-bold"><i class="fas fa-eye mr-2"></i>What the LLM saw</h4>
+                    <pre class="terminal-body" style="background: transparent; font-size: 0.85rem;">Epoch 2. Rule(s) fired: ['R1', 'R2', 'R5'].
+You must action the highest-precedence
+rule, which is R5.
+
+Current hyperparameters:
+  lr = 0.05
+  batch_size = 128
+
+Current-epoch diagnostics:
+  epoch = 2
+  train_loss = 1.248
+  val_loss = 1.427
+  val_acc = 0.479
+  dead_relu_fraction = 0.684
+  update_to_param_ratio = 0.220
+  grad_noise_scale = 37.80
+  max_layer_grad_norm = 0.576
+  min_layer_grad_norm = 0.087</pre>
+                </div>
+                <div class="concept-card">
+                    <h4 class="text-emerald-400 font-bold"><i class="fas fa-bolt mr-2"></i>What the LLM decided</h4>
+                    <pre class="terminal-body" style="background: transparent; font-size: 0.85rem;">{
+  "event_type": "architecture_change",
+  "cites": ["R5"],
+  "justification": "Dead-ReLU fraction
+    exceeds 0.40 for 3 consecutive epochs,
+    indicating many neurons are stuck at
+    zero.",
+  "remedy_direction": "swap_activation",
+  "remedy_params": {
+    "lr_new": 0.05,
+    "edit_op": "swap_activation",
+    "edit_to": "leaky_relu"
+  }
+}</pre>
+                </div>
+            </div>
+
+            <p>
+                The harness applies the edit in place. Every ReLU in the model becomes a LeakyReLU. <code>model._activation</code> updates to <code>"leaky_relu"</code> so the architecture-replay check (judge step 6) will pass at the end. R1 and R2 are deferred with <code>&quot;deferred_to_R5&quot;</code>.
+            </p>
+
+            <p>
+                What happens next is the satisfying part: <strong>one epoch later, the dead-ReLU fraction is zero</strong>. LeakyReLU cannot produce exactly-zero outputs, so once the swap takes hold, every neuron in the network is alive again. The EMA smoother has a short memory though, so it takes two more epochs of zero readings before R5 officially clears &mdash; and during those two epochs the LLM keeps issuing the same R5 remedy (an idempotent swap of LeakyReLU &rarr; LeakyReLU). The decision log captures this honestly, and it does not hurt the run: the edits are no-ops, but the LLM is reasoning correctly given what the EMA still shows.
+            </p>
+
+            <!-- ==================== ACT III ==================== -->
+            <h3><i class="fas fa-mountain mr-2 text-cyan-400"></i>Act III &mdash; The Capacity Wall (epochs 6&ndash;19)</h3>
+
+            <p>
+                At <strong>epoch 6</strong> the monitor reports something new: R4 (depth / capacity) fires for the first time. Train accuracy is inching up by less than 2 percentage points per epoch. With gradients clean and activations alive, the model is running out of room in the parameters it has.
+            </p>
+
+            <p>
+                The LLM reads the right prescription &mdash; R4&rsquo;s playbook remedy is <strong>add a residual block</strong> &mdash; and emits <code>architecture_change</code> with <code>edit_op: "add_block"</code>. But the reference harness does not execute <code>add_block</code>: inserting a new block would require rebuilding the optimizer&rsquo;s parameter groups and transferring state, which is fragile to do mid-training. So the harness <strong>downgrades</strong> the decision to <code>rule_triggered_no_action</code> with the justification: <em>"harness does not execute edit &lsquo;none&rsquo;; deferring R4."</em>
+            </p>
+
+            <div class="info-box">
+                <strong><i class="fas fa-handshake mr-2"></i>Why this is the honest move:</strong>
+                The judge&rsquo;s step 6 audit replays every <code>architecture_change</code> event against the submitted model. If the log said "we added a block" but the submitted model only has the original blocks, step 6 hard-fails and zeroes both scores. By downgrading before logging, the harness keeps the log consistent with the actual model state. The process integrity score drops because of unexecuted deferrals &mdash; that is the honest cost of a harness that cannot fulfill every playbook remedy.
+            </div>
+
+            <p>
+                For the next 14 epochs, R4 fires every time. The LLM defers every time. Val accuracy climbs to 60.6% at epoch 15, wobbles for a few epochs, and the run ends with test accuracy <strong>0.627</strong> &mdash; close enough to the 0.70 target to give an accuracy score of <strong>0.895</strong>.
+            </p>
+
+            <!-- Rule firing heatmap -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-border-all mr-2"></i>Rule-Firing Heatmap &mdash; Which Rules Fired When</h4>
+                <div style="overflow-x: auto;">
+                <table class="benchmark-table" style="font-size: 0.75rem; min-width: 900px;">
+                    <thead>
+                        <tr>
+                            <th>Rule</th>
+                            <th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>R1 LR</td><td>·</td><td>·</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td><td>🟠</td></tr>
+                        <tr><td>R2 batch</td><td>·</td><td>·</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+                        <tr><td>R3 early-stop</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+                        <tr><td>R4 depth</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td><td>🔵</td></tr>
+                        <tr><td>R5 activations</td><td>·</td><td>·</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+                        <tr><td>R6 vanishing</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+                        <tr><td>R7 exploding</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+                    </tbody>
+                </table>
+                </div>
+                <p class="text-sm text-slate-400 mt-3">
+                    ✅ = fired &amp; actioned &nbsp;
+                    ❌ = fired &amp; missed (precedence_violation) &nbsp;
+                    🟠 = fired &amp; deferred, deferral never cleared (unresolved_deferral) &nbsp;
+                    🔵 = fired &amp; deferred, waived by harness (no penalty) &nbsp;
+                    · = not fired
+                </p>
+            </div>
+
+            <!-- Epilogue / final scoring breakdown -->
+            <h3><i class="fas fa-scroll mr-2"></i>Epilogue &mdash; What the Judge Said</h3>
+
+            <p>
+                All 7 hard-fail gates passed cleanly: deliverables in place, <code>load_model()</code> with the correct signature, weights loaded, <code>run_config.json</code> consistent with the session record, hash chain intact end-to-end, architecture replay (R5 swap to leaky_relu) matches the submitted model, and the live diagnostic (one fwd/bwd pass on held-out training batches) was within tolerance of the logged final-epoch gradient norms.
+            </p>
+
+            <p>
+                The process score then took exactly two hits:
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-list-ol mr-2"></i>Violations Breakdown</h4>
+                <table class="benchmark-table">
+                    <thead><tr><th>Count</th><th>Kind</th><th>Rule</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td class="score-amber">18</td>
+                            <td>unresolved_deferral</td>
+                            <td>R1</td>
+                            <td>R1 fired every epoch from 2&ndash;19. The LLM always picked a higher-precedence rule (R5 then R4). R1 never got its turn to be actioned, so it never cleared &mdash; the judge counts that each time.</td>
+                        </tr>
+                        <tr>
+                            <td class="score-red">1</td>
+                            <td>precedence_violation</td>
+                            <td>R5</td>
+                            <td>At epoch 6, R5 was still flagged by EMA lag <em>and</em> R4 fired. The LLM picked R4 (same capacity tier). Because R5 was listed first in the canonical tie-break, the audit flagged it.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                Final scores:
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-chart-simple mr-2"></i>The Two Axes, Decoupled:</strong><br>
+                <strong>accuracy_score</strong> = 0.627 / 0.70 &asymp; <strong>0.895</strong> (close to the target)<br>
+                <strong>process_score</strong> = 1 &minus; 19 / 51 &asymp; <strong>0.627</strong> (18 stuck R1 deferrals drag it down)
+            </div>
+
+            <p>
+                This is exactly the separation the environment was designed to produce. A benchmark that measured only accuracy would give this run full marks. A benchmark that measured only process would miss that the model genuinely learned. Env-RL reports both &mdash; and the gap between them is itself the story: <em>the LLM trained a competent CIFAR-10 classifier, but it also left one rule (R1) chronically unacted throughout the run</em>. If you cared to improve this run further, you would not change the model &mdash; you would change the decision-making.
+            </p>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 8: THIS IS NOT RL                                     -->
             <!-- ============================================================ -->
             <h2><i class="fas fa-triangle-exclamation mr-3"></i>This Is Not Reinforcement Learning</h2>
 
@@ -1613,5 +1853,27 @@ def compute_scores(*, hard_fail: bool, test_accuracy: float, target_acc: float,
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+    <!-- Mermaid for the xychart-beta line + bar charts in the "Real Run" section -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#f59e0b',
+                primaryTextColor: '#e2e8f0',
+                primaryBorderColor: '#f59e0b',
+                lineColor: '#f59e0b',
+                secondaryColor: '#f43f5e',
+                tertiaryColor: '#1e293b',
+                background: '#0f172a',
+                mainBkg: '#1e293b',
+                xyChart: {
+                    plotColorPalette: '#f59e0b, #f43f5e, #06b6d4, #10b981'
+                }
+            }
+        });
+    </script>
 </body>
 </html>
