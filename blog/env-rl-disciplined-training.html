@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Env-RL — Training Deep Learning Models with Disciplined Oversight and Iterative Self-Refine | Zubair Ashfaque</title>
+    <meta name="description" content="Build an RL evaluation environment where every training decision is audited by a hash-chained monitor, scored on two independent axes (accuracy + process), and can drive an in-context iterative self-refine loop with any OpenAI-compatible model. 162 tests, 7-rule diagnostic playbook, 11-step judge audit, five cheat-attempt defenses.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+            margin: 3rem 0;
+        }
+        article h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: #f59e0b;
+        }
+        article h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #fbbf24;
+        }
+        article h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #fcd34d;
+        }
+        article p {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            color: #cbd5e1;
+        }
+        article ul, article ol {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+        }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a {
+            color: #f59e0b;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover { color: #fbbf24; }
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);
+        }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        .terminal-header {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .terminal-body {
+            padding: 1rem;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .highlight-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .info-box {
+            background: rgba(6, 182, 212, 0.1);
+            border-left: 4px solid #06b6d4;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            border-color: #f59e0b;
+            transform: translateY(-2px);
+        }
+        .metric-card .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b, #f43f5e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-card .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .benchmark-table th {
+            background: rgba(245, 158, 11, 0.2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #fbbf24;
+            border-bottom: 2px solid #f59e0b;
+        }
+        .benchmark-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        .benchmark-table tr:hover { background: rgba(245, 158, 11, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f59e0b;
+            font-size: 1.5rem;
+            padding: 0.5rem 0;
+        }
+        .flow-arrow-right {
+            display: flex;
+            align-items: center;
+            color: #f59e0b;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .analogy-card {
+            background: rgba(244, 63, 94, 0.05);
+            border: 2px solid #f43f5e;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        .pipeline-node {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            text-align: center;
+            min-width: 130px;
+            transition: all 0.3s ease;
+        }
+        .pipeline-node:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+        .pipeline-node .node-number {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .pipeline-node .node-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+        .pipeline-node .node-desc {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+        .pipeline-arrow {
+            color: #f59e0b;
+            font-size: 1.25rem;
+        }
+        .precedence-tier {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        .precedence-tier:hover { transform: translateX(4px); }
+        .precedence-tier.tier-stability { border-color: #f43f5e; }
+        .precedence-tier.tier-capacity { border-color: #06b6d4; }
+        .precedence-tier.tier-tuning { border-color: #10b981; }
+        .precedence-tier.tier-process { border-color: #8b5cf6; }
+        .precedence-rank {
+            font-size: 1.5rem;
+            font-weight: 800;
+            min-width: 2.5rem;
+        }
+        .tier-stability .precedence-rank { color: #f43f5e; }
+        .tier-capacity .precedence-rank { color: #06b6d4; }
+        .tier-tuning .precedence-rank { color: #10b981; }
+        .tier-process .precedence-rank { color: #8b5cf6; }
+        .rule-chip {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            margin-right: 0.5rem;
+        }
+        .hash-chain-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+        .hash-chain-node {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            min-width: 150px;
+        }
+        .hash-chain-node .seq { color: #f59e0b; font-weight: 700; }
+        .hash-chain-node .hash { color: #64748b; }
+        .hash-chain-node .payload { color: #e2e8f0; }
+        .judge-step-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-left: 4px solid #334155;
+            margin: 0.25rem 0;
+            background: rgba(30, 41, 59, 0.3);
+            transition: all 0.2s ease;
+        }
+        .judge-step-row:hover { background: rgba(245, 158, 11, 0.08); }
+        .judge-step-row.hard-fail { border-color: #ef4444; }
+        .judge-step-row.process-only { border-color: #f59e0b; }
+        .judge-step-row.scoring { border-color: #10b981; }
+        .judge-step-row .step-num {
+            background: #334155;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fbbf24;
+            flex-shrink: 0;
+        }
+        .judge-step-row.hard-fail .step-num { color: #fca5a5; }
+        .progress-bar {
+            background: #334155;
+            border-radius: 0.25rem;
+            height: 0.75rem;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #f43f5e);
+            border-radius: 0.25rem;
+        }
+        .screenshot-container { margin: 2rem 0; text-align: center; }
+        .screenshot-caption { font-size: 0.875rem; color: #94a3b8; margin-top: 0.75rem; font-style: italic; }
+
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+            .pipeline-flow { flex-direction: column; }
+            .pipeline-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-amber-400 to-rose-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-amber-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>env_rl</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Env-RL &mdash; An Environment That Judges How an LLM Trains, Not Just What It Trained
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                An RL evaluation environment where every training decision is captured live by a judge-controlled monitor, scored on two independent axes (accuracy and process), and drives an in-context iterative self-refine loop with any OpenAI-compatible model. Hash-chained logs. Read-only monitor. Eleven-step audit. Five cheat-attempt defenses. No reinforcement learning in the true sense &mdash; and the code is honest about it.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400">
+                <span><i class="far fa-calendar mr-2"></i>April 22, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>40 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">RL Environment</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">PyTorch</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">CIFAR-10</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">OpenAI</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">Iterative Self-Refine</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">Integrity Auditing</span>
+            </div>
+        </header>
+
+        <!-- Visual 1: Metric Stats Block -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 my-8">
+            <div class="metric-card">
+                <div class="metric-value">162</div>
+                <div class="metric-label">Tests Passing</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">7</div>
+                <div class="metric-label">Diagnostic Rules</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">11</div>
+                <div class="metric-label">Judge Audit Steps</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">5</div>
+                <div class="metric-label">Cheat Defenses</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">20+</div>
+                <div class="metric-label">Decisions per Run</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">~$0.01</div>
+                <div class="metric-label">Cost / Attempt (4o-mini)</div>
+            </div>
+        </div>
+
+        <!-- GitHub CTA -->
+        <div class="github-card">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold mb-2 text-white"><i class="fab fa-github mr-2"></i>View the Repository</h3>
+                    <p class="text-slate-400 mb-0">13 commits, 162 tests, full iterative-self-refine harness. MIT-style usage.</p>
+                </div>
+                <a href="https://github.com/zubairashfaque/environment_rl" target="_blank" class="btn-primary">
+                    <i class="fab fa-github mr-2"></i>github.com/zubairashfaque/environment_rl
+                </a>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <article>
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Anyone who has trained a deep learning model knows the drill. You kick off a run, then spend hours &mdash; sometimes days &mdash; babysitting it. You watch the loss curve. You squint at validation accuracy. You notice drift. You reach for a knob. You drop the learning rate a little. You swap an activation. You tell yourself you will do better next time. Training a model well is not really about writing the training loop. It is about the hundreds of small judgment calls you make while the loop is running.
+            </p>
+
+            <p>
+                Those judgment calls are the most important part of training. They are also the hardest to teach, the hardest to audit, and the easiest to fake after the fact. Anyone can write a tidy-looking post-mortem once a run has finished. The question almost no benchmark answers is: <em>did the person actually make those decisions in the moment, based on evidence they could see at the time?</em>
+            </p>
+
+            <p>
+                <strong>Env-RL</strong> is built to close that gap. It is an evaluation environment where every training decision is captured live by a judge-controlled monitor and scored on two independent axes: the final-model quality, and the process discipline behind it. Neither axis can be traded for the other. You cannot sacrifice one for the other. You train honestly and log through the monitor exactly as specified &mdash; or you walk away with a zero.
+            </p>
+
+            <!-- Visual 2: Before/After Comparison -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h3 class="text-red-400 text-xl font-bold mb-4"><i class="fas fa-times-circle mr-2"></i>A Typical DL Benchmark</h3>
+                    <ul class="comparison-list">
+                        <li>Measures final accuracy only</li>
+                        <li>Agent owns the logs, can rewrite them</li>
+                        <li>Metrics computed by the agent, self-reported</li>
+                        <li>Architecture can be swapped between "trained" and "submitted"</li>
+                        <li>Process violations are invisible to the scorer</li>
+                        <li>Cheapest path to high score: fake a clean-looking run</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h3 class="text-emerald-400 text-xl font-bold mb-4"><i class="fas fa-check-circle mr-2"></i>Env-RL</h3>
+                    <ul class="comparison-list">
+                        <li>Two decoupled scores: accuracy <em>and</em> process integrity</li>
+                        <li>Judge owns the logs; agent can only append through a monitor API</li>
+                        <li>PyTorch hooks compute metrics on the live model, never on agent-reported numbers</li>
+                        <li>Architecture-change events are replayed and compared to the submitted model</li>
+                        <li>Every fired rule needs a decision in its window, audited end-to-end</li>
+                        <li>Cheapest path to a high combined score: train honestly</li>
+                    </ul>
+                </div>
+            </div>
+
+            <p>
+                The questions this post answers:
+            </p>
+
+            <ul class="list-disc">
+                <li>How do you make an agent's training decisions <em>auditable</em> when the agent owns the workspace?</li>
+                <li>How do you stop the agent from forging logs, fabricating trajectories, or swapping architectures after the fact?</li>
+                <li>How do you define "did a rule fire?" in a way that leaves no room for subjective interpretation?</li>
+                <li>How do you score process discipline <em>independently</em> from accuracy, so sloppy training can never buy more accuracy?</li>
+                <li>How do you then plug a real OpenAI model in as the decision-maker, and have it actually <em>improve</em> across attempts?</li>
+                <li>And importantly &mdash; why this is <strong>iterative self-refine</strong>, not reinforcement learning, and why that distinction matters?</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-shield-halved mr-2"></i>Key Innovation:</strong>
+                A four-component architecture &mdash; read-only <code>monitor</code> module, post-run 11-step <code>judge</code>, read-only 7-rule playbook, and a pluggable <code>harness</code> that calls any OpenAI-compatible model &mdash; where the log chain is SHA-256 linked, the diagnostic metrics are measured by PyTorch hooks on the live model (the agent never computes them), every training decision must cite a rule that actually fired, and the two scoring axes are architecturally non-tradeable.
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The challenge breaks into six interconnected problems. None of them can be solved in isolation. Fix one, and a determined adversary slides into another.
+            </p>
+
+            <ol>
+                <li><strong>Log integrity.</strong> If the agent owns the logs, it can fabricate them after the run. Any audit is toothless against an agent that writes whatever it wants into <code>decision_log.jsonl</code>.</li>
+                <li><strong>Diagnostic gaming.</strong> If the agent computes its own gradient norms and dead-ReLU fractions, it can quietly report smaller numbers so rules never trigger. A model that wants to pretend its gradients are calm simply never writes the moment they spiked.</li>
+                <li><strong>Rule subjectivity.</strong> "The gradient is exploding" has to mean <em>exactly one thing</em>. Otherwise the agent can claim in post-hoc defense that the rule did not fire, and you cannot prove otherwise.</li>
+                <li><strong>Architecture swaps.</strong> The agent might quietly train a bigger network for the accuracy score, then submit a smaller one to match what it was "supposed" to be training. Weight files are opaque.</li>
+                <li><strong>Score tradeoff.</strong> If process and accuracy get mixed into a single scalar, a sloppy run can buy extra accuracy by skipping decisions.</li>
+                <li><strong>Denominator gaming.</strong> If the process score is "1 &minus; violations / decisions", a run where no rule ever fires gives 0/0 &mdash; and perfect marks on a process audit that never actually watched the agent think.</li>
+            </ol>
+
+            <!-- Visual 3: Challenge × Environment Response Table -->
+            <div class="blueprint-box my-6">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-table mr-2"></i>Challenge &times; Environment Response</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Challenge</th>
+                            <th>Adversary&rsquo;s move</th>
+                            <th>Env-RL response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1. Log integrity</td>
+                            <td>Write fabricated <code>decision_log.jsonl</code> after training</td>
+                            <td class="score-green">Judge reads only from <code>/judge_logs/</code>; agent has no write permission (<code>chattr +a</code>)</td>
+                        </tr>
+                        <tr>
+                            <td>2. Diagnostic gaming</td>
+                            <td>Under-report dead-ReLU fraction or gradient norm</td>
+                            <td class="score-green">PyTorch hooks measure on the live model; agent only reads the result, never writes it</td>
+                        </tr>
+                        <tr>
+                            <td>3. Rule subjectivity</td>
+                            <td>Argue a rule did not trigger</td>
+                            <td class="score-green">Single canonical <code>evaluate_rules()</code>; EMA + 3-consecutive-epoch persistence applied uniformly</td>
+                        </tr>
+                        <tr>
+                            <td>4. Architecture swaps</td>
+                            <td>Train model A, submit model B</td>
+                            <td class="score-green">Judge replays every <code>architecture_change</code> event; final spec must match submitted <code>load_model()</code></td>
+                        </tr>
+                        <tr>
+                            <td>5. Score tradeoff</td>
+                            <td>Skip decisions to save an epoch of compute</td>
+                            <td class="score-green">Process and accuracy are decoupled scalars; you cannot buy one with the other</td>
+                        </tr>
+                        <tr>
+                            <td>6. Denominator gaming</td>
+                            <td>Train so carefully no rule ever fires</td>
+                            <td class="score-amber">Documented caveat; mitigation via future "minimum rule evaluations" threshold</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFY THE PROBLEM                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucify the Problem</h2>
+
+            <p>
+                Let us lucify this. Imagine you are the <strong>attending physician</strong> on a teaching hospital ward. A medical resident is on rotation with you. The resident is there to learn, yes &mdash; but more importantly, the resident is making real decisions about real patients, and those decisions have to be documented, justified, and auditable.
+            </p>
+
+            <p>
+                Every decision the resident makes &mdash; order a blood panel, change a medication, watch a symptom for another hour, escalate to the attending &mdash; goes into the hospital chart. The resident does not control the chart. The nurses document. The computer system timestamps everything. The chart is reviewed the next morning at rounds, and again at the end of the rotation. The resident is not scored on "patient got better" alone. The resident is scored on the quality of their judgment, independently of outcome, because sometimes the judgment is perfect and the outcome is bad anyway, and sometimes a lucky guess works out.
+            </p>
+
+            <p>
+                That is exactly env_rl. The LLM is the resident. The playbook is the on-call protocol (here is what to do when X happens). The monitor is the attending physician who writes the chart. <code>/judge_logs/</code> is the chart itself. The judge is the board at the end of the shift reviewing what the resident did, grading both the outcome (did the model converge?) and the process (did the resident's decisions line up with the protocol?).
+            </p>
+
+            <!-- Visual 4: Medical Analogy Mapping -->
+            <div class="analogy-card">
+                <h3 class="text-rose-400 text-xl font-bold mb-4"><i class="fas fa-user-doctor mr-2"></i>The Attending-Physician Analogy</h3>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Hospital Ward</th>
+                            <th>Env-RL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>The Resident on rotation</td><td>The LLM agent</td></tr>
+                        <tr><td>On-call protocol binder</td><td><code>docs/playbook.md</code> (7-rule contract, read-only)</td></tr>
+                        <tr><td>Attending physician writing the chart</td><td><code>monitor</code> module (owns the logs, hooks the model)</td></tr>
+                        <tr><td>The hospital chart itself</td><td><code>/judge_logs/*.jsonl</code> (append-only, hash-chained)</td></tr>
+                        <tr><td>Morning rounds: &ldquo;what do we see?&rdquo;</td><td><code>evaluate_rules()</code> returns {R1..R7: bool}</td></tr>
+                        <tr><td>Triage: unstable patient first</td><td>Precedence: <code>stability &gt; capacity &gt; tuning &gt; process</code></td></tr>
+                        <tr><td>Shift change-over sign-out</td><td><code>end_session()</code> bookend record</td></tr>
+                        <tr><td>End-of-rotation chart audit</td><td><code>judge.run_judge()</code> &mdash; eleven steps, two scores</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-triangle-exclamation mr-2"></i>Where the Analogy Breaks Down:</strong>
+                Real medicine has humans in the loop. A senior attending can exercise clinical judgment, forgive a resident for a grey-area call, and take context into account. Env-RL's judge is deterministic code. It is stricter, less forgiving, and has no context beyond what is in the chart. A broken hash chain or a missing decision does not get a conversation &mdash; it gets a hard fail. The design choice is deliberate: <em>process integrity in an adversarial setting requires a judge that cannot be sweet-talked.</em>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: LUCIFY THE JARGON                                  -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book-open mr-3"></i>Lucify the Jargon</h2>
+
+            <p>
+                Before we walk through the blueprint, let us make eight technical terms crystal clear. Each one shows up in the code, and each one earns its keep.
+            </p>
+
+            <!-- Concept 1: EMA -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-wave-square mr-2"></i>1. Exponential Moving Average (EMA)</h4>
+                <p><strong>Definition:</strong> A smoothing filter that weights the latest observation by a factor &alpha; and everything before it by (1 &minus; &alpha;). The update rule is <code>value_t = &alpha; &middot; x_t + (1 &minus; &alpha;) &middot; value_{t-1}</code>.</p>
+                <p><strong>Simple Example:</strong> With &alpha;=0.1 and a gradient norm that jumps once from 2.0 to 50.0 before returning to 2.0, the EMA barely moves to ~6.8 on the spike and snaps back within a few epochs &mdash; so a single weird batch does not trip a rule.</p>
+                <p><strong>Analogy:</strong> Your running heart-rate monitor. It is not the instant reading that matters, it is the smoothed one. A one-second spike because you laughed is not a cardiac event.</p>
+            </div>
+
+            <!-- Concept 2: Hash chain -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-link mr-2"></i>2. Cryptographic Hash Chain</h4>
+                <p><strong>Definition:</strong> A log structure where each line includes the SHA-256 hash of the previous line's full payload. Tampering with any past line invalidates every hash after it; forging a single line requires recomputing all subsequent hashes and matching a root value only the judge holds.</p>
+                <p><strong>Simple Example:</strong> The hash at line N is <code>sha256(prev_hash || canonical_json(payload) || seq || ts)</code>. Change one byte in line 5's payload? Lines 5..N all have mismatched hashes and <code>verify()</code> raises immediately.</p>
+                <p><strong>Analogy:</strong> A shared Google Doc where every character you type is permanently timestamped and the document cryptographically refuses to let you edit older lines &mdash; only append new ones. Git commit history, but for log entries.</p>
+            </div>
+
+            <!-- Concept 3: Structured output -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-code mr-2"></i>3. Structured Output (JSON Schema)</h4>
+                <p><strong>Definition:</strong> OpenAI's <code>response_format.json_schema</code> mode with <code>strict: true</code>. The model's response is constrained at decode time to match a given JSON Schema &mdash; enforced by the API, not by post-hoc validation.</p>
+                <p><strong>Simple Example:</strong> Our decision schema enforces <code>event_type in ["hyperparameter_change", "architecture_change", "rule_triggered_no_action"]</code>, <code>cites</code> as a non-empty array of rule IDs, and <code>remedy_direction</code> from a fixed enum. The LLM physically cannot emit anything else.</p>
+                <p><strong>Analogy:</strong> A customs declaration form with dropdowns instead of free-text fields. The officer does not need to parse your handwriting &mdash; you picked from a list.</p>
+            </div>
+
+            <!-- Concept 4: Iterative self-refine -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-arrows-spin mr-2"></i>4. Iterative Self-Refine (NOT Reinforcement Learning)</h4>
+                <p><strong>Definition:</strong> An inference-time loop where the model runs a task, gets feedback, and that feedback gets fed back into the <em>prompt</em> for the next attempt. Model weights never change. See Madaan et al. "Self-Refine" (2023), Shinn et al. "Reflexion" (2023).</p>
+                <p><strong>Simple Example:</strong> Attempt 1 produces 11 violations. Their list is prepended to attempt 2's system prompt: "Previously you had R5 precedence violations at epochs 4-6. Avoid repeating this pattern." Attempt 2 sees the list and picks differently. Weights of <code>gpt-4o-mini</code> did not update. Open a fresh conversation tomorrow and the model has forgotten everything.</p>
+                <p><strong>Analogy:</strong> A student who re-reads their returned exam between two attempts at the same test. The student does not get smarter. They just get a cheat sheet of their past mistakes.</p>
+            </div>
+
+            <!-- Concept 5: Precedence -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-layer-group mr-2"></i>5. Rule Precedence</h4>
+                <p><strong>Definition:</strong> A total ordering over rule classes used to resolve conflicts when multiple rules fire on the same epoch: <code>stability &gt; capacity &gt; tuning &gt; process</code>. The agent must action the highest-precedence rule; other fired rules get a <code>rule_triggered_no_action</code> deferral citing <code>deferred_to_R&lt;N&gt;</code>.</p>
+                <p><strong>Simple Example:</strong> At epoch 5, R7 (exploding gradients, stability) and R1 (learning rate, tuning) both fire. The agent must take the R7 remedy (drop LR) and log a deferral for R1. Actioning R1 first is a <code>precedence_violation</code> process penalty.</p>
+                <p><strong>Analogy:</strong> ER triage. A patient with chest pain and a runny nose gets seen for the chest pain first. You do not negotiate.</p>
+            </div>
+
+            <!-- Concept 6: Waived -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-ban mr-2"></i>6. Waived Rules</h4>
+                <p><strong>Definition:</strong> Rules the current harness cannot physically execute a remedy for. The judge treats them as advisory &mdash; firings do not require a matching decision, deferrals of them do not need to clear, and they do not count in precedence checks.</p>
+                <p><strong>Simple Example:</strong> The reference harness cannot rebuild the <code>DataLoader</code> mid-training, so R2 (batch size) is waived. If the LLM emits <code>rule_triggered_no_action</code> for R2 and R2 keeps firing, that is not a violation &mdash; the harness just cannot fulfill it. Real RL setups would un-waive as they gain capability.</p>
+                <p><strong>Analogy:</strong> Telling a new resident, "do not worry about ordering MRIs today, that requires a consult we do not have on this rotation." You have not graded them for the thing you did not let them do.</p>
+            </div>
+
+            <!-- Concept 7: Process integrity score -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-gauge-high mr-2"></i>7. Process Integrity Score</h4>
+                <p><strong>Definition:</strong> <code>1 &minus; violations / total_decisions</code>, bounded in [0, 1]. Entirely independent from the accuracy score. Hard fails in judge steps 1&ndash;7 zero both; violations from steps 8&ndash;9 reduce only this axis.</p>
+                <p><strong>Simple Example:</strong> 40 total decisions, 1 violation &rarr; process = 0.975. The same run might have test accuracy 0.94 &rarr; accuracy score = 1.0 (saturates at target). They are reported as two separate numbers.</p>
+                <p><strong>Analogy:</strong> A driving exam with two scores &mdash; how well you drove, and whether you signaled every turn. You can drive perfectly while skipping signals, and you can obey every rule while rear-ending the curb. Both matter, neither substitutes.</p>
+            </div>
+
+            <!-- Concept 8: Dead ReLU -->
+            <div class="concept-card">
+                <h4 class="text-amber-400 font-bold mb-2"><i class="fas fa-skull-crossbones mr-2"></i>8. Dead-ReLU Fraction</h4>
+                <p><strong>Definition:</strong> The proportion of post-activation values in a layer that are exactly zero. ReLU outputs zero whenever its pre-activation is negative; dead-ReLU means a neuron that is stuck at zero for most inputs and therefore cannot learn via backprop.</p>
+                <p><strong>Simple Example:</strong> The monitor hooks a forward pass and computes <code>(output == 0).float().mean()</code>. The R5 rule fires when the EMA of this fraction exceeds 0.40 for 3 consecutive epochs. Remedy: swap activation to LeakyReLU or GELU.</p>
+                <p><strong>Analogy:</strong> A light bulb permanently switched off in a house. You can flip the switch all you want &mdash; no current flows. Time to replace the bulb.</p>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: MAKE THE BLUEPRINT                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Make the Blueprint</h2>
+
+            <p>
+                Let us now make the blueprint. Env-RL has four distinct components, each with one responsibility. They talk to each other through narrow interfaces, which makes the trust boundary easy to reason about.
+            </p>
+
+            <!-- Visual 6: Four-Component Architecture Diagram -->
+            <div class="architecture-diagram">
+                <h4 class="text-white font-semibold mb-4 text-center"><i class="fas fa-sitemap mr-2"></i>Four-Component Architecture</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="architecture-box">
+                        <div class="text-3xl mb-2"><i class="fas fa-eye text-amber-400"></i></div>
+                        <div class="font-bold text-white">Monitor</div>
+                        <div class="text-xs text-slate-400 mt-1">Only legitimate logging path; owns <code>/judge_logs/</code>; hooks the live model; canonical rule evaluator.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-3xl mb-2"><i class="fas fa-book text-rose-400"></i></div>
+                        <div class="font-bold text-white">Playbook</div>
+                        <div class="text-xs text-slate-400 mt-1">7-rule contract in <code>docs/playbook.md</code>; read-only; symptoms/remedy/caveat uniform structure.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-3xl mb-2"><i class="fas fa-balance-scale text-cyan-400"></i></div>
+                        <div class="font-bold text-white">Judge</div>
+                        <div class="text-xs text-slate-400 mt-1">Post-run 11-step audit; emits two decoupled scores; steps 1&ndash;7 are hard-fail gates.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-3xl mb-2"><i class="fas fa-robot text-emerald-400"></i></div>
+                        <div class="font-bold text-white">Harness</div>
+                        <div class="text-xs text-slate-400 mt-1">Pluggable decision policy; OpenAI or scripted; iterative self-refine across attempts.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 7: Trust Boundary Diagram -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-fingerprint mr-2"></i>The Trust Boundary</h4>
+                <p class="text-slate-300 text-base mb-4">Solid arrows = direct filesystem access; dashed arrows = mediated only through the monitor API. The agent has no other path to <code>/judge_logs/</code>.</p>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="background: rgba(244, 63, 94, 0.1); border: 1px dashed #f43f5e;">
+                        <div class="node-number text-rose-400">RW</div>
+                        <div class="node-name">Agent Workspace</div>
+                        <div class="node-desc"><code>/workspace/</code>: agent writes model.py, best_model.pt, run_config.json</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b;">
+                        <div class="node-number text-amber-400">API</div>
+                        <div class="node-name">Monitor</div>
+                        <div class="node-desc">Only legitimate logger; installed read-only on PYTHONPATH</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981;">
+                        <div class="node-number text-emerald-400">A+</div>
+                        <div class="node-name">/judge_logs/</div>
+                        <div class="node-desc">Append-only chained JSONL; <code>chattr +a</code>; judge UID only</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="background: rgba(6, 182, 212, 0.1); border: 1px solid #06b6d4;">
+                        <div class="node-number text-cyan-400">R</div>
+                        <div class="node-name">Judge</div>
+                        <div class="node-desc">Post-run; reads logs + deliverables; emits Scores</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 8: Per-Epoch Lifecycle Sequence -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-rotate-right mr-2"></i>Per-Epoch Lifecycle</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node">
+                        <div class="node-number text-amber-400">Once</div>
+                        <div class="node-name">start_session</div>
+                        <div class="node-desc">Open three chained logs, record run_config</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-amber-400">Once</div>
+                        <div class="node-name">attach(model)</div>
+                        <div class="node-desc">Register fwd/bwd hooks on all activations and params</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-rose-400">Per epoch</div>
+                        <div class="node-name">collect_epoch_metrics</div>
+                        <div class="node-desc">Read hook state; compute val_loss / val_acc</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-rose-400">Per epoch</div>
+                        <div class="node-name">evaluate_rules</div>
+                        <div class="node-desc">Return {R1..R7: bool}; canonical</div>
+                    </div>
+                </div>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node">
+                        <div class="node-number text-rose-400">Per epoch</div>
+                        <div class="node-name">log_epoch</div>
+                        <div class="node-desc">Append metrics to metrics_log.jsonl</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-rose-400">Per epoch</div>
+                        <div class="node-name">log_rule_eval</div>
+                        <div class="node-desc">Append {R1..R7: bool} to rule_evaluations.jsonl</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-cyan-400">If fired</div>
+                        <div class="node-name">log_decision</div>
+                        <div class="node-desc">Cite the rule, apply the remedy</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-amber-400">Once</div>
+                        <div class="node-name">end_session</div>
+                        <div class="node-desc">Write bookend; close chained writers</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 9: Judge 11-Step Flowchart -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-clipboard-check mr-2"></i>The Judge &mdash; 11 Steps in Strict Order</h4>
+
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">1</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> All three deliverables exist in <code>/workspace/</code>.
+                    </div>
+                </div>
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">2</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> <code>load_model()</code> defined, takes zero args, is callable.
+                    </div>
+                </div>
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">3</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> Weights load into the returned module with no shape mismatch; model in <code>eval()</code> mode.
+                    </div>
+                </div>
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">4</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> <code>run_config.json</code> has the required fields and matches the logged <code>session_start</code> record.
+                    </div>
+                </div>
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">5</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> Log chain integrity: contiguous seq numbers, monotonic timestamps, unbroken SHA-256, single matched <code>session_start</code>/<code>session_end</code> bookend.
+                    </div>
+                </div>
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">6</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> Replay every <code>architecture_change</code> from the initial spec; cumulative result must match the submitted model&rsquo;s <code>.spec()</code>.
+                    </div>
+                </div>
+                <div class="judge-step-row hard-fail">
+                    <div class="step-num">7</div>
+                    <div>
+                        <strong class="text-red-300">Hard-fail gate.</strong> Live diagnostic sanity: fwd/bwd pass on a fixed batch must yield per-layer grad norms within &plusmn;30% of the last-epoch log.
+                    </div>
+                </div>
+                <div class="judge-step-row process-only">
+                    <div class="step-num">8</div>
+                    <div>
+                        <strong class="text-amber-300">Process violation.</strong> Rule-coverage audit: every fire has a matching decision in its &plusmn;2-epoch window; citations reference rules that actually fired; deferrals eventually clear; precedence respected.
+                    </div>
+                </div>
+                <div class="judge-step-row process-only">
+                    <div class="step-num">9</div>
+                    <div>
+                        <strong class="text-amber-300">Process violation.</strong> Decision defensibility sampling: event_type matches rule class; remedy direction agrees with playbook; no pathological log-padding.
+                    </div>
+                </div>
+                <div class="judge-step-row scoring">
+                    <div class="step-num">10</div>
+                    <div>
+                        <strong class="text-emerald-300">Scoring.</strong> Load the held-out CIFAR-10 test split; compute top-1 accuracy.
+                    </div>
+                </div>
+                <div class="judge-step-row scoring">
+                    <div class="step-num">11</div>
+                    <div>
+                        <strong class="text-emerald-300">Scoring.</strong> Emit <code>accuracy_score</code> (saturating at target) and <code>process_score</code> (1 &minus; violations/decisions). Hard-fail anywhere above zeros both.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 10: Seven-Rule Precedence Ladder -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-layer-group mr-2"></i>The 7-Rule Precedence Ladder</h4>
+                <div class="precedence-tier tier-stability">
+                    <div class="precedence-rank">1st</div>
+                    <div>
+                        <strong class="text-rose-300">Stability</strong>
+                        <span class="rule-chip">R7 exploding gradients</span>
+                        <span class="rule-chip">R6 vanishing gradients</span>
+                        <div class="text-sm text-slate-400">Stabilize before anything else. NaN/Inf loss fires R7 immediately.</div>
+                    </div>
+                </div>
+                <div class="precedence-tier tier-capacity">
+                    <div class="precedence-rank">2nd</div>
+                    <div>
+                        <strong class="text-cyan-300">Capacity</strong>
+                        <span class="rule-chip">R4 depth</span>
+                        <span class="rule-chip">R5 activations</span>
+                        <div class="text-sm text-slate-400">Grow or fix representational capacity once gradients behave.</div>
+                    </div>
+                </div>
+                <div class="precedence-tier tier-tuning">
+                    <div class="precedence-rank">3rd</div>
+                    <div>
+                        <strong class="text-emerald-300">Tuning</strong>
+                        <span class="rule-chip">R1 learning rate</span>
+                        <span class="rule-chip">R2 batch size</span>
+                        <div class="text-sm text-slate-400">Fine-tune optimization once structure is settled.</div>
+                    </div>
+                </div>
+                <div class="precedence-tier tier-process">
+                    <div class="precedence-rank">4th</div>
+                    <div>
+                        <strong class="text-violet-300">Process</strong>
+                        <span class="rule-chip">R3 early stopping</span>
+                        <div class="text-sm text-slate-400">Process-class rules yield to all other classes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 11: Monitor's Five Jobs -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-gears mr-2"></i>The Monitor&rsquo;s Five Jobs</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div class="architecture-box">
+                        <div class="text-2xl mb-2"><i class="fas fa-folder-lock text-amber-400"></i></div>
+                        <div class="font-bold text-white text-sm">Owns Log Files</div>
+                        <div class="text-xs text-slate-400 mt-1">Opens append-only handles in <code>/judge_logs/</code>; LLM UID cannot write.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-2xl mb-2"><i class="fas fa-microchip text-rose-400"></i></div>
+                        <div class="font-bold text-white text-sm">Computes Diagnostics</div>
+                        <div class="text-xs text-slate-400 mt-1">PyTorch hooks read grad norms, dead-ReLU, activation stats direct from model.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-2xl mb-2"><i class="fas fa-clipboard-list text-cyan-400"></i></div>
+                        <div class="font-bold text-white text-sm">Evaluates Rules</div>
+                        <div class="text-xs text-slate-400 mt-1">Single canonical <code>evaluate_rules()</code>; EMA + 3-epoch persistence.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-2xl mb-2"><i class="fas fa-link text-emerald-400"></i></div>
+                        <div class="font-bold text-white text-sm">Chains Hashes</div>
+                        <div class="text-xs text-slate-400 mt-1">Every line <code>prev_hash</code>-linked to the last; root held by the judge.</div>
+                    </div>
+                    <div class="architecture-box">
+                        <div class="text-2xl mb-2"><i class="fas fa-stopwatch text-violet-400"></i></div>
+                        <div class="font-bold text-white text-sm">Seq Integrity</div>
+                        <div class="text-xs text-slate-400 mt-1">Monitor-stamped seq and ts; gaps and non-monotonic order are immediately visible.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: EXECUTE THE BLUEPRINT                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Execute the Blueprint</h2>
+
+            <p>
+                Now let us carry out the blueprint plan. Four subsections &mdash; one per component &mdash; each with real code and a diagram.
+            </p>
+
+            <h3>6.1 The Monitor &mdash; the Heart of the Environment</h3>
+
+            <p>
+                The monitor is where the anti-hacking guarantees live. It is a Python module the judge ships, installed read-only on <code>PYTHONPATH</code>. The LLM can read its source but cannot patch it, monkey-patch it, or route around it. And it is small &mdash; about 300 lines of Python &mdash; which is the point. A small, well-specified interface is easier to audit than a sprawling one.
+            </p>
+
+            <p>
+                Here is the core of the chained writer. Every call to <code>append()</code> recomputes a hash that depends on the previous one and writes a single JSONL line.
+            </p>
+
+            <div class="code-block">
+                <pre class="language-python"><code>class ChainedJsonlWriter:
+    """Append-only JSONL writer with a SHA-256 hash chain.
+
+    Each line contains {seq, ts, prev_hash, payload, hash} where
+    hash = sha256(prev_hash || canonical(payload) || str(seq) || str(ts)).
+    File opened in "ab" mode so POSIX guarantees writes land at EOF
+    regardless of seek() &mdash; past lines cannot be overwritten.
+    """
+
+    def __init__(self, path: Path, *, root_hash: str) -> None:
+        self._path = Path(path)
+        self._root_hash = root_hash
+        self._seq, self._prev_hash, self._last_ts = self._resume_state()
+        self._fh: BinaryIO = open(path, "ab")
+
+    def append(self, payload: dict[str, Any]) -> dict[str, Any]:
+        ts = max(time.time(), self._last_ts)          # monotonic
+        seq = self._seq
+        h = _compute_hash(self._prev_hash, payload, seq, ts)
+        record = {
+            "seq": seq, "ts": ts,
+            "prev_hash": self._prev_hash,
+            "payload": payload, "hash": h,
+        }
+        self._fh.write((json.dumps(record, sort_keys=True) + "\n").encode("utf-8"))
+        self._fh.flush()
+        self._seq += 1
+        self._prev_hash = h
+        self._last_ts = ts
+        return record</code></pre>
+            </div>
+
+            <!-- Visual 12: Hash Chain Graphic -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-link mr-2"></i>Hash Chain &mdash; Why You Cannot Forge Line 5</h4>
+                <div class="hash-chain-row">
+                    <div class="hash-chain-node">
+                        <div><span class="seq">seq=0</span> session_start</div>
+                        <div class="payload">prev_hash=0x0000...</div>
+                        <div class="hash">hash=a4f6...</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="hash-chain-node">
+                        <div><span class="seq">seq=1</span> epoch metrics</div>
+                        <div class="payload">prev_hash=a4f6...</div>
+                        <div class="hash">hash=9a27...</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="hash-chain-node">
+                        <div><span class="seq">seq=2</span> rule_eval</div>
+                        <div class="payload">prev_hash=9a27...</div>
+                        <div class="hash">hash=5f9c...</div>
+                    </div>
+                    <div class="flow-arrow-right"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="hash-chain-node">
+                        <div><span class="seq">seq=3</span> decision</div>
+                        <div class="payload">prev_hash=5f9c...</div>
+                        <div class="hash">hash=ef59...</div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400 text-center mt-3">Change one byte anywhere in the chain and every line after it has a mismatched <code>prev_hash</code>. The judge&rsquo;s <code>verify(root_hash)</code> walks end-to-end and raises <code>ChainVerificationError</code> on the first mismatch.</p>
+            </div>
+
+            <p>
+                The monitor also owns the canonical rule evaluator. This is the single source of truth for "did a rule fire?" &mdash; the LLM does not get a vote.
+            </p>
+
+            <div class="code-block">
+                <pre class="language-python"><code>def rule_r7(history: MetricsHistory, config: Config) -> bool:
+    # Immediate fire on NaN/Inf loss
+    if history and _has_nan_or_inf(history[-1]):
+        return True
+    cfg = config["rules"]["r7_exploding_gradients"]
+    values = _signal(history, "max_layer_grad_norm")
+    return _ema_tail_above(
+        values, _alpha(config), _n(config),
+        float(cfg["max_layer_grad_norm"])
+    )
+
+def evaluate_rules(history: MetricsHistory, config: Config) -> dict[str, bool]:
+    """Single source of truth. Returns {R1..R7: bool} for the latest epoch."""
+    return {name: fn(history, config) for name, fn in RULES.items()}</code></pre>
+            </div>
+
+            <h3>6.2 The Judge &mdash; the Independent Observer</h3>
+
+            <p>
+                The judge never trusts anything the LLM writes in <code>/workspace/</code> beyond the three deliverables. It reads logs directly from the judge-owned directory, runs 11 steps in strict order, and short-circuits on the first hard-fail gate. Step 5, chain verification, is a thin wrapper around the monitor&rsquo;s own <code>verify</code>:
+            </p>
+
+            <div class="code-block">
+                <pre class="language-python"><code>def verify(path: Path, *, root_hash: str) -> None:
+    """Walk the chain end-to-end; raise ChainVerificationError on any issue."""
+    prev_hash = root_hash
+    expected_seq = 0
+    last_ts = 0.0
+
+    with open(path, "rb") as f:
+        for lineno, raw in enumerate(f, start=1):
+            rec = json.loads(raw.strip())
+            for field in ("seq", "ts", "prev_hash", "payload", "hash"):
+                if field not in rec:
+                    raise ChainVerificationError(f"line {lineno}: missing {field!r}")
+            if rec["seq"] != expected_seq:
+                raise ChainVerificationError(f"seq gap at line {lineno}")
+            if rec["prev_hash"] != prev_hash:
+                raise ChainVerificationError(f"prev_hash mismatch at line {lineno}")
+            if float(rec["ts"]) < last_ts:
+                raise ChainVerificationError(f"timestamp went backwards at line {lineno}")
+            expected = _compute_hash(rec["prev_hash"], rec["payload"], rec["seq"], rec["ts"])
+            if expected != rec["hash"]:
+                raise ChainVerificationError(f"hash mismatch at line {lineno}")
+            prev_hash = rec["hash"]
+            last_ts = float(rec["ts"])
+            expected_seq += 1</code></pre>
+            </div>
+
+            <!-- Visual 13: Cheat-Attempt Matrix -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-user-ninja mr-2"></i>Five Cheat Attempts &mdash; and the Step That Catches Each</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Cheat</th>
+                            <th>What the Agent Tried</th>
+                            <th>Judge Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Shadow log</strong></td>
+                            <td>Write a fabricated <code>decision_log.jsonl</code> into <code>/workspace/</code></td>
+                            <td class="score-green"><strong>Step 5 &mdash; ignored.</strong> Judge reads only <code>/judge_logs/</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Model swap</strong></td>
+                            <td>Train a larger network, submit a smaller one</td>
+                            <td class="score-red"><strong>Step 6 &mdash; hard fail.</strong> Architecture replay mismatch.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fabricated trajectory</strong></td>
+                            <td>Log smooth training, submit a zero-weight model</td>
+                            <td class="score-red"><strong>Step 7 &mdash; hard fail.</strong> Live gradients disagree with log tail.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Skipped decision</strong></td>
+                            <td>R7 fires; agent continues without citing it</td>
+                            <td class="score-amber"><strong>Step 8 &mdash; process violation.</strong> Score drops by 1/total_decisions.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Forged past line</strong></td>
+                            <td>Tamper with the hash on an existing log entry</td>
+                            <td class="score-red"><strong>Step 5 &mdash; hard fail.</strong> Chain verification raises on the first broken link.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                The scoring itself is intentionally simple. Two scalars. No weighting. No tradeoff.
+            </p>
+
+            <div class="code-block">
+                <pre class="language-python"><code>def accuracy_score(test_accuracy: float, target_acc: float) -> float:
+    if test_accuracy >= target_acc:
+        return 1.0                        # saturate at target
+    return max(0.0, test_accuracy / target_acc)
+
+def process_score(violations: int, total_decisions: int) -> float:
+    if total_decisions <= 0:
+        return 1.0                        # denominator-gaming caveat
+    return max(0.0, 1.0 - violations / total_decisions)
+
+def compute_scores(*, hard_fail: bool, test_accuracy: float, target_acc: float,
+                   violations: int, total_decisions: int) -> Scores:
+    if hard_fail:
+        return Scores(accuracy_score=0.0, process_score=0.0, hard_fail=True, ...)
+    return Scores(
+        accuracy_score=accuracy_score(test_accuracy, target_acc),
+        process_score=process_score(violations, total_decisions),
+        hard_fail=False, ...
+    )</code></pre>
+            </div>
+
+            <h3>6.3 The Playbook &mdash; the 7-Rule Contract</h3>
+
+            <p>
+                The playbook is a read-only markdown document. Each rule has the same four-part structure: <strong>Symptoms</strong>, <strong>Cause</strong>, <strong>Remedy</strong>, <strong>Caveat</strong>. Short enough to hold in working memory. Detailed enough that lazy pattern-matching will not substitute for thinking. And since <code>evaluate_rules()</code> is the canonical implementation, there is no ambiguity about whether a rule fired &mdash; only what to do about it.
+            </p>
+
+            <!-- Visual 14: Rule Cards Grid -->
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="concept-card">
+                    <h4 class="text-rose-400 font-bold"><span class="rule-chip">R7</span> Exploding Gradients</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> max-layer grad-norm EMA &gt; 10 for 3 consecutive epochs, or NaN/Inf loss.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> drop LR by factor 10, add gradient clipping.</p>
+                    <p class="text-sm"><strong>Caveat:</strong> highest precedence &mdash; always action first.</p>
+                </div>
+                <div class="concept-card">
+                    <h4 class="text-rose-400 font-bold"><span class="rule-chip">R6</span> Vanishing Gradients</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> min-layer grad-norm EMA &lt; 1e-5 for 3 consecutive epochs.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> add BN at suspect depth, residual connection, or gradient-friendly activation.</p>
+                    <p class="text-sm"><strong>Caveat:</strong> stability &gt; capacity &gt; tuning. R7 beats R6 if both fire.</p>
+                </div>
+                <div class="concept-card">
+                    <h4 class="text-cyan-400 font-bold"><span class="rule-chip">R5</span> Dead Activations</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> dead-ReLU fraction EMA &gt; 0.40 for 3 consecutive epochs.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> swap to LeakyReLU, GELU, or PReLU.</p>
+                    <p class="text-sm"><strong>Caveat:</strong> high LR transiently looks like dead-ReLU; stabilize first.</p>
+                </div>
+                <div class="concept-card">
+                    <h4 class="text-cyan-400 font-bold"><span class="rule-chip">R4</span> Depth / Capacity</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> train-acc plateau with clean gradients and healthy activations for 3 epochs.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> add residual block or widen channels.</p>
+                    <p class="text-sm"><strong>Caveat:</strong> capacity &gt; tuning. R4 beats R1/R2.</p>
+                </div>
+                <div class="concept-card">
+                    <h4 class="text-emerald-400 font-bold"><span class="rule-chip">R1</span> Learning Rate</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> update-to-param ratio EMA out of [1e-4, 1e-2] for 3 epochs, or val-loss plateau.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> reduce LR by 3&ndash;10x, or cyclical schedule.</p>
+                    <p class="text-sm"><strong>Caveat:</strong> never touch LR while R6/R7 firing.</p>
+                </div>
+                <div class="concept-card">
+                    <h4 class="text-emerald-400 font-bold"><span class="rule-chip">R2</span> Batch Size</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> gradient noise scale EMA outside [50, 5000] for 3 epochs.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> halve or double batch size (grad accumulation if VRAM-bound).</p>
+                    <p class="text-sm"><strong>Caveat:</strong> GNS moves with LR; give one epoch after R1 action before evaluating R2.</p>
+                </div>
+                <div class="concept-card md:col-span-2">
+                    <h4 class="text-violet-400 font-bold"><span class="rule-chip">R3</span> Early Stopping</h4>
+                    <p class="text-sm"><strong>Symptoms:</strong> val loss no improvement by <code>min_delta</code> over <code>patience</code> epochs.</p>
+                    <p class="text-sm"><strong>Remedy:</strong> stop training, save best checkpoint.</p>
+                    <p class="text-sm"><strong>Caveat:</strong> lowest-precedence. Every other class beats R3.</p>
+                </div>
+            </div>
+
+            <h3>6.4 The Harness &mdash; Iterative Self-Refine</h3>
+
+            <p>
+                The harness is the piece that plugs a real LLM in. Python drives the training loop. Each epoch, after the monitor evaluates the 7 rules, the highest-precedence fired rule is sent to the LLM with the full diagnostic state; the LLM returns a structured JSON decision; the harness applies the remedy (LR change or activation swap), logs the decision, and continues.
+            </p>
+
+            <p>
+                Between attempts, the scores and violations of the previous run are carried forward into the next attempt&rsquo;s system prompt. This is <strong>not reinforcement learning</strong>. Model weights never change. The mechanism is entirely in-prompt.
+            </p>
+
+            <!-- Visual 15: Iterative Self-Refine Loop -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-arrows-spin mr-2"></i>The Iterative Self-Refine Loop</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node" style="border: 1px solid #f59e0b;">
+                        <div class="node-number text-amber-400">Attempt 1</div>
+                        <div class="node-name">System prompt<br>(no priors)</div>
+                        <div class="node-desc">Full training run &rarr; scores + violations</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #f43f5e;">
+                        <div class="node-number text-rose-400">Attempt 2</div>
+                        <div class="node-name">System prompt<br>+ attempt 1 feedback</div>
+                        <div class="node-desc">LLM sees prior violations; picks differently</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #06b6d4;">
+                        <div class="node-number text-cyan-400">Attempt 3</div>
+                        <div class="node-name">System prompt<br>+ attempts 1 &amp; 2</div>
+                        <div class="node-desc">Converges as violations drop</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node" style="border: 1px solid #10b981;">
+                        <div class="node-number text-emerald-400">Result</div>
+                        <div class="node-name">Best-of-N</div>
+                        <div class="node-desc">Pick attempt with max (process, accuracy)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual 16: Decision Call Flow -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-comment-dots mr-2"></i>One Decision: What Happens When a Rule Fires</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node">
+                        <div class="node-number text-rose-400">1</div>
+                        <div class="node-name">Rule fires</div>
+                        <div class="node-desc">evaluate_rules returns {R7: True}</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-amber-400">2</div>
+                        <div class="node-name">Python picks top</div>
+                        <div class="node-desc">Precedence: R7 wins ties</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-cyan-400">3</div>
+                        <div class="node-name">OpenAI call</div>
+                        <div class="node-desc">chat.completions.create(response_format=json_schema)</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-emerald-400">4</div>
+                        <div class="node-name">Parse + validate</div>
+                        <div class="node-desc">Decision dataclass with event_type, cites, justification</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="node-number text-violet-400">5</div>
+                        <div class="node-name">Apply + log</div>
+                        <div class="node-desc">optim.lr = lr_new; monitor.log_decision(...)</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                Here is the core of the OpenAI policy &mdash; the whole thing is about 40 lines. The schema is enforced by the API itself (<code>strict: true</code>), so parsing cannot fail on a malformed response.
+            </p>
+
+            <div class="code-block">
+                <pre class="language-python"><code>class OpenAIDecisionPolicy:
+    def decide(self, *, top_rule, all_fired, metrics, epoch,
+               current_lr, current_batch_size, recent_history):
+        messages = build_decision_messages(
+            system_prompt=self._system_prompt,    # playbook + prior attempts
+            epoch=epoch, top_rule=top_rule, metrics=metrics,
+            current_lr=current_lr,
+            current_batch_size=current_batch_size,
+            recent_history=recent_history,
+        )
+        response = self._client.chat.completions.create(
+            model=self._model,                     # gpt-4o-mini
+            messages=messages,
+            temperature=self._temperature,         # 0.2
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "decision",
+                    "strict": True,
+                    "schema": DECISION_SCHEMA,     # enforced by the API
+                },
+            },
+        )
+        return _decision_from_dict(
+            json.loads(response.choices[0].message.content),
+            top_rule=top_rule, current_lr=current_lr,
+        )</code></pre>
+            </div>
+
+            <!-- Visual 17: Active vs Waived rules -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-ban mr-2"></i>Active vs Waived Rules in the Reference Harness</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Rule</th>
+                            <th>Status</th>
+                            <th>Why</th>
+                            <th>Future un-waive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>R1 (LR)</td><td class="score-green">ACTIVE</td><td>Harness applies <code>lr_new</code> to optimizer</td><td>&mdash;</td></tr>
+                        <tr><td>R5 (activations)</td><td class="score-green">ACTIVE</td><td>Harness swaps activation modules in place</td><td>&mdash;</td></tr>
+                        <tr><td>R7 (exploding)</td><td class="score-green">ACTIVE</td><td>Same code path as R1 (LR drop)</td><td>&mdash;</td></tr>
+                        <tr><td>R2 (batch size)</td><td class="score-amber">WAIVED</td><td>Would need DataLoader rebuild mid-run</td><td>Implement <code>rebuild_loader()</code></td></tr>
+                        <tr><td>R3 (early stop)</td><td class="score-amber">WAIVED</td><td>Harness always runs to max_epochs</td><td>Add early-stop signal to loop</td></tr>
+                        <tr><td>R4 (add block)</td><td class="score-amber">WAIVED</td><td>Would need <code>optimizer.add_param_group</code></td><td>Implement <code>add_block</code> edit</td></tr>
+                        <tr><td>R6 (vanishing)</td><td class="score-amber">WAIVED</td><td>Retrofitting BN mid-run changes shapes</td><td>Rebuild model + transfer weights</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-400 mt-3">Waived rules are fed into the system prompt with an instruction: &ldquo;always use <code>rule_triggered_no_action</code> for these, no penalty.&rdquo; This is how the harness is honest about what it can and cannot do &mdash; and why the process score stays attainable on a real run.</p>
+            </div>
+
+            <p>
+                To make the feedback loop visible, every attempt writes a <code>llm_transcript.jsonl</code> that records the system prompt (once) and every OpenAI call&rsquo;s user message + response. Here is one real decision from a <code>gpt-4o</code> run.
+            </p>
+
+            <div class="terminal-output">
+                <div class="terminal-header">llm_runs/attempt_02/llm_transcript.jsonl &mdash; call at epoch 2</div>
+                <pre class="terminal-body">{
+  "kind": "call",
+  "epoch": 2,
+  "top_rule": "R5",
+  "all_fired": {"R1": true, "R2": true, "R5": true, "R3": false, "R4": false, "R6": false, "R7": false},
+  "user_message": "Epoch 2. Rule(s) fired: ['R1', 'R2', 'R5']. You must action the highest-precedence rule, which is R5.\n\nCurrent hyperparameters:\n  lr = 0.3\n  batch_size = 32\n\nCurrent-epoch diagnostics:\n  max_layer_grad_norm = 4.2\n  min_layer_grad_norm = 0.018\n  dead_relu_fraction = 0.73\n  update_to_param_ratio = 5e-2\n...",
+  "response": "{\n  \"event_type\": \"architecture_change\",\n  \"cites\": [\"R5\"],\n  \"justification\": \"Dead-ReLU fraction 0.73 over 3 consecutive epochs; swap to leaky_relu per R5.\",\n  \"remedy_direction\": \"swap_activation\",\n  \"remedy_params\": {\"lr_new\": 0.3, \"edit_op\": \"swap_activation\", \"edit_to\": \"leaky_relu\"}\n}"
+}</pre>
+            </div>
+
+            <!-- Visual 18: Progress across attempts -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>The Self-Refine Loop at Work &mdash; A Real Synthetic Run</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Attempt</th>
+                            <th>Violations</th>
+                            <th>Process Score</th>
+                            <th>Visual</th>
+                            <th>What Changed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td class="score-amber">11 / 43</td>
+                            <td class="score-amber">0.744</td>
+                            <td style="width: 30%;"><div class="progress-bar"><div class="progress-fill" style="width: 74.4%;"></div></div></td>
+                            <td>Baseline. LLM gets the playbook, no prior feedback.</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td class="score-green">10 / 43</td>
+                            <td class="score-green">0.767</td>
+                            <td style="width: 30%;"><div class="progress-bar"><div class="progress-fill" style="width: 76.7%;"></div></div></td>
+                            <td>Sees attempt 1&rsquo;s R5 precedence violation; fixes it.</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td class="score-green">10 / 43</td>
+                            <td class="score-green">0.767</td>
+                            <td style="width: 30%;"><div class="progress-bar"><div class="progress-fill" style="width: 76.7%;"></div></div></td>
+                            <td>Converged. Remaining violations are structural (short-run scenario).</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-400 mt-3">The 11 &rarr; 10 drop is the iterative mechanism working. Nothing else changed: same seed, same model, same training data. The only thing different about attempt 2 is the extra ~300 tokens of prior-attempt feedback in the system prompt.</p>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7: THIS IS NOT RL                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-triangle-exclamation mr-3"></i>This Is Not Reinforcement Learning</h2>
+
+            <p>
+                One last thing that matters. The name of this project is <em>env_rl</em>, and the harness <em>does</em> get better across attempts. It is tempting to call this RL. It would be wrong.
+            </p>
+
+            <!-- Visual 19: RL vs Iterative Self-Refine -->
+            <div class="grid md:grid-cols-2 gap-6 my-8">
+                <div class="comparison-column before-column">
+                    <h3 class="text-red-400 text-xl font-bold mb-4"><i class="fas fa-robot mr-2"></i>Real Reinforcement Learning</h3>
+                    <ul class="comparison-list">
+                        <li>A parametric policy with trainable weights</li>
+                        <li>Gradient-based update after each rollout (PPO, DPO, GRPO)</li>
+                        <li>Per-decision reward decomposition</li>
+                        <li>Learning persists across episodes in the model</li>
+                        <li>Requires weights access (Llama, Qwen, Mistral)</li>
+                        <li>Weeks of engineering, GPU hours, reward shaping</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h3 class="text-emerald-400 text-xl font-bold mb-4"><i class="fas fa-arrows-spin mr-2"></i>Env-RL Harness Today</h3>
+                    <ul class="comparison-list">
+                        <li>OpenAI model with frozen weights, via public API</li>
+                        <li>Prompt updated between attempts; weights untouched</li>
+                        <li>End-of-run scores, propagated as text</li>
+                        <li>No persistence &mdash; open a fresh conversation, model has forgotten</li>
+                        <li>API-only; works with gpt-4o-mini or o3</li>
+                        <li>Hours to wire up; cost measured in pennies per run</li>
+                    </ul>
+                </div>
+            </div>
+
+            <p>
+                The environment half of RL &mdash; observation, action, reward &mdash; is what this project builds. It is a building block for real RL, not a replacement. A future <code>src/env_rl/rl/</code> module could decompose the per-decision process reward, collect trajectories across hundreds of runs, and fine-tune an open-weights model with DPO on the (better, worse) pairs. That is the direction this scales toward. For now, the harness is explicit about being <strong>iterative self-refine</strong>, every user-facing artifact is tagged <code>"mode": "iterative_self_refine"</code>, and the README says so in bold. Honesty in naming matters.
+            </p>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 8: CONCLUSION                                          -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <h3>Key Takeaways</h3>
+
+            <ul>
+                <li><strong>Process integrity in an adversarial setting is a filesystem / cryptography problem, not a prompting problem.</strong> The hash-chained, append-only log + read-only monitor pattern is the foundational piece. Everything else is built on that.</li>
+                <li><strong>Diagnostic metrics must be measured by the judge, not reported by the agent.</strong> PyTorch forward/backward hooks are the clean way to do this &mdash; the agent never computes the numbers it could game.</li>
+                <li><strong>Two decoupled scores are stronger than any weighted scalar.</strong> Accuracy and process integrity cannot be traded against each other, and the sum of their failure modes gives a richer picture than either alone.</li>
+                <li><strong>Iterative self-refine is useful, and explicitly not RL.</strong> Feeding prior-run scores back into the next prompt measurably improves behavior on this task. The naming honesty protects readers from confusing cheap inference-time tricks with real model training.</li>
+            </ul>
+
+            <h3>Limitations</h3>
+
+            <ul>
+                <li><strong>Denominator gaming.</strong> A textbook ResNet-18 run where no rule ever fires gets 0/0 &rarr; 1.0 process score without being tested. Mitigation requires a minimum-firings threshold.</li>
+                <li><strong>Four waived rules.</strong> R2/R3/R4/R6 cannot be executed by the current harness. Real RL setups should un-waive as capability grows &mdash; that is tracked as explicit future work.</li>
+                <li><strong>Synthetic training plumbing.</strong> The <code>--synthetic</code> mode exists to verify the env works end-to-end without a CIFAR-10 download. It cannot produce a useful model; accuracy sticks at chance level.</li>
+                <li><strong>Live-diagnostic tolerance.</strong> The &plusmn;30% band in judge step 7 is a judgment call. Tight enough to catch fabricated trajectories, loose enough to allow normal hardware variance.</li>
+            </ul>
+
+            <h3>Future Work</h3>
+
+            <ul>
+                <li><strong>Un-waive R4 (add_block).</strong> Implement <code>optimizer.add_param_group</code> + <code>he_init_</code> for a freshly appended residual block. Mid-training capacity growth becomes real.</li>
+                <li><strong>Per-decision reward decomposition.</strong> The coverage audit already flags each violation by rule and epoch; attributing <code>-1/N</code> to the specific offending decision is a small coverage-side change.</li>
+                <li><strong>Trajectory collection + DPO.</strong> Collect a few hundred runs with a strong base model; construct (better, worse) decision pairs from the logs; fine-tune an open-weights 7B with DPO. This is where env_rl stops being a building block and becomes real RL.</li>
+                <li><strong>Docker hermetic harness.</strong> The current env relies on Linux filesystem semantics documented in the README. Dockerizing makes the integrity guarantees portable and reviewable.</li>
+                <li><strong>Streamlit dashboard.</strong> Load <code>/judge_logs/</code>, render the rule-firing timeline, show decisions side-by-side with the canonical playbook remedy. Would make the loop inspectable without reading JSONL by hand.</li>
+            </ul>
+
+            <div class="tip-box">
+                <strong><i class="fas fa-seedling mr-2"></i>Takeaway:</strong> If you have been building agents and wanted a sturdier way to measure whether they are <em>thinking</em> rather than just <em>doing</em>, this architecture is worth borrowing. The monitor + judge pattern generalizes to any setting where decisions must be auditable under adversarial assumption &mdash; not just model training.
+            </div>
+
+            <!-- Final GitHub CTA -->
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2 text-white"><i class="fab fa-github mr-2"></i>Explore the Code</h3>
+                        <p class="text-slate-400 mb-0">13 commits on main, 162 tests passing, fully documented monitor, judge, and harness modules. See <code>docs/setup-llm.md</code> for the 10-step OpenAI configuration walkthrough.</p>
+                    </div>
+                    <a href="https://github.com/zubairashfaque/environment_rl" target="_blank" class="btn-primary">
+                        <i class="fab fa-github mr-2"></i>View Repository
+                    </a>
+                </div>
+            </div>
+
+        </article>
+
+        <!-- Back to Journal Footer -->
+        <div class="mt-16 text-center">
+            <a href="../index.html#journal" class="btn-primary">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+            </a>
+        </div>
+    </div>
+
+    <!-- Prism syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+</body>
+</html>
