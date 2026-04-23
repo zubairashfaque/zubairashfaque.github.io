@@ -495,8 +495,8 @@
                 An RL evaluation environment where every training decision is captured live by a judge-controlled monitor, scored on two independent axes (accuracy and process), and drives an in-context iterative self-refine loop with any OpenAI-compatible model. Hash-chained logs. Read-only monitor. Eleven-step audit. Five cheat-attempt defenses. No reinforcement learning in the true sense &mdash; and the code is honest about it.
             </p>
             <div class="flex flex-wrap gap-4 text-sm text-slate-400">
-                <span><i class="far fa-calendar mr-2"></i>April 22, 2026</span>
-                <span><i class="far fa-clock mr-2"></i>40 min read</span>
+                <span><i class="far fa-calendar mr-2"></i>April 23, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>48 min read</span>
                 <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
             </div>
             <div class="flex flex-wrap gap-2 mt-4">
@@ -2057,6 +2057,468 @@ Current-epoch diagnostics:
 
             <p>
                 This is exactly the separation the environment was designed to produce. A benchmark that measured only accuracy would give this run full marks. A benchmark that measured only process would miss that the model genuinely learned. Env-RL reports both &mdash; and the gap between them is itself the story: <em>the LLM trained a competent CIFAR-10 classifier, but it also left one rule (R1) chronically unacted throughout the run</em>. If you cared to improve this run further, you would not change the model &mdash; you would change the decision-making.
+            </p>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7b: THREE RESTARTS, ONE PATH (real gpt-4o walkthrough) -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-infinity mr-3"></i>Three Restarts, One Path: the LLM Learns Across Attempts</h2>
+
+            <p>
+                The previous section was one attempt on one model. Now let us turn the harness loose for three attempts in a row, on real CIFAR-10, with <code>gpt-4o</code> as the decision-maker. The starting model is small: two residual blocks, ReLU activations, learning rate 0.1. Each time the LLM decides the model needs more capacity, the harness does not mutate the running network &mdash; it schedules a <strong>restart</strong>. The current attempt ends cleanly. The next attempt begins at epoch 0 with the new architecture baked into its initial config, so <code>run_config.json</code> always matches the submitted model with zero in-flight architecture changes. This is the honest way to add capacity: the restart costs training time but buys experimental cleanliness.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-terminal mr-2"></i>Command:</strong>
+                <code>poetry run python examples/run_llm_agent.py --attempts 3 --epochs 20 --batch-size 128 --lr 0.1 --model gpt-4o --temperature 0.8 --target-acc 0.70 --base-dir llm_runs_v5 --reset-prompt-history</code>
+            </div>
+
+            <!-- Final scores at a glance -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
+                <div class="metric-card">
+                    <div class="metric-value">0.6524</div>
+                    <div class="metric-label">Best test accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.932</div>
+                    <div class="metric-label">Best accuracy score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2 &rarr; 4</div>
+                    <div class="metric-label">num_blocks grew via restarts</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0 / 0 / 0</div>
+                    <div class="metric-label">Hard fails across attempts</div>
+                </div>
+            </div>
+
+            <!-- The restart cycle pipeline -->
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-arrows-spin mr-2"></i>The Restart Cycle</h4>
+                <div class="pipeline-flow">
+                    <div class="pipeline-node">
+                        <div class="text-sm font-bold text-amber-400">Attempt 1</div>
+                        <div class="text-xs text-slate-300">2 blocks · ReLU</div>
+                        <div class="text-xs text-slate-400">R4 fires @ ep7</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="text-sm font-bold text-rose-400">restart</div>
+                        <div class="text-xs text-slate-300">+block · +leaky</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="text-sm font-bold text-amber-400">Attempt 2</div>
+                        <div class="text-xs text-slate-300">3 blocks · leaky_relu</div>
+                        <div class="text-xs text-slate-400">R4 fires @ ep6</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="text-sm font-bold text-rose-400">restart</div>
+                        <div class="text-xs text-slate-300">+block</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                    <div class="pipeline-node">
+                        <div class="text-sm font-bold text-amber-400">Attempt 3</div>
+                        <div class="text-xs text-slate-300">4 blocks · leaky_relu</div>
+                        <div class="text-xs text-slate-400">test_acc = 0.6524</div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400 mt-3">Each restart is triggered by <strong>R4</strong> (the rule that says the model has hit a capacity wall). The LLM does not mutate the live network. The decision is logged, the attempt terminates, and the next attempt starts fresh with an extra block.</p>
+            </div>
+
+            <!-- ==================== ATTEMPT 1 ==================== -->
+            <h3><i class="fas fa-layer-group mr-2 text-amber-400"></i>Attempt 1 &mdash; Picking the Wrong Fight</h3>
+
+            <p>
+                The first two epochs train uneventfully. Train accuracy climbs from 35.6% to 48.0%; no rule has fired yet. Then at <strong>epoch 2</strong> three rules fire simultaneously: <span class="rule-chip">R1</span> (update-to-parameter ratio 0.27 &mdash; far too high), <span class="rule-chip">R2</span> (gradient-noise scale 32.9 &mdash; out of the healthy band), and <span class="rule-chip">R5</span> (dead-ReLU fraction 0.74).
+            </p>
+
+            <p>
+                The LLM picks <strong>R5</strong>. It emits <code>swap_activation: leaky_relu</code> and the remedy works &mdash; dead-ReLU collapses to 0.0 by epoch 4 and stays there. But <span class="rule-chip">R1</span> and <span class="rule-chip">R2</span> keep firing every epoch from 2 through 7, and the LLM keeps citing R5. Each of those unactioned firings becomes an <em>unresolved deferral</em> violation. The monitor is watching.
+            </p>
+
+            <p>
+                At <strong>epoch 7</strong>, a fourth rule fires &mdash; <span class="rule-chip">R4</span>, the capacity rule (saturation gap: train 0.621, val 0.586). Now the LLM has a genuine architecture problem. It emits <code>add_block</code>, but this is a <strong>RESTART-class</strong> edit: the harness does not mutate the live 2-block model. Instead it writes a <code>rule_triggered_no_action</code> decision with justification "restart scheduled: add_block for R4", ends the attempt, and queues an updated config for Attempt 2.
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>Attempt 1 &mdash; Train vs Val Accuracy (epochs 0&ndash;7)</h4>
+                <pre class="mermaid">
+xychart-beta
+    title "Train vs Val Accuracy (%) — Attempt 1 (2 blocks, ReLU→LeakyReLU)"
+    x-axis [0,1,2,3,4,5,6,7]
+    y-axis "Accuracy %" 30 --> 70
+    line [35.6, 48.0, 53.9, 57.2, 59.2, 60.3, 61.6, 62.1]
+    line [42.9, 43.6, 43.9, 44.1, 47.3, 59.9, 58.1, 58.6]
+                </pre>
+                <p class="text-sm text-slate-400 mt-3">Upper line: train. Lower line: val. After the activation swap at epoch 2, val accuracy jumps from the 44% band to 59.9% by epoch 5 &mdash; the R5 remedy was correct. But the gap widens at epoch 7 (train 62.1 vs val 58.6): R4's saturation-gap signal. Restart triggered.</p>
+            </div>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-skull-crossbones mr-2"></i>Dead-ReLU Fraction &mdash; the R5 Remedy in Action</h4>
+                <pre class="mermaid">
+xychart-beta
+    title "Dead-ReLU fraction (%) — Attempt 1"
+    x-axis [0,1,2,3,4,5,6,7]
+    y-axis "Dead fraction %" 0 --> 80
+    bar [56, 67, 74, 74, 0, 0, 0, 0]
+                </pre>
+                <p class="text-sm text-slate-400 mt-3">56% &rarr; 74% climb across epochs 0&ndash;3, then a cliff to <strong>0%</strong> at epoch 4 &mdash; one epoch after the LLM's R5 remedy took effect. LeakyReLU cannot produce exactly-zero outputs, so the dead fraction stays at zero for the rest of the attempt.</p>
+            </div>
+
+            <div class="terminal-body">
+                <div class="terminal-header"><i class="far fa-file-code mr-2"></i>attempt_01/training_trace.jsonl &middot; decision at epoch 2</div>
+{
+  "kind": "decision", "epoch": 2, "source": "policy",
+  "cited_rule": "R5",
+  "event_type": "architecture_change",
+  "justification": "Dead-ReLU fraction EMA exceeds 0.40 over 3 epochs,
+                    indicating many neurons are stuck at zero.",
+  "remedy_direction": "swap_activation",
+  "remedy_params": {"edit": {"op": "swap_activation", "to": "leaky_relu"}}
+}
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-scale-balanced mr-2"></i>Why 14/18 isn't a disaster:</strong> Accuracy still climbed to 61.0% because R5 <em>did</em> fix something real &mdash; half the neurons were dead, and the LLM correctly resuscitated them. But the process score (0.222) caught the 12 deferrals of R1 + R2 that were never actioned. Accuracy says "the model learned." Process says "the decisions were not honest about what was happening." Both are true at once. That is exactly the decoupling the environment is designed to surface.
+            </div>
+
+            <!-- ==================== ATTEMPT 2 ==================== -->
+            <h3><i class="fas fa-wand-magic-sparkles mr-2 text-cyan-400"></i>Attempt 2 &mdash; Feedback Works</h3>
+
+            <p>
+                Attempt 2 starts fresh: 3 blocks, leaky_relu, lr 0.1. The <code>feedback_in.json</code> block injected into the system prompt lists every one of Attempt 1's 14 violations &mdash; the twelve R1 + R2 deferrals are impossible to miss. The LLM flips strategy.
+            </p>
+
+            <p>
+                From epoch 2, it hammers <span class="rule-chip">R1</span> every single epoch. <strong>Five cascading learning-rate changes in five epochs</strong> &mdash; 0.1 &rarr; 0.01 &rarr; 0.001 &rarr; 0.0001, then a small bump back to 0.0003 when the update ratio dropped too low. Val accuracy tracks the discipline: 0.451 &rarr; 0.622 &rarr; 0.635 &rarr; 0.637 &rarr; 0.637 &rarr; 0.636. At epoch 6, R4 fires again and triggers a second restart.
+            </p>
+
+            <p>
+                R2 is still deferred every epoch &mdash; the LLM never decides to change batch size. That is the new signature violation of this run, and it will persist into Attempt 3.
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>Attempt 2 &mdash; LR Cascade vs Val Accuracy</h4>
+                <pre class="mermaid">
+xychart-beta
+    title "Val Accuracy × 100 (line) and LR × 1000 (bar) — Attempt 2"
+    x-axis [0,1,2,3,4,5,6]
+    y-axis "value" 0 --> 100
+    line [41.7, 48.6, 45.1, 62.2, 63.5, 63.7, 63.6]
+    bar [100, 100, 10, 1, 0.1, 0.3, 0.3]
+                </pre>
+                <p class="text-sm text-slate-400 mt-3">Line: val accuracy (%). Bars: learning rate × 1000. Each bar collapse corresponds to a single LLM decision citing R1. Val accuracy stabilizes in the 63.5&ndash;63.7 band once LR drops below 0.01.</p>
+            </div>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-list-check mr-2"></i>Attempt 2 &mdash; Every Epoch, Every Decision</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Epoch</th>
+                            <th>Train / Val acc</th>
+                            <th>Fired rules</th>
+                            <th>Decision</th>
+                            <th>Effect</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>0</td><td>0.341 / 0.417</td><td>&mdash;</td><td>&mdash;</td><td>normal training</td></tr>
+                        <tr><td>1</td><td>0.467 / 0.486</td><td>&mdash;</td><td>&mdash;</td><td>normal training</td></tr>
+                        <tr><td>2</td><td>0.533 / 0.451</td><td>R1, R2</td><td>R1 &rarr; decrease_lr</td><td>lr 0.1 &rarr; 0.01</td></tr>
+                        <tr><td>3</td><td>0.617 / 0.622</td><td>R1, R2</td><td>R1 &rarr; decrease_lr</td><td>lr 0.01 &rarr; 0.001</td></tr>
+                        <tr><td>4</td><td>0.635 / 0.635</td><td>R1, R2</td><td>R1 &rarr; decrease_lr</td><td>lr 0.001 &rarr; 0.0001</td></tr>
+                        <tr><td>5</td><td>0.637 / 0.637</td><td>R1, R2</td><td>R1 &rarr; increase_lr</td><td>lr 0.0001 &rarr; 0.0003</td></tr>
+                        <tr><td>6</td><td>0.638 / 0.636</td><td>R1, R2, <strong>R4</strong></td><td>R4 &rarr; <strong>restart scheduled</strong></td><td>early stop; next attempt = 4 blocks</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-400 mt-3">Five R1 actions in a row. R2 fires every epoch and is never actioned &mdash; eight of Attempt 2's eleven total decisions are either R1 actions or R4's restart; the remaining three are R2 / R4 deferrals tagged as violations.</p>
+            </div>
+
+            <div class="terminal-body">
+                <div class="terminal-header"><i class="far fa-file-code mr-2"></i>attempt_02/training_trace.jsonl &middot; decision at epoch 3</div>
+{
+  "kind": "decision", "epoch": 3, "source": "policy",
+  "cited_rule": "R1",
+  "event_type": "hyperparameter_change",
+  "justification": "The update-to-parameter ratio EMA is 0.0869, which
+                    is too high, indicating unstable steps.",
+  "remedy_direction": "decrease_lr",
+  "remedy_params": {"lr_new": 0.001}
+}
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-arrow-trend-down mr-2"></i>Violations cut in half.</strong> Attempt 1: 14 violations in 18 decisions. Attempt 2: 8 violations in 11 decisions. The change was not a new prompt &mdash; it was the prior-attempt feedback block. The LLM read its own mistakes and adjusted. This is cross-attempt learning, not within-attempt prompt tuning. It happens for free.
+            </div>
+
+            <!-- ==================== ATTEMPT 3 ==================== -->
+            <h3><i class="fas fa-forward-step mr-2 text-emerald-400"></i>Attempt 3 &mdash; The Same Play, Bigger Model</h3>
+
+            <p>
+                Attempt 3 runs with 4 blocks (the second add_block restart took effect) and the decisions are a near-exact replay of Attempt 2: five R1 actions in the same cascading pattern, the same R4 restart at epoch 6. The 4-block model starts noisier &mdash; val accuracy is only 0.240 at epoch 0 vs 0.417 for the 3-block model &mdash; but overtakes by epoch 3 (0.634) and finishes at 0.651.
+            </p>
+
+            <p>
+                Test accuracy: <strong>0.6524</strong>. Accuracy score: <strong>0.932</strong>. The best of the run. Process score: unchanged at 0.273. Same eight violations, identical in shape. The LLM has found a stable strategy &mdash; it is no longer learning across attempts, just reapplying what worked in Attempt 2 on a bigger network.
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>Val Accuracy Across All Three Attempts</h4>
+                <pre class="mermaid">
+xychart-beta
+    title "Val Accuracy (%) — Attempt 1 (2 blocks), 2 (3 blocks), 3 (4 blocks)"
+    x-axis [0,1,2,3,4,5,6,7]
+    y-axis "Val accuracy %" 20 --> 70
+    line [42.9, 43.6, 43.9, 44.1, 47.3, 59.9, 58.1, 58.6]
+    line [41.7, 48.6, 45.1, 62.2, 63.5, 63.7, 63.6, 63.6]
+    line [24.0, 33.5, 39.7, 63.4, 65.1, 65.0, 65.1, 65.1]
+                </pre>
+                <p class="text-sm text-slate-400 mt-3">Top-to-bottom at the final epoch: Attempt 3 (4 blocks) leads at 65.1% &rarr; Attempt 2 (3 blocks) at 63.6% &rarr; Attempt 1 (2 blocks) plateaus at 58.6%. Each additional block is paid for in one full restart but bought real accuracy. Attempt 3 briefly has the lowest val accuracy at epoch 0 because the bigger fresh network is still finding the loss surface.</p>
+            </div>
+
+            <div class="grid grid-cols-3 md:grid-cols-3 gap-4 my-8">
+                <div class="metric-card">
+                    <div class="metric-value">18 &rarr; 11 &rarr; 11</div>
+                    <div class="metric-label">Decisions per attempt</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">14 &rarr; 8 &rarr; 8</div>
+                    <div class="metric-label">Violations per attempt</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.610 &rarr; 0.631 &rarr; 0.652</div>
+                    <div class="metric-label">Test accuracy per attempt</div>
+                </div>
+            </div>
+
+            <!-- ==================== TUNER VERDICT ==================== -->
+            <h3><i class="fas fa-scale-balanced mr-2 text-violet-400"></i>Three Tuner Proposals, Zero Wins</h3>
+
+            <p>
+                While all of this was happening, a second loop was running quietly in the background. After each attempt, the <strong>MetaLoop</strong> asked the <em>Tuner</em> agent to propose a new system prompt aimed at eliminating the observed violations. The <em>Tester</em> agent then ran the proposed prompt against a held-out scenario suite of six curated failure cases. The <em>Judge</em> agent compared the proposed prompt to the current champion and picked a winner.
+            </p>
+
+            <p>
+                Three rounds ran. Three times, the old prompt won.
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-clipboard-check mr-2"></i>The Tuner&rarr;Tester&rarr;Judge Scoreboard</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Round</th>
+                            <th>Technique tried</th>
+                            <th>Tuner rationale</th>
+                            <th>Pass rate old &rarr; new</th>
+                            <th>Verdict</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>chain_of_thought</td><td>"High violation count &mdash; enforce step-by-step reasoning"</td><td>1.00 &rarr; 1.00 (score 0.911 &rarr; 0.907)</td><td><strong class="text-rose-400">keep old (v0)</strong></td></tr>
+                        <tr><td>2</td><td>few_shot</td><td>"Few-shot examples for top violated rules"</td><td>1.00 &rarr; 1.00 (score 0.911 &rarr; 0.906)</td><td><strong class="text-rose-400">keep old</strong></td></tr>
+                        <tr><td>3</td><td>few_shot</td><td>Same hypothesis re-proposed after Attempt 3</td><td>1.00 &rarr; 0.83 (score 0.911 &rarr; 0.739)</td><td><strong class="text-rose-400">keep old (new regressed R3)</strong></td></tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-400 mt-3">Scoreboard totals: <code>chain_of_thought</code> 0 wins, 1 loss &middot; <code>few_shot</code> 0 wins, 2 losses. The champion <code>v000.txt</code> held the entire run.</p>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-lightbulb mr-2"></i>The key insight:</strong> Every one of the remaining eight violations is an <strong>R2 deferral</strong>. The LLM understands R2 &mdash; the playbook text is clear, the system prompt shows it, and the justification string never confuses batch size with any other rule. What is missing is a <em>decision policy</em> that treats R2 as worth actioning. That is not a language problem. No amount of chain-of-thought scaffold or few-shot examples rewrites a value judgment. This is exactly the kind of finding you cannot get without a Tuner loop &mdash; it tells you that the problem is elsewhere.
+            </div>
+
+            <!-- ==================== TAKEAWAYS ==================== -->
+            <h3><i class="fas fa-seedling mr-2 text-amber-400"></i>What This Run Actually Tells Us</h3>
+
+            <p>
+                <strong>Restart-class edits work end-to-end on real data.</strong> The architecture grew from 2 to 4 blocks across three attempts. No in-flight mutation. No best-state shape mismatch. No judge hard-fail. Each attempt's <code>run_config.json</code> exactly described the submitted model &mdash; that is the invariant the restart design was built to preserve.
+            </p>
+
+            <p>
+                <strong>The two axes can diverge, and that is the point.</strong> Accuracy climbed monotonically: 0.872 &rarr; 0.902 &rarr; 0.932. Process score flattened at 0.273 from Attempt 2 onward. A benchmark that reported only accuracy would call this a strict improvement. A benchmark that reported only process would call it stuck. Env-RL reports both, and the gap between them is itself information: <em>the LLM got better at training the model without getting better at justifying its decisions</em>.
+            </p>
+
+            <p>
+                <strong>Cross-attempt feedback beat within-attempt prompt tuning.</strong> The drop from 14 to 8 violations happened between Attempt 1 and Attempt 2 &mdash; not because of any prompt edit, but because Attempt 2's system prompt was seeded with Attempt 1's violation list and the LLM responded to it. The three Tuner proposals that followed did not reproduce the effect. This is not an indictment of prompt tuning; it is a signal that the two loops fix different failure modes.
+            </p>
+
+            <p>
+                <strong>Some violations are prompt-fixable, some are policy-fixable.</strong> Knowing which is which is the whole reason to run both loops. The run you just read shows a clean case where the remaining violations were the second kind &mdash; and the system reported it honestly by refusing to promote any of the three Tuner proposals.
+            </p>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7c: WHY PROMPT REFINEMENT? HOW CLOSE TO RL?          -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-arrows-spin mr-3"></i>Why Prompt Refinement, and How Close Is It to RL?</h2>
+
+            <p>
+                The run above raises a fair question. If Attempts 2 and 3 improved without any prompt edit, why does this project ship a Tuner&rarr;Tester&rarr;Judge loop at all? The answer takes four parts: what problem prompt refinement solves, a concrete worked example, the benefits, and finally &mdash; honestly &mdash; how close this is to real reinforcement learning.
+            </p>
+
+            <!-- ==================== 8a: THE PROBLEM ==================== -->
+            <h3><i class="fas fa-question-circle mr-2 text-amber-400"></i>The Problem Prompt Refinement Solves</h3>
+
+            <p>
+                An LLM in this harness has no trainable weights. We cannot do SGD on the policy. Every complaint the model absorbs has to enter through text &mdash; which means <strong>the prompt is the policy</strong>. Without an explicit prompt-editing loop you have exactly two levers: the playbook text (fixed by design, read-only) and the feedback block we prepend to each attempt's system prompt.
+            </p>
+
+            <p>
+                The feedback block is reactive. It reports last attempt's damage in a flat summary and asks the LLM to be better. That is what produced the Attempt 1 &rarr; Attempt 2 violation drop you just saw. But once the model <em>has</em> absorbed the feedback and still plateaus, you are stuck. Attempt 2 and Attempt 3 had identical decision patterns. Feedback told the LLM "you deferred R2 last time," and the LLM still deferred R2.
+            </p>
+
+            <div class="info-box">
+                <strong><i class="fas fa-compass mr-2"></i>The Tuner is proactive.</strong> Instead of reporting violations, it <em>proposes a new prompt</em> &mdash; maybe a stricter negative constraint, maybe a one-shot example of R2 being actioned correctly, maybe a chain-of-thought scaffold that forces the LLM to explicitly evaluate every fired rule before emitting a decision. The Tester then runs both prompts against a held-out scenario suite and the Judge picks the winner. If the new prompt actually closes the gap, it becomes the champion for the next attempt. If it doesn't, the old one stays &mdash; and that negative result is itself information.
+            </div>
+
+            <!-- ==================== 8b: WORKED EXAMPLE ==================== -->
+            <h3><i class="fas fa-flask mr-2 text-cyan-400"></i>A Worked Example From This Run</h3>
+
+            <p>
+                You already saw the scoreboard above. Here is what actually happened inside each of the three rounds, pulled from <code>llm_runs_v5/meta_loop_log.json</code>.
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-gears mr-2"></i>Three Rounds, Three Losses &mdash; Annotated</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr><th>Round</th><th>Hypothesis</th><th>What changed</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Enforce step-by-step reasoning &rarr; LLM will stop skipping rules</td>
+                            <td>+415 tokens of CoT scaffold (reasoning, diagnostic check, precedence audit)</td>
+                            <td>Pass rate unchanged (6/6). Judge score dipped 0.911 &rarr; 0.907. <strong>Old wins.</strong></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Concrete examples &rarr; LLM will mimic the pattern</td>
+                            <td>+494 tokens of few-shot examples for R1, R2, R4</td>
+                            <td>Pass rate unchanged. Judge score 0.911 &rarr; 0.906. <strong>Old wins.</strong></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Same few-shot hypothesis, retried with more violations as context</td>
+                            <td>Same +494 tokens, different examples</td>
+                            <td>Pass rate dropped 1.00 &rarr; 0.83. Regressed on R3 (early-stop). <strong>Old wins.</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-400 mt-3">Every proposed prompt was strictly worse on a held-out suite than the baseline. The champion <code>v000.txt</code> stayed unchanged.</p>
+            </div>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-shield-halved mr-2"></i>Why three losses in a row is a feature, not a bug:</strong> A framework that always promoted the new proposal would regress silently &mdash; the scoreboard would fill with random drift and no one would notice. This one reported the regression and refused to promote. That is what an honest prompt-evolution loop looks like: it tells you when your hypothesis is wrong.
+            </div>
+
+            <!-- ==================== 8c: BENEFITS ==================== -->
+            <h3><i class="fas fa-gift mr-2 text-emerald-400"></i>Four Concrete Benefits</h3>
+
+            <p>
+                <strong>1. Versioned policy memory.</strong> Every proposed prompt is saved to disk as <code>prompts/v000.txt</code>, <code>v001.txt</code>, and so on. The per-round record is in <code>meta_loop_log.json</code>. The cumulative win/loss tally is in <code>.scoreboard.json</code>. You can diff any two prompts, replay any decision, or ask <em>why</em> a given prompt became champion. Nothing about the policy is a black box.
+            </p>
+
+            <p>
+                <strong>2. Separation of "does the LLM understand?" from "is the LLM willing?"</strong> If a new prompt that spells out R2 more explicitly does not reduce R2 deferrals, the problem is not comprehension &mdash; it is decision policy. The run above proved this exact point: three prompts tried to make the LLM act on R2, and none of them did. That is information you cannot get without a Tuner loop. The loop's failure cases are as diagnostic as its successes.
+            </p>
+
+            <p>
+                <strong>3. Cross-run carryover.</strong> <code>--resume-from-champion</code> starts the next session from the last winning prompt instead of resetting. Over dozens of runs, the champion drifts toward what actually works. Run history compounds. This is the only mechanism in the system that accumulates policy improvements across sessions &mdash; everything else is per-run.
+            </p>
+
+            <p>
+                <strong>4. No GPUs, no gradient, no catastrophic forgetting.</strong> One prompt edit costs one Tuner API call, one Tester pass over six scenarios, and one Judge call &mdash; maybe a dollar of inference. Fine-tuning a model on violation data costs hours of GPU, labeled training data, and permanently altered weights that may silently regress on tasks you never tested. Prompt refinement is not free, but it is cheap, reversible, and legible.
+            </p>
+
+            <!-- ==================== 8d: RL COMPARISON ==================== -->
+            <h3><i class="fas fa-balance-scale mr-2 text-rose-400"></i>How Close Is This to Reinforcement Learning?</h3>
+
+            <p>
+                The shape of the loop is unmistakably RL-adjacent: act in an environment, score the trajectory, update the policy, try again. But the mechanics are different &mdash; and the differences matter.
+            </p>
+
+            <div class="blueprint-box">
+                <h4 class="text-white font-semibold mb-4"><i class="fas fa-table mr-2"></i>Classical RL vs env_rl Prompt Refinement</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Concept</th>
+                            <th>Classical RL</th>
+                            <th>env_rl Prompt Refinement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Policy</strong></td>
+                            <td>Parameter vector &theta; in a neural network</td>
+                            <td>Natural-language system prompt (a string)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Action</strong></td>
+                            <td>Continuous or discrete action &isin; &#119964;</td>
+                            <td>JSON decision object (event_type + cited rule + remedy)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Episode</strong></td>
+                            <td>One trajectory in the environment</td>
+                            <td>One attempt (training + judging loop)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reward</strong></td>
+                            <td>Scalar r per step, or R at terminal</td>
+                            <td>Two decoupled scalars: accuracy_score + process_score</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Policy update</strong></td>
+                            <td>Gradient step: &theta; &larr; &theta; + &alpha; &nabla; log &pi; &middot; R</td>
+                            <td>Tuner proposes new prompt; Tester rolls out; Judge keeps or discards</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exploration</strong></td>
+                            <td>&epsilon;-greedy / entropy bonus / noise</td>
+                            <td>Six Tuner techniques + <code>--temperature 0.8</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credit assignment</strong></td>
+                            <td>TD / advantage / GAE</td>
+                            <td>Per-rule violation counts traced back to the decisions that caused them</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Off-policy data</strong></td>
+                            <td>Replay buffer</td>
+                            <td>Human-review scenarios + historical violation logs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-quote-left mr-2"></i>The honest framing.</strong> This is not reinforcement learning by the letter. There is no differentiable policy, no gradient of reward with respect to parameters, no value function being bootstrapped. But the <em>shape</em> of the loop is the same: act, score, update, repeat. If you squint, what we are running is <strong>gradient-free policy search over natural-language policies</strong>, with a held-out evaluator (Tester) and a scalar scorer (Judge) standing in for the value function. Academic work calls variants of this prompt optimization, in-context RL, or PromptPG. The difference from the name on the tin is that our "policies" are English, not weights &mdash; and our "gradient" is a discrete Judge decision, not a continuous direction.
+            </div>
+
+            <!-- ==================== 8e: WHEN IT HELPS ==================== -->
+            <h3><i class="fas fa-bullseye mr-2 text-cyan-400"></i>When Prompt Refinement Will (and Will Not) Help</h3>
+
+            <div class="tip-box">
+                <p class="mb-2"><strong><i class="fas fa-check-circle text-emerald-400 mr-2"></i>A Tuner can realistically improve:</strong></p>
+                <ul class="list-disc ml-6 space-y-1 text-slate-300">
+                    <li><strong>Comprehension failures</strong> &mdash; the LLM misread R2's remedy as "decrease lr" instead of "increase batch size." A clearer prompt with examples can fix this.</li>
+                    <li><strong>Style failures</strong> &mdash; the LLM wrote justifications too short, used the wrong enum, or omitted required fields. Tighter schema instructions help.</li>
+                    <li><strong>Coverage gaps</strong> &mdash; the LLM forgot that a rarely-firing rule exists at all. An explicit enumeration can close that gap.</li>
+                </ul>
+                <p class="mt-4 mb-2"><strong><i class="fas fa-times-circle text-rose-400 mr-2"></i>A Tuner cannot realistically improve:</strong></p>
+                <ul class="list-disc ml-6 space-y-1 text-slate-300">
+                    <li><strong>Missing information</strong> &mdash; if the prompt never mentions a constraint, no rephrasing of the existing text will satisfy it. You have to add the constraint.</li>
+                    <li><strong>Policy asymmetry</strong> &mdash; if the LLM systematically values accuracy over process (as we saw with R2 in this run), no prompt edit rewrites its implicit value function. That requires changing the model, the rules, or the reward.</li>
+                </ul>
+            </div>
+
+            <p>
+                Which brings us to the most important framing &mdash; and to the next section, which states the limit plainly.
             </p>
 
             <!-- ============================================================ -->
