@@ -441,6 +441,36 @@
             
             const projects = [
                 {
+                    title: 'Env-RL: Disciplined Oversight for LLM-Driven Training',
+                    company: 'Personal Research Project',
+                    description: 'An evaluation environment where an LLM (GPT-4o) trains a CNN on CIFAR-10 under a hash-chained monitor that scores it on two independent axes — accuracy and process integrity. Every decision is auditable, forged logs are impossible by construction, and the prompt itself evolves across attempts via a Tuner→Tester→Judge loop.',
+                    challenge: 'Loss curves tell you whether a model trained, not whether the engineer behind it reasoned well. Existing benchmarks reward outcome and ignore process — so an LLM can hit the accuracy target by cheating (forging logs, peeking at the test set, ignoring rules that fire) and still look perfect.',
+                    solution: 'Four-component architecture: a read-only monitor owns all logging with SHA-256 hash chains and monotonic sequence numbers; a judge runs 11 independent audit steps with 7 hard-fail gates; a 7-rule playbook defines when the LLM must act; and a prompt-refinement meta-loop evolves system prompts across attempts using six techniques (CoT, few-shot, negative-constraint, role-play, etc.) with versioned scoreboard.',
+                    impact: 'Real 3-attempt CIFAR-10 run: test accuracy climbs 61% → 63% → 65% across architecture restarts (2→4 blocks via add_block). 247 tests, all six cheat-attempt attack classes proven caught by construction. First concrete demonstration of restart-class edits end-to-end.',
+                    tech: ['PyTorch', 'OpenAI API', 'GPT-4o', 'Pydantic', 'JSON Schema', 'Hash-chain Audit', 'Iterative Self-Refine', 'CIFAR-10'],
+                    tags: ['Research', 'LLM', 'Agentic'],
+                    icon: 'fa-shield-halved',
+                    color: 'from-amber-500 to-rose-500',
+                    github: 'https://github.com/zubairashfaque/environment_rl',
+                    blog: 'blog/env-rl-disciplined-training.html',
+                    demo: true
+                },
+                {
+                    title: 'MedAlign-RLHF: Medical LLM Post-Training on Free GPUs',
+                    company: 'Personal Research Project',
+                    description: 'Complete post-training pipeline for a 7B medical LLM: QLoRA supervised fine-tuning, DPO preference alignment, hybrid RAG with cross-encoder reranking, and GGUF quantization with a custom medical imatrix — running on free Kaggle GPUs and a consumer laptop. Total cloud cost: ~$5.',
+                    challenge: 'Post-training a capable medical LLM usually means rented A100s, curated preference data, and brittle serving stacks. Most practitioners are locked out by cost and infrastructure complexity.',
+                    solution: 'Stitched Mistral-7B SFT on MedQA/PubMedQA into a DPO preference head tuned with a held-out safety set, then layered hybrid retrieval (BM25 + dense) with cross-encoder reranking. Quantized to GGUF via llama.cpp with a domain-specific importance matrix so the smallest quant tier still answers medical multiple-choice reliably.',
+                    impact: 'Runs end-to-end on free Kaggle GPU sessions; full pipeline documented attempt-by-attempt with failure modes named, not hidden. Quantized weights fit on a laptop at inference time. A reproducible recipe for anyone trying to ship a specialist model without a budget.',
+                    tech: ['Mistral-7B', 'QLoRA', 'DPO', 'Hybrid RAG', 'Cross-Encoder Reranking', 'GGUF / llama.cpp', 'Kaggle GPUs'],
+                    tags: ['Research', 'LLM', 'RAG'],
+                    icon: 'fa-user-md',
+                    color: 'from-emerald-500 to-teal-500',
+                    github: 'https://github.com/zubairashfaque/medalign-rlhf',
+                    blog: 'blog/medalign-rlhf.html',
+                    demo: true
+                },
+                {
                     title: 'Agent Nurse Bot',
                     company: 'Health Recovery Solutions',
                     description: 'Built an advanced agentic system combining text-to-SQL with RAG for comprehensive clinical information access.',
