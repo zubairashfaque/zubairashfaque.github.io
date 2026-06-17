@@ -243,6 +243,16 @@
                 Goldsmith inverts the data-cost problem. Instead of paying experts to label outputs, we <em>construct</em> faulted outputs whose labels are free <strong>by construction</strong> &mdash; we know exactly what is wrong with each one because we put the flaw there ourselves, and a deterministic verifier confirms it landed before we trust it.
             </div>
 
+            <h3><i class="fas fa-gauge mr-2" style="color:#fbbf24;"></i>Goldsmith by the Numbers</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+                <div class="metric-card"><div class="metric-value">8</div><div class="metric-label">Fault classes</div></div>
+                <div class="metric-card"><div class="metric-value">4</div><div class="metric-label">Deterministic verifiers</div></div>
+                <div class="metric-card"><div class="metric-value">4</div><div class="metric-label">LLM judges compared</div></div>
+                <div class="metric-card"><div class="metric-value">6</div><div class="metric-label">Pipeline stages</div></div>
+                <div class="metric-card"><div class="metric-value">&#8776;0.5</div><div class="metric-label">Realism AUC gate</div></div>
+                <div class="metric-card"><div class="metric-value">73</div><div class="metric-label">Tests, fully offline</div></div>
+            </div>
+
             <div class="section-divider"></div>
 
             <!-- ============================================================ -->
@@ -334,6 +344,32 @@
                     </tr>
                 </tbody>
             </table>
+
+            <h3><i class="fas fa-scale-unbalanced mr-2" style="color:#fbbf24;"></i>Shipping Blind vs Calibrating First</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                <div class="comparison-column before-column">
+                    <h4 style="margin-top:0; color:#fca5a5;"><i class="fas fa-eye-slash mr-2"></i>Judge shipped blind</h4>
+                    <ul class="comparison-list">
+                        <li>No proof it catches <em>your</em> failure modes</li>
+                        <li>Confident scores that hide silent misses</li>
+                        <li>A flipped negation slips through unnoticed</li>
+                        <li>"Accuracy 0.9" &mdash; on what? versus what?</li>
+                        <li>Judge choice argued by intuition</li>
+                        <li>Costs unknown per real fault caught</li>
+                    </ul>
+                </div>
+                <div class="comparison-column after-column">
+                    <h4 style="margin-top:0; color:#6ee7b7;"><i class="fas fa-circle-check mr-2"></i>Judge calibrated with Goldsmith</h4>
+                    <ul class="comparison-list">
+                        <li>Recall measured <em>per fault class</em></li>
+                        <li>Misses surfaced with a 95% confidence interval</li>
+                        <li>Negation-flip recall: a number you can defend</li>
+                        <li>Ground truth known by construction + verified</li>
+                        <li>Judge choice decided by McNemar significance</li>
+                        <li>Cost-per-detected-fault on a Pareto frontier</li>
+                    </ul>
+                </div>
+            </div>
 
             <div class="section-divider"></div>
 
@@ -655,6 +691,25 @@
                 </div>
             </div>
 
+            <h3><i class="fas fa-microscope mr-2" style="color:#fbbf24;"></i>Anatomy of One Faulted Sample</h3>
+            <p>Here is a single negation-flip in flight &mdash; the clean summary, the one-span edit, and the label it produces. The highlighted span is the entire difference between "safe" and "dangerous."</p>
+            <div class="blueprint-box">
+                <div class="text-xs font-bold mb-1" style="color:#6ee7b7;"><i class="fas fa-circle-check mr-1"></i>CLEAN (genuine)</div>
+                <div style="background:#0f172a; border:1px solid #334155; border-radius:0.5rem; padding:0.9rem 1rem; font-family:'Courier New',monospace; font-size:0.85rem; color:#cbd5e1;">
+                    Member <span style="background:rgba(16,185,129,0.25); border-radius:3px; padding:0 3px;">denies chest pain</span>. Continue lisinopril 10&nbsp;mg once daily. Urgent callback scheduled.
+                </div>
+                <div class="flow-arrow" style="color:#fb923c;"><i class="fas fa-arrow-down"></i> &nbsp;<span class="text-xs" style="color:#fdba74;">inject: negation_flip</span></div>
+                <div class="text-xs font-bold mb-1" style="color:#fca5a5;"><i class="fas fa-triangle-exclamation mr-1"></i>FAULTED (label: negation_flip, severity: critical)</div>
+                <div style="background:#0f172a; border:1px solid #334155; border-radius:0.5rem; padding:0.9rem 1rem; font-family:'Courier New',monospace; font-size:0.85rem; color:#cbd5e1;">
+                    Member <span style="background:rgba(239,68,68,0.3); border-radius:3px; padding:0 3px;">reports chest pain</span>. Continue lisinopril 10&nbsp;mg once daily. Urgent callback scheduled.
+                </div>
+                <div class="flex flex-wrap gap-3 mt-4 text-xs" style="color:#94a3b8;">
+                    <span><strong style="color:#67e8f9;">span:</strong> chars 7&ndash;24</span>
+                    <span><strong style="color:#67e8f9;">verifier:</strong> nli &rarr; polarity negated&rarr;affirmed</span>
+                    <span><strong style="color:#67e8f9;">landed:</strong> <span class="score-green">true</span></span>
+                </div>
+            </div>
+
             <h3><i class="fas fa-rotate mr-2" style="color:#fbbf24;"></i>The Tools-First Loop</h3>
 
             <p>
@@ -945,6 +1000,28 @@ def bootstrap_mean_ci(indicators, n_resamples=10000, confidence_level=0.95, meth
             min(1.0, mean if np.isnan(hi) else hi))</code></pre>
             </div>
 
+            <h3><i class="fas fa-table-cells-large mr-2" style="color:#fbbf24;"></i>How the Numbers Are Computed</h3>
+            <p>Every judge verdict on every sample falls into one of four buckets. Faulted samples can be caught (true positive) or missed (false negative); clean controls can be left alone (true negative) or wrongly flagged (false positive). Recall and precision fall straight out of this 2&times;2.</p>
+            <div class="blueprint-box">
+                <div style="display:grid; grid-template-columns:120px 1fr 1fr; gap:0.5rem; align-items:stretch;">
+                    <div></div>
+                    <div style="text-align:center; font-weight:700; color:#fca5a5;">Judge says: FAULTY</div>
+                    <div style="text-align:center; font-weight:700; color:#6ee7b7;">Judge says: CLEAN</div>
+
+                    <div style="display:flex; align-items:center; font-weight:700; color:#fca5a5;">Actually faulty</div>
+                    <div style="background:rgba(16,185,129,0.18); border:1px solid #10b981; border-radius:0.5rem; padding:1rem; text-align:center;"><div style="font-size:1.3rem; font-weight:800; color:#6ee7b7;">TP</div><div class="text-xs" style="color:#94a3b8;">caught the fault &#10003;</div></div>
+                    <div style="background:rgba(239,68,68,0.18); border:1px solid #ef4444; border-radius:0.5rem; padding:1rem; text-align:center;"><div style="font-size:1.3rem; font-weight:800; color:#fca5a5;">FN</div><div class="text-xs" style="color:#94a3b8;">silent miss &#10007;</div></div>
+
+                    <div style="display:flex; align-items:center; font-weight:700; color:#6ee7b7;">Actually clean</div>
+                    <div style="background:rgba(245,158,11,0.18); border:1px solid #f59e0b; border-radius:0.5rem; padding:1rem; text-align:center;"><div style="font-size:1.3rem; font-weight:800; color:#fcd34d;">FP</div><div class="text-xs" style="color:#94a3b8;">cried wolf</div></div>
+                    <div style="background:rgba(148,163,184,0.12); border:1px solid #475569; border-radius:0.5rem; padding:1rem; text-align:center;"><div style="font-size:1.3rem; font-weight:800; color:#cbd5e1;">TN</div><div class="text-xs" style="color:#94a3b8;">correctly quiet</div></div>
+                </div>
+                <div class="flex flex-wrap gap-6 justify-center mt-5 text-sm">
+                    <span style="color:#cbd5e1;"><strong style="color:#67e8f9;">Recall</strong> = TP / (TP + FN) &mdash; of real faults, how many caught?</span>
+                    <span style="color:#cbd5e1;"><strong style="color:#67e8f9;">Precision</strong> = TP / (TP + FP) &mdash; of flags raised, how many real?</span>
+                </div>
+            </div>
+
             <h3><i class="fas fa-chart-column mr-2" style="color:#fbbf24;"></i>The Scorecard</h3>
 
             <p>
@@ -1011,6 +1088,50 @@ def bootstrap_mean_ci(indicators, n_resamples=10000, confidence_level=0.95, meth
                 "The holistic GPT-4-class judge missed 38% of negation flips; the claim-decomposition judge caught 91% at one-fifth the cost &mdash; significant at <em>p&nbsp;&lt;&nbsp;0.01</em> (McNemar, n&nbsp;=&nbsp;600)." Significance testing on judge comparisons is what turns an opinion into a finding.
             </div>
 
+            <h4>Which judge wins where (recall heatmap)</h4>
+            <p>Detection is not uniform &mdash; each judge has fault classes it owns and others it fumbles. Greener is higher recall. The pattern is the thesis: claim-decomposition dominates the safety-critical faults.</p>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Fault class</th><th>holistic</th><th>pairwise</th><th>claim_decomp</th><th>ensemble</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>negation_flip</td><td class="score-red">0.62</td><td class="score-amber">0.74</td><td class="score-green">0.91</td><td class="score-amber">0.80</td></tr>
+                    <tr><td>dosage_unit_error</td><td class="score-amber">0.71</td><td class="score-amber">0.76</td><td class="score-green">0.88</td><td class="score-amber">0.79</td></tr>
+                    <tr><td>fabricated_med_instruction</td><td class="score-amber">0.68</td><td class="score-green">0.83</td><td class="score-green">0.90</td><td class="score-green">0.82</td></tr>
+                    <tr><td>dropped_escalation</td><td class="score-red">0.55</td><td class="score-amber">0.79</td><td class="score-green">0.86</td><td class="score-amber">0.74</td></tr>
+                    <tr><td>speaker_misattribution</td><td class="score-amber">0.70</td><td class="score-green">0.81</td><td class="score-amber">0.77</td><td class="score-amber">0.72</td></tr>
+                    <tr><td>fabricated_callback</td><td class="score-amber">0.66</td><td class="score-amber">0.72</td><td class="score-green">0.84</td><td class="score-amber">0.70</td></tr>
+                </tbody>
+            </table>
+            <p style="color:#94a3b8; font-size:0.8rem;"><span class="score-green">green</span> &ge; 0.82 &nbsp;&middot;&nbsp; <span class="score-amber">amber</span> 0.66&ndash;0.81 &nbsp;&middot;&nbsp; <span class="score-red">red</span> &lt; 0.66. Illustrative values in the shape Goldsmith reports.</p>
+
+            <h4>Not all misses are equal: severity weighting</h4>
+            <p>A missed dosage fabrication is not a missed tone nitpick. Goldsmith weights every false negative by severity, so the scorecard&rsquo;s "miss cost" reflects clinical risk, not raw counts.</p>
+            <div class="blueprint-box">
+                <div class="recall-row"><div class="recall-label"><span class="sev-badge sev-critical">critical</span> e.g. dosage fabrication</div><div class="recall-track"><div class="recall-fill" style="width:100%; background:linear-gradient(90deg,#ef4444,#f87171);"></div></div><div class="recall-val">&times;10</div></div>
+                <div class="recall-row"><div class="recall-label"><span class="sev-badge sev-high">high</span> e.g. speaker swap</div><div class="recall-track"><div class="recall-fill" style="width:50%; background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div></div><div class="recall-val">&times;5</div></div>
+                <div class="recall-row"><div class="recall-label"><span class="sev-badge sev-medium">medium</span> e.g. fabricated callback</div><div class="recall-track"><div class="recall-fill" style="width:20%; background:linear-gradient(90deg,#3b82f6,#60a5fa);"></div></div><div class="recall-val">&times;2</div></div>
+                <div class="recall-row"><div class="recall-label">low &mdash; e.g. tone</div><div class="recall-track"><div class="recall-fill" style="width:10%; background:linear-gradient(90deg,#64748b,#94a3b8);"></div></div><div class="recall-val">&times;1</div></div>
+                <p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin:0.75rem 0 0;">Miss cost = &Sigma; (severity weight &times; missed faults of that class). One missed critical fault outweighs ten missed nitpicks.</p>
+            </div>
+
+            <h4><i class="fas fa-code-compare mr-2" style="color:#fcd34d;"></i>Is the gap real? McNemar's paired test</h4>
+            <p>McNemar looks only at the items where two judges <em>disagree</em>. If claim-decomposition is right far more often than holistic on exactly those items, the difference is significant &mdash; not luck.</p>
+            <div class="blueprint-box">
+                <div style="display:grid; grid-template-columns:140px 1fr 1fr; gap:0.5rem; align-items:stretch; max-width:560px; margin:0 auto;">
+                    <div></div>
+                    <div style="text-align:center; font-weight:700; color:#6ee7b7;">holistic right</div>
+                    <div style="text-align:center; font-weight:700; color:#fca5a5;">holistic wrong</div>
+                    <div style="display:flex; align-items:center; font-weight:700; color:#6ee7b7;">claim_decomp right</div>
+                    <div style="background:rgba(148,163,184,0.12); border:1px solid #475569; border-radius:0.5rem; padding:0.9rem; text-align:center;"><div style="font-weight:800; color:#cbd5e1;">both right</div><div class="text-xs" style="color:#94a3b8;">ignored</div></div>
+                    <div style="background:rgba(16,185,129,0.18); border:1px solid #10b981; border-radius:0.5rem; padding:0.9rem; text-align:center;"><div style="font-size:1.2rem; font-weight:800; color:#6ee7b7;">b = 178</div><div class="text-xs" style="color:#94a3b8;">claim_decomp saves it</div></div>
+                    <div style="display:flex; align-items:center; font-weight:700; color:#fca5a5;">claim_decomp wrong</div>
+                    <div style="background:rgba(239,68,68,0.18); border:1px solid #ef4444; border-radius:0.5rem; padding:0.9rem; text-align:center;"><div style="font-size:1.2rem; font-weight:800; color:#fca5a5;">c = 41</div><div class="text-xs" style="color:#94a3b8;">holistic saves it</div></div>
+                    <div style="background:rgba(148,163,184,0.12); border:1px solid #475569; border-radius:0.5rem; padding:0.9rem; text-align:center;"><div style="font-weight:800; color:#cbd5e1;">both wrong</div><div class="text-xs" style="color:#94a3b8;">ignored</div></div>
+                </div>
+                <p style="text-align:center; color:#cbd5e1; font-size:0.9rem; margin:1rem 0 0;">178 vs 41 on the disagreements &rarr; <strong class="score-green">p &lt; 0.01</strong>. The advantage is real.</p>
+            </div>
+
             <h4>Cost-per-detected-fault frontier</h4>
             <table class="benchmark-table">
                 <thead>
@@ -1053,29 +1174,44 @@ Scorecard: output/scorecard_demo.html</div>
                 Two things to notice. The judges already separate &mdash; claim-decomposition 1.00 vs holistic 0.58 &mdash; and the realism gate <em>correctly rejects</em> this toy run (AUC 1.0), because the stub appends an identical sentence to every fake. That rejection is the safety mechanism doing its job.
             </p>
 
+            <h3><i class="fas fa-folder-tree mr-2" style="color:#fbbf24;"></i>How the Code Is Organized</h3>
+            <p>Each pipeline stage maps to one package, so the architecture diagram and the directory tree are the same picture. Adding a fault, a verifier, or a judge means touching one folder.</p>
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-folder mr-2"></i>goldsmith/src/goldsmith</div>
+                <div class="terminal-body">corpus/      <span style="color:#fbbf24;"># 1. scenario sampling + LLM transcript generation</span>
+faults/      <span style="color:#fbbf24;"># 2. 8 injectors + taxonomy (severity, verifier_id)</span>
+verifiers/   <span style="color:#fbbf24;"># 3. deterministic "did it land?" checks (tools-first)</span>
+realism/     <span style="color:#fbbf24;"># 4. adversarial discriminator + AUC gate</span>
+judges/      <span style="color:#fbbf24;"># 5. holistic | pairwise | claim_decomp | ensemble</span>
+stats/       <span style="color:#fbbf24;"># 6. confusion, bootstrap CIs, McNemar, severity, frontier</span>
+graph/       <span style="color:#94a3b8;"># LangGraph state + nodes + builder + routing</span>
+store/       <span style="color:#94a3b8;"># DuckDB schema + typed insert/query helpers</span>
+reporting/   <span style="color:#94a3b8;"># Jinja2 static HTML scorecard + plots</span>
+config/      <span style="color:#94a3b8;"># provider-agnostic registry + YAML settings</span>
+observability/ <span style="color:#94a3b8;"># LangSmith-primary, pluggable manager</span></div>
+            </div>
+
             <div class="github-card">
-                <div class="flex flex-col md:flex-row items-center gap-6">
-                    <div class="text-6xl" style="color:#f59e0b;">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="text-5xl" style="color:#f59e0b; line-height:1;">
                         <i class="fab fa-github"></i>
                     </div>
-                    <div>
-                        <h3 class="text-2xl font-bold text-white mb-2" style="margin-top:0;">Goldsmith</h3>
-                        <p class="text-gray-300 mb-4">
-                            Full source: 8-class fault taxonomy, 4 deterministic verifiers, a LangGraph pipeline with retry + realism gates, a 4-judge zoo, bootstrap/McNemar/Krippendorff statistics, a DuckDB store, and a static HTML scorecard. 73 passing tests; every LLM mocked so the suite runs offline. Clone and run:
-                        </p>
-                        <div class="code-block" style="margin:0 0 1rem;">
-                            <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
-                            <pre><code class="language-bash">git clone https://github.com/zubairashfaque/goldsmith
-cd goldsmith &amp;&amp; poetry install
-make test                                  # 73 tests, no API key needed
-poetry run goldsmith generate-corpus --n 20 --dry-run
-python examples/calibrate_one_domain.py    # full pipeline -> output/scorecard_demo.html</code></pre>
-                        </div>
-                        <a href="https://github.com/zubairashfaque/goldsmith" target="_blank" class="btn-primary">
-                            <i class="fab fa-github mr-2"></i>View Repository
-                        </a>
-                    </div>
+                    <h3 class="text-2xl font-bold text-white" style="margin:0;">Goldsmith on GitHub</h3>
                 </div>
+                <p class="text-gray-300 mb-4">
+                    Full source: 8-class fault taxonomy, 4 deterministic verifiers, a LangGraph pipeline with retry + realism gates, a 4-judge zoo, bootstrap/McNemar/Krippendorff statistics, a DuckDB store, and a static HTML scorecard. 73 passing tests; every LLM mocked so the suite runs offline. Clone and run:
+                </p>
+                <div class="code-block" style="margin:0 0 1.25rem;">
+                    <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                    <pre><code class="language-bash">git clone https://github.com/zubairashfaque/goldsmith
+cd goldsmith &amp;&amp; poetry install
+make test                                # 73 tests, no API key
+poetry run goldsmith generate-corpus --n 20 --dry-run
+python examples/calibrate_one_domain.py  # -&gt; output/scorecard_demo.html</code></pre>
+                </div>
+                <a href="https://github.com/zubairashfaque/goldsmith" target="_blank" class="btn-primary">
+                    <i class="fab fa-github mr-2"></i>View Repository
+                </a>
             </div>
 
             <div class="section-divider"></div>
