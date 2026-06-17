@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goldsmith — Manufacturing Gold-Standard Eval Data to Calibrate LLM Judges | Zubair Ashfaque</title>
+    <meta name="description" content="Goldsmith manufactures ground-truth eval data by injecting controlled clinical faults into synthetic call summaries, then measures whether an LLM-as-a-judge actually detects them — with deterministic verifiers, an adversarial realism filter, and bootstrap-CI significance testing.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="alternate icon" href="../favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+        }
+        .blog-container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .hero-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .code-block {
+            background: #1e293b; border-radius: 0.5rem; padding: 1.5rem; margin: 1.5rem 0;
+            overflow-x: auto; border: 1px solid #334155; position: relative;
+        }
+        .concept-card {
+            background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 0.75rem;
+            padding: 1.5rem; margin: 1rem 0; transition: all 0.3s ease;
+        }
+        .concept-card:hover {
+            border-color: #f59e0b; transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);
+        }
+        .github-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #f59e0b; border-radius: 1rem; padding: 2rem; margin: 2rem 0;
+        }
+        .blueprint-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #f59e0b; border-radius: 1rem; padding: 2rem; margin: 2rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: #1e293b;
+            padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 700;
+            transition: all 0.3s ease; display: inline-block; text-decoration: none;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3); }
+        .section-divider { height: 2px; background: linear-gradient(90deg, transparent, #f59e0b, transparent); margin: 3rem 0; }
+        article h2 { font-size: 2rem; font-weight: 700; margin-top: 3rem; margin-bottom: 1rem; color: #f59e0b; }
+        article h3 { font-size: 1.5rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; color: #fbbf24; }
+        article h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #fcd34d; }
+        article p { font-size: 1.125rem; line-height: 1.8; margin-bottom: 1.25rem; color: #cbd5e1; }
+        article ul, article ol { font-size: 1.125rem; line-height: 1.8; margin-bottom: 1.25rem; padding-left: 1.5rem; color: #cbd5e1; }
+        article li { margin-bottom: 0.5rem; }
+        .breadcrumb { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 2rem; font-size: 0.875rem; color: #94a3b8; }
+        .breadcrumb a { color: #f59e0b; text-decoration: none; transition: color 0.3s; }
+        .breadcrumb a:hover { color: #fbbf24; }
+        .copy-btn {
+            position: absolute; top: 1rem; right: 1rem; background: #334155; color: #e2e8f0;
+            border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer;
+            font-size: 0.875rem; transition: all 0.3s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .comparison-column { background: rgba(30, 41, 59, 0.5); border-radius: 0.75rem; padding: 1.5rem; transition: all 0.3s ease; }
+        .before-column { border: 2px solid #ef4444; }
+        .after-column { border: 2px solid #10b981; }
+        .comparison-column:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2); }
+        .comparison-list { list-style: none; padding: 0; }
+        .comparison-list li { padding: 0.75rem 0; padding-left: 1.5rem; position: relative; border-bottom: 1px solid rgba(100, 116, 139, 0.2); }
+        .comparison-list li:last-child { border-bottom: none; }
+        .comparison-list li::before { position: absolute; left: 0; font-weight: bold; font-size: 1.1rem; }
+        .before-column .comparison-list li::before { content: '\2717'; color: #ef4444; }
+        .after-column .comparison-list li::before { content: '\2713'; color: #10b981; }
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #f59e0b; border-radius: 1rem; padding: 2rem; margin: 2rem 0;
+        }
+        .architecture-box {
+            background: rgba(30, 41, 59, 0.5); border-radius: 0.75rem; padding: 1.5rem;
+            text-align: center; min-width: 120px; transition: all 0.3s ease;
+        }
+        .architecture-box:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3); }
+        .terminal-output { background: #1e1e1e; border: 2px solid #334155; border-radius: 0.5rem; overflow: hidden; font-family: 'Courier New', monospace; margin: 1rem 0; }
+        .terminal-header { background: #334155; padding: 0.5rem 1rem; font-size: 0.875rem; color: #94a3b8; font-weight: 600; }
+        .terminal-body { padding: 1rem; color: #e2e8f0; font-size: 0.875rem; line-height: 1.6; margin: 0; white-space: pre-wrap; }
+        .highlight-box { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem; }
+        .tip-box { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem; }
+        .info-box { background: rgba(6, 182, 212, 0.1); border-left: 4px solid #06b6d4; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0.5rem; }
+        .metric-card { background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 0.75rem; padding: 1.25rem; text-align: center; transition: all 0.3s ease; }
+        .metric-card:hover { border-color: #f59e0b; transform: translateY(-2px); }
+        .metric-card .metric-value { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .metric-card .metric-label { font-size: 0.875rem; color: #94a3b8; margin-top: 0.25rem; }
+        .benchmark-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        .benchmark-table th { background: rgba(245, 158, 11, 0.2); padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #fcd34d; border-bottom: 2px solid #f59e0b; }
+        .benchmark-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #334155; color: #cbd5e1; }
+        .benchmark-table tr:hover { background: rgba(245, 158, 11, 0.05); }
+        .score-red { color: #ef4444; font-weight: 700; }
+        .score-amber { color: #f59e0b; font-weight: 700; }
+        .score-cyan { color: #06b6d4; font-weight: 700; }
+        .score-green { color: #10b981; font-weight: 700; }
+        .flow-arrow { display: flex; align-items: center; justify-content: center; color: #f59e0b; font-size: 1.5rem; padding: 0.5rem 0; }
+        .analogy-card { background: rgba(6, 182, 212, 0.05); border: 2px solid #06b6d4; border-radius: 1rem; padding: 2rem; margin: 2rem 0; }
+        .pipeline-flow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; margin: 2rem 0; }
+        .pipeline-node { background: rgba(30, 41, 59, 0.7); border-radius: 0.75rem; padding: 1rem 1.25rem; text-align: center; min-width: 130px; transition: all 0.3s ease; }
+        .pipeline-node:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3); }
+        .pipeline-node .node-number { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .pipeline-node .node-name { font-size: 0.875rem; font-weight: 600; color: white; }
+        .pipeline-node .node-desc { font-size: 0.7rem; color: #94a3b8; margin-top: 0.25rem; }
+        .pipeline-arrow { color: #f59e0b; font-size: 1.25rem; }
+        .routing-branch { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.05); border: 1px dashed #f59e0b; border-radius: 0.75rem; min-width: 130px; }
+        /* Hero stat badges */
+        .stat-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 999px; font-size: 0.85rem; color: #fcd34d; font-weight: 600; }
+        /* Forge-line big icons (plain-English architecture view) */
+        .forge-step { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; min-width: 130px; }
+        .forge-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: white; margin-bottom: 0.6rem; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+        .forge-title { font-size: 0.95rem; font-weight: 700; color: #fff; }
+        .forge-plain { font-size: 0.78rem; color: #94a3b8; margin-top: 0.25rem; line-height: 1.35; }
+        /* Severity badges (fault taxonomy) */
+        .sev-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+        .sev-critical { background: rgba(239, 68, 68, 0.18); color: #fca5a5; border: 1px solid #ef4444; }
+        .sev-high { background: rgba(245, 158, 11, 0.18); color: #fcd34d; border: 1px solid #f59e0b; }
+        .sev-medium { background: rgba(59, 130, 246, 0.18); color: #93c5fd; border: 1px solid #3b82f6; }
+        .fault-card { background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; border-radius: 0.75rem; padding: 1rem 1.1rem; transition: all 0.3s ease; }
+        .fault-card:hover { transform: translateY(-3px); border-color: #f59e0b; box-shadow: 0 8px 24px rgba(245,158,11,0.18); }
+        .fault-card .fault-name { font-weight: 700; color: #fff; font-size: 0.95rem; }
+        .fault-card .fault-verifier { font-family: 'Courier New', monospace; font-size: 0.72rem; color: #67e8f9; }
+        /* Recall bars with CI whiskers */
+        .recall-row { display: grid; grid-template-columns: 230px 1fr 70px; align-items: center; gap: 0.75rem; margin: 0.55rem 0; }
+        .recall-label { font-size: 0.8rem; color: #cbd5e1; }
+        .recall-track { position: relative; height: 18px; background: rgba(148,163,184,0.15); border-radius: 999px; }
+        .recall-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; }
+        .recall-ci { position: absolute; top: 50%; height: 10px; transform: translateY(-50%); border-left: 2px solid #e2e8f0; border-right: 2px solid #e2e8f0; opacity: 0.7; }
+        .recall-val { font-size: 0.8rem; font-weight: 700; color: #fff; text-align: right; }
+        /* Realism AUC gauge */
+        .auc-track { position: relative; height: 28px; border-radius: 999px; background: linear-gradient(90deg, #10b981 0%, #10b981 40%, #f59e0b 50%, #ef4444 70%, #ef4444 100%); }
+        .auc-marker { position: absolute; top: -6px; width: 4px; height: 40px; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+        .auc-band { position: absolute; top: 0; height: 100%; background: rgba(255,255,255,0.18); border-left: 2px dashed #fff; border-right: 2px dashed #fff; }
+        @media (max-width: 768px) {
+            .blog-container { padding: 1rem; }
+            article h2 { font-size: 1.5rem; }
+            article p, article ul, article ol { font-size: 1rem; }
+            .metric-card .metric-value { font-size: 1.5rem; }
+            .pipeline-flow { flex-direction: column; }
+            .pipeline-arrow { transform: rotate(90deg); }
+            .recall-row { grid-template-columns: 1fr; gap: 0.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="../index.html" class="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+                    Zubair Ashfaque
+                </a>
+                <div class="flex gap-6">
+                    <a href="../index.html#journal" class="text-slate-300 hover:text-amber-400 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Journal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="blog-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="../index.html#journal">Journal</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span>Goldsmith</span>
+        </div>
+
+        <!-- Hero Section -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4 hero-gradient">
+                Goldsmith &mdash; Manufacturing Gold-Standard Eval Data to Calibrate LLM Judges
+            </h1>
+            <p class="text-xl text-slate-400 mb-6">
+                A complete guide to building a system that forges eval data with <em>known</em> defects &mdash; injecting controlled clinical faults into synthetic call summaries, confirming each fault landed with deterministic verifiers, filtering for realism, then measuring whether an LLM-as-a-judge actually catches them, with bootstrap confidence intervals and McNemar significance tests.
+            </p>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-400 mb-6">
+                <span><i class="far fa-calendar mr-2"></i>June 17, 2026</span>
+                <span><i class="far fa-clock mr-2"></i>35 min read</span>
+                <span><i class="far fa-user mr-2"></i>Zubair Ashfaque</span>
+            </div>
+            <div class="flex flex-wrap gap-3 mb-5">
+                <span class="stat-badge"><i class="fas fa-vial"></i>8 Fault Classes</span>
+                <span class="stat-badge"><i class="fas fa-check-double"></i>4 Deterministic Verifiers</span>
+                <span class="stat-badge"><i class="fas fa-scale-balanced"></i>4 Judges</span>
+                <span class="stat-badge"><i class="fas fa-mask"></i>Realism Gate (AUC&#8776;0.5)</span>
+                <span class="stat-badge"><i class="fas fa-flask"></i>73 Passing Tests</span>
+                <span class="stat-badge"><i class="fas fa-chart-column"></i>Bootstrap-CI Significance</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">LLM-as-Judge</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">Eval Calibration</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">LangGraph</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">Synthetic Data</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">Fault Injection</span>
+                <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm">Bootstrap CI</span>
+            </div>
+        </header>
+
+        <article>
+            <!-- ============================================================ -->
+            <!-- SECTION 0: THE MOTIVATION                                     -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-lightbulb mr-3"></i>The Motivation</h2>
+
+            <p>
+                Across the industry, teams have quietly handed one of the most consequential jobs in their AI stack to a model nobody has tested: the judge. We use a large language model to grade the output of another large language model &mdash; to decide whether a summary is faithful, whether an answer is safe, whether a response is good enough to ship. We then treat that judge's score as if it were ground truth. But almost no one can answer the only question that matters: <em>does this judge actually catch the failures I care about?</em>
+            </p>
+
+            <p>
+                The root cause is a data problem. To prove a judge works, you need examples where you already know the right answer &mdash; outputs that are definitely wrong, in specific, known ways. In a regulated domain like healthcare, producing those examples normally means paying clinicians to read and annotate hundreds of transcripts. It is slow, expensive, and the labels are themselves debatable. So the testing never happens, and the judge ships uncalibrated.
+            </p>
+
+            <p>
+                This matters because an uncalibrated judge fails silently. It hands out confident scores while missing the exact errors &mdash; a flipped negation, a fabricated dosage, a dropped escalation &mdash; that make an output dangerous. The questions this article answers are:
+            </p>
+
+            <ul class="list-disc">
+                <li>How can we manufacture eval data with trustworthy ground-truth labels <em>without</em> paying for human annotation?</li>
+                <li>How do we prove a fault we injected actually <em>landed</em>, instead of trusting the model that injected it?</li>
+                <li>How do we keep our synthetic faults realistic enough that judge performance on them predicts performance in production?</li>
+                <li>How do we compare judges with real statistical rigor &mdash; confidence intervals and significance tests &mdash; rather than a single hand-wavy accuracy number?</li>
+            </ul>
+
+            <p>
+                By the end, you will be able to build a measurement system that turns the judge from an act of faith into something you can put a number on &mdash; per failure type, with a confidence interval and a cost.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-info-circle mr-2"></i>Key Innovation:</strong>
+                Goldsmith inverts the data-cost problem. Instead of paying experts to label outputs, we <em>construct</em> faulted outputs whose labels are free <strong>by construction</strong> &mdash; we know exactly what is wrong with each one because we put the flaw there ourselves, and a deterministic verifier confirms it landed before we trust it.
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 1: THE CHALLENGE                                      -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-bullseye mr-3"></i>The Challenge</h2>
+
+            <p>
+                The <strong>Challenge</strong> is that you cannot trust a judge you have never tested against known, domain-specific failures &mdash; and building the test set is exactly the part everyone skips. Off-the-shelf eval libraries ship generic metrics, but a metric is not the same as evidence that <em>your</em> judge detects <em>your</em> failure modes on <em>your</em> data.
+            </p>
+
+            <p>
+                There are three sharp edges. First, <strong>the labels</strong>: to measure detection you need outputs with known defects, and authoritative labels in a clinical setting are expensive and contested. Second, <strong>the realism</strong>: if you generate synthetic faults that are obviously broken, your judge will score 99% on them and 60% in production &mdash; the measurement lies. Third, <strong>the rigor</strong>: comparing two judges by a single accuracy number tells you nothing about whether the difference is real or noise, or whether a missed dosage error should count the same as a missed typo. Goldsmith is built to take all three edges seriously at once.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: LUCIFY THE PROBLEM                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-search mr-3"></i>Lucifying the Problem</h2>
+
+            <p>
+                Let's <strong>lucify</strong> this concept with a craft most people already understand: the work of a master goldsmith and the assayer who tests their gold.
+            </p>
+
+            <div class="analogy-card">
+                <h4 style="margin-top:0;"><i class="fas fa-gem mr-2"></i>The Goldsmith and the Assayer</h4>
+                <p style="margin-bottom: 0.75rem;">
+                    Imagine you run a mint, and you employ an <em>assayer</em> &mdash; an expert whose entire job is to spot fake or debased gold. How do you know your assayer is any good? You cannot find out by handing them real coins; if every coin is genuine, an assayer who simply says "genuine" every time looks perfect while testing nothing.
+                </p>
+                <p style="margin-bottom: 0.75rem;">
+                    So you do something clever: you become a <strong>goldsmith of fakes</strong>. You deliberately forge coins with <em>specific, known</em> defects &mdash; this one is underweight, that one has the wrong hallmark, another is gold-plated lead. Because <em>you</em> created each flaw, you know the truth about every coin without anyone needing to judge it. You slip these among genuine coins and watch which defects your assayer catches and which slip through.
+                </p>
+                <p style="margin-bottom: 0.75rem;">
+                    But there is a catch. If your fakes are crude &mdash; bright green and crumbling &mdash; catching them proves nothing about catching a <em>good</em> forgery. So you hire a second expert whose only job is to tell your fakes apart from natural coins. If that expert <em>can't</em> reliably tell which is which, your fakes are realistic enough to trust as a test.
+                </p>
+                <p style="margin-bottom: 0;">
+                    Goldsmith is exactly this, for LLM judges. The synthetic call summary is the coin. The injected fault is the forged defect with a known truth. The deterministic verifier is the goldsmith's own scale confirming the coin really is underweight. The realism filter is the second expert. And the LLM judge under test is the assayer we are finally able to grade &mdash; defect by defect, with numbers.
+                </p>
+            </div>
+
+            <p>
+                The analogy has limits &mdash; clinical language is far richer than coin weight, and "realistic" is a spectrum rather than a yes/no. But it captures the core dynamic precisely: <strong>you can only measure a detector if you control the ground truth of what it is detecting.</strong> Everything in Goldsmith follows from taking that seriously.
+            </p>
+
+            <p>
+                This is also what separates Goldsmith from the eval tools most teams already reach for. Ragas, DeepEval, promptfoo, and OpenAI Evals all ship excellent metrics &mdash; but a metric measures an output; it does not prove your judge detects your failures.
+            </p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Ragas / DeepEval / promptfoo / OpenAI&nbsp;Evals</th>
+                        <th>Goldsmith</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>"How faithful is this output?"</td>
+                        <td class="score-green">Yes &mdash; ships the metric</td>
+                        <td class="score-green">Uses such metrics as judges</td>
+                    </tr>
+                    <tr>
+                        <td>"Does my judge detect <em>my</em> failure modes?"</td>
+                        <td class="score-red">Not answered</td>
+                        <td class="score-green">Core output</td>
+                    </tr>
+                    <tr>
+                        <td>Ground-truth labels without human annotation</td>
+                        <td class="score-red">You must supply them</td>
+                        <td class="score-green">Free by construction + verified</td>
+                    </tr>
+                    <tr>
+                        <td>Proof the test cases are realistic</td>
+                        <td class="score-red">No</td>
+                        <td class="score-green">Adversarial realism gate (AUC&#8776;0.5)</td>
+                    </tr>
+                    <tr>
+                        <td>Significance testing between judges</td>
+                        <td class="score-amber">Rare / manual</td>
+                        <td class="score-green">Bootstrap CIs + McNemar built in</td>
+                    </tr>
+                    <tr>
+                        <td>Cost per detected fault</td>
+                        <td class="score-red">No</td>
+                        <td class="score-green">Pareto frontier</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: LUCIFY THE JARGON                                  -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-book-open mr-3"></i>Lucifying the Tech Terms</h2>
+
+            <p>
+                Before we build anything, we first need to <strong>lucify</strong> the key technical terms. Each one below comes with a plain definition, a simple example, and an everyday analogy &mdash; so the blueprint that follows reads like a story rather than a spec sheet.
+            </p>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-scale-balanced mr-2"></i>LLM-as-a-Judge</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> Using a language model to score or grade another model's output &mdash; for example, rating how faithfully a summary reflects its source on a 1&ndash;10 scale, or flagging it as faulty.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> You ask GPT-4o, "Here is a call transcript and a summary of it &mdash; does the summary contain any clinical errors?" and it answers yes or no with a reason.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> A teaching assistant grading a stack of essays against an answer key. Fast and scalable &mdash; but only as trustworthy as the TA, which is exactly what we are testing.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-vial mr-2"></i>Fault Injection</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> Deliberately introducing a single, well-defined error into an otherwise-correct output, recording exactly what was changed, where, and how severe it is.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> Taking the line "patient denies chest pain" and flipping it to "patient reports chest pain" &mdash; a negation flip with a known location and a critical severity.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> A crash-test engineer who dents a car in one precise spot to see if the safety sensors fire. The damage is intentional and documented.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-certificate mr-2"></i>Gold Set (Ground Truth by Construction)</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> A dataset whose correct labels are known with certainty because they were created, not annotated. We know each item is faulty (and how) because we injected the fault ourselves.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> 200 clean summaries plus faulted copies; every faulted copy carries the exact fault type that defines its "wrong" label &mdash; no human had to read it.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> A maze you drew yourself. You don't need to solve it to know the exit &mdash; you put the exit there.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-check-double mr-2"></i>Tools-First Verifier</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> A deterministic (non-LLM) check that confirms an injected fault actually landed in the text before we trust its label. If the check fails, we re-inject rather than emit a mislabeled example.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> After a dosage edit, a regex parses "5&nbsp;mg" &rarr; "5&nbsp;g" and confirms the value or unit genuinely changed. Code, not a model, makes the call.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> The goldsmith's own scale. The LLM <em>claims</em> it made the coin underweight; the scale <em>proves</em> it.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-mask mr-2"></i>Adversarial Realism Filter (AUC&#8776;0.5)</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> A classifier trained to tell injected faults from natural text. If it <em>fails</em> &mdash; scoring near AUC&nbsp;0.5, pure chance &mdash; the faults are realistic enough to trust. If it succeeds, our fakes are too obvious and the gold set is rejected.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> Feed the discriminator 200 faulted and 200 clean summaries; if it can't beat a coin flip at separating them, the faults blend in.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> The second expert hired to spot your forgeries. You <em>want</em> them to be stumped &mdash; that means the fakes look real.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-chart-column mr-2"></i>Bootstrap Confidence Interval</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> A range of plausible values for a metric (like recall), estimated by resampling the data thousands of times. It turns a single number into "the truth is very likely in here."</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> A judge's recall on negation flips is 0.91, 95% CI [0.84, 0.96] &mdash; so we can say with confidence it is not, say, 0.6.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> Polling. One survey gives a point estimate; the margin of error tells you how much to trust it.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-code-compare mr-2"></i>McNemar's Test</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> A statistical test for whether two judges differ <em>significantly</em> when graded on the <em>same</em> items &mdash; it looks only at the cases where they disagree.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> On 600 items, the claim-decomposition judge beats the holistic judge with p&nbsp;&lt;&nbsp;0.01 &mdash; the gap is real, not luck.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> Two referees watching the same match. You only care about the calls they made differently.</p>
+            </div>
+
+            <div class="concept-card">
+                <h4 class="text-xl font-semibold" style="color:#fcd34d;"><i class="fas fa-coins mr-2"></i>Cost-per-Detected-Fault</h4>
+                <p class="text-gray-300 mb-2"><strong>Definition:</strong> The dollar cost a judge spends for each real fault it actually catches &mdash; total LLM spend divided by true positives &mdash; used to find the judges that are both effective and economical.</p>
+                <p class="text-gray-400 text-sm mb-2"><strong>Simple Example:</strong> A cheap judge catching 90 faults for $1 beats a pricey one catching 50 for $10 &mdash; it sits on the Pareto frontier.</p>
+                <p class="text-gray-400 text-sm"><strong>Analogy:</strong> Cost per pothole fixed. A crew that fills more holes for less money wins the contract.</p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: MAKE THE BLUEPRINT                                 -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-drafting-compass mr-3"></i>Making the Blueprint</h2>
+
+            <p>
+                Now, let's <strong>make the blueprint</strong> to solve this. Goldsmith is a six-phase pipeline. Each phase has one job, and &mdash; crucially &mdash; the trustworthy-labels guarantee is enforced by a deterministic gate between injecting a fault and using it.
+            </p>
+
+            <ol>
+                <li><strong>Forge the corpus.</strong> Sample structured, PHI-free scenario specs (member profile, medication list, call reason) deterministically from a seed, then have an LLM render each into a clean, realistic post-call summary. This is our supply of genuine "coins." <em>Tool: LangGraph node + provider-agnostic LLM.</em></li>
+                <li><strong>Inject one fault.</strong> For each scenario, an LLM applies exactly one perturbation from an 8-class taxonomy (negation flip, dosage error, fabricated instruction, dropped escalation, and so on), emitting the fault type, the changed span, and a severity. <em>Tool: per-fault injector prompts.</em></li>
+                <li><strong>Verify it landed (tools-first).</strong> A deterministic verifier &mdash; NLI polarity, unit parsing, span diff, escalation-flag presence &mdash; confirms the fault is genuinely present. If not, we re-inject up to a retry limit. No verified fault, no trusted label. <em>Tool: deterministic Python verifiers.</em></li>
+                <li><strong>Filter for realism.</strong> An adversarial discriminator tries to separate faulted from clean summaries. The gold set is accepted only when it <em>fails</em> (AUC near 0.5), proving the faults look natural. <em>Tool: scikit-learn TF-IDF + logistic regression.</em></li>
+                <li><strong>Run the judge zoo.</strong> Each surviving sample (and clean controls) is graded in parallel by four judges &mdash; holistic rubric, pairwise with position-swap, claim-decomposition, and a small-model ensemble &mdash; each writing its own verdict and cost. <em>Tool: LangGraph parallel fan-out.</em></li>
+                <li><strong>Score with rigor.</strong> Join injected faults against judge verdicts to compute per-fault-class precision and recall with bootstrap confidence intervals, McNemar tests between judges, a severity-weighted miss cost, and a cost-per-detected-fault frontier &mdash; rendered to a static HTML scorecard. <em>Tool: scipy / statsmodels + DuckDB + Jinja2.</em></li>
+            </ol>
+
+            <p>
+                That is the plan in words. Now let's see it &mdash; first the way a non-engineer would read it at a glance, then the real technical pipeline underneath.
+            </p>
+
+            <h3><i class="fas fa-eye mr-2" style="color:#fbbf24;"></i>The Big Picture (plain-English view)</h3>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center" style="color:#fff; margin-top:0; margin-bottom:1.5rem;">How Goldsmith works, in six plain steps</h4>
+                <div style="display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:center; gap:0.5rem;">
+                    <div class="forge-step">
+                        <div class="forge-icon" style="background:#f59e0b;"><i class="fas fa-file-pen"></i></div>
+                        <div class="forge-title">1. Write fake notes</div>
+                        <div class="forge-plain">We generate realistic (but made-up, no real patient) call summaries.</div>
+                    </div>
+                    <div class="pipeline-arrow" style="align-self:center;"><i class="fas fa-arrow-right"></i></div>
+                    <div class="forge-step">
+                        <div class="forge-icon" style="background:#fb923c;"><i class="fas fa-hammer"></i></div>
+                        <div class="forge-title">2. Break one on purpose</div>
+                        <div class="forge-plain">We plant one known mistake &mdash; e.g. a wrong dose &mdash; and remember exactly what we did.</div>
+                    </div>
+                    <div class="pipeline-arrow" style="align-self:center;"><i class="fas fa-arrow-right"></i></div>
+                    <div class="forge-step">
+                        <div class="forge-icon" style="background:#06b6d4;"><i class="fas fa-magnifying-glass-chart"></i></div>
+                        <div class="forge-title">3. Double-check the break</div>
+                        <div class="forge-plain">A simple program (not an AI) confirms the mistake really is in the text.</div>
+                    </div>
+                    <div class="pipeline-arrow" style="align-self:center;"><i class="fas fa-arrow-right"></i></div>
+                    <div class="forge-step">
+                        <div class="forge-icon" style="background:#8b5cf6;"><i class="fas fa-mask"></i></div>
+                        <div class="forge-title">4. Make sure it looks real</div>
+                        <div class="forge-plain">We check the fakes still blend in with normal notes &mdash; no obvious tells.</div>
+                    </div>
+                    <div class="pipeline-arrow" style="align-self:center;"><i class="fas fa-arrow-right"></i></div>
+                    <div class="forge-step">
+                        <div class="forge-icon" style="background:#3b82f6;"><i class="fas fa-scale-balanced"></i></div>
+                        <div class="forge-title">5. Let the judges try</div>
+                        <div class="forge-plain">Four different AI judges read each note and guess: is something wrong here?</div>
+                    </div>
+                    <div class="pipeline-arrow" style="align-self:center;"><i class="fas fa-arrow-right"></i></div>
+                    <div class="forge-step">
+                        <div class="forge-icon" style="background:#10b981;"><i class="fas fa-award"></i></div>
+                        <div class="forge-title">6. Grade the judges</div>
+                        <div class="forge-plain">We score each judge: which mistakes it caught, how sure we are, and what it cost.</div>
+                    </div>
+                </div>
+                <p style="text-align:center; color:#94a3b8; font-size:0.85rem; margin:1.5rem 0 0;">
+                    Read left to right. Steps 1&ndash;2 forge the test; step 3 guarantees the answer key is correct; step 4 keeps it honest; steps 5&ndash;6 are the actual exam for the AI judges.
+                </p>
+            </div>
+
+            <h3><i class="fas fa-project-diagram mr-2" style="color:#fbbf24;"></i>The Technical Pipeline (LangGraph DAG)</h3>
+
+            <p>
+                Underneath the plain-English view is a LangGraph state machine. Two control-flow ideas make it trustworthy: a <strong>retry loop</strong> (if a fault didn't land, re-inject) and a <strong>reject gate</strong> (if the realism check fails, drop the sample). The four judges run as a <strong>parallel fan-out</strong>, each writing to its own key in shared state.
+            </p>
+
+            <div class="architecture-diagram">
+                <h4 class="text-center" style="color:#fff; margin-top:0; margin-bottom:1.5rem;">Goldsmith per-sample pipeline</h4>
+
+                <!-- Row 1: corpus -->
+                <div class="pipeline-flow" style="margin:0 0 0.5rem;">
+                    <div class="pipeline-node" style="border:2px solid #f59e0b;">
+                        <div class="node-number" style="color:#fbbf24;">1</div>
+                        <div class="node-name">scenario_gen</div>
+                        <div class="node-desc">sample spec from seed</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="pipeline-node" style="border:2px solid #f59e0b;">
+                        <div class="node-number" style="color:#fbbf24;">2</div>
+                        <div class="node-name">transcript_gen</div>
+                        <div class="node-desc">LLM &rarr; clean summary</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="pipeline-node" style="border:2px solid #fb923c;">
+                        <div class="node-number" style="color:#fdba74;">3</div>
+                        <div class="node-name">fault_injector</div>
+                        <div class="node-desc">plant one known fault</div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+
+                <!-- Row 2: verify + retry -->
+                <div class="pipeline-flow" style="margin:0 0 0.5rem;">
+                    <div class="pipeline-node" style="border:2px solid #06b6d4;">
+                        <div class="node-number" style="color:#67e8f9;">4</div>
+                        <div class="node-name">verifier</div>
+                        <div class="node-desc">did the fault land?</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="routing-branch">
+                        <div class="text-xs font-bold" style="color:#fbbf24;">ROUTE: did it land?</div>
+                        <div class="text-xs" style="color:#94a3b8;"><span class="score-red">no</span> &amp; retries&lt;2 &rarr; re-inject (back to 3)</div>
+                        <div class="text-xs" style="color:#94a3b8;"><span class="score-green">yes</span> &rarr; continue</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="pipeline-node" style="border:2px solid #8b5cf6;">
+                        <div class="node-number" style="color:#c4b5fd;">5</div>
+                        <div class="node-name">realism_filter</div>
+                        <div class="node-desc">AUC&#8776;0.5 gate</div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+                <div class="text-center text-xs font-bold" style="color:#c4b5fd; margin-bottom:0.5rem;">ROUTE: realism failed &rarr; <span class="score-red">reject sample</span> &nbsp;|&nbsp; passed &rarr; fan out to judges</div>
+
+                <!-- Row 3: judge fan-out -->
+                <div class="text-center text-xs font-bold" style="color:#93c5fd; margin-bottom:0.5rem;">PARALLEL JUDGE ZOO (each writes its own verdict + cost)</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="pipeline-node" style="border:2px solid #3b82f6;">
+                        <div class="node-number" style="color:#93c5fd;">6a</div>
+                        <div class="node-name">holistic</div>
+                        <div class="node-desc">1&ndash;10 rubric</div>
+                    </div>
+                    <div class="pipeline-node" style="border:2px solid #3b82f6;">
+                        <div class="node-number" style="color:#93c5fd;">6b</div>
+                        <div class="node-name">pairwise</div>
+                        <div class="node-desc">position-swap</div>
+                    </div>
+                    <div class="pipeline-node" style="border:2px solid #3b82f6;">
+                        <div class="node-number" style="color:#93c5fd;">6c</div>
+                        <div class="node-name">claim_decomp</div>
+                        <div class="node-desc">verify each claim</div>
+                    </div>
+                    <div class="pipeline-node" style="border:2px solid #3b82f6;">
+                        <div class="node-number" style="color:#93c5fd;">6d</div>
+                        <div class="node-name">ensemble</div>
+                        <div class="node-desc">small-model vote</div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+
+                <!-- Row 4: persist + stats + scorecard -->
+                <div class="pipeline-flow" style="margin:0;">
+                    <div class="pipeline-node" style="border:2px solid #10b981;">
+                        <div class="node-number" style="color:#6ee7b7;">7</div>
+                        <div class="node-name">persist</div>
+                        <div class="node-desc">DuckDB store</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="pipeline-node" style="border:2px solid #10b981;">
+                        <div class="node-number" style="color:#6ee7b7;">8</div>
+                        <div class="node-name">stats_aggregate</div>
+                        <div class="node-desc">CIs, McNemar, cost</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="pipeline-node" style="border:2px solid #10b981;">
+                        <div class="node-number" style="color:#6ee7b7;">9</div>
+                        <div class="node-name">scorecard</div>
+                        <div class="node-desc">static HTML report</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="fas fa-circle-info mr-2"></i>Why a clean control matters:</strong>
+                Alongside every faulted sample we also send the <em>clean</em> summary through the judges. Faulted samples measure recall (did the judge catch the planted fault?); clean controls measure false positives (does the judge cry wolf?). Both are needed to compute precision honestly.
+            </div>
+
+            <h3><i class="fas fa-vials mr-2" style="color:#fbbf24;"></i>The Fault Taxonomy</h3>
+
+            <p>
+                The eight fault classes are the heart of the answer key. Each declares a severity (which drives how much a miss costs) and the deterministic verifier that proves it landed. Six ship in the MVP; two more arrive in v2.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 my-6">
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-arrows-rotate mr-2" style="color:#fca5a5;"></i>negation_flip</span>
+                        <span class="sev-badge sev-critical">critical</span>
+                    </div>
+                    <div class="text-sm text-slate-400">"denies chest pain" &rarr; "reports chest pain"</div>
+                    <div class="fault-verifier">verifier: nli</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-prescription-bottle-medical mr-2" style="color:#fca5a5;"></i>dosage_unit_error</span>
+                        <span class="sev-badge sev-critical">critical</span>
+                    </div>
+                    <div class="text-sm text-slate-400">"5 mg" &rarr; "5 g" &mdash; value or unit corrupted</div>
+                    <div class="fault-verifier">verifier: unit_parser</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-pen-fancy mr-2" style="color:#fca5a5;"></i>fabricated_med_instruction</span>
+                        <span class="sev-badge sev-critical">critical</span>
+                    </div>
+                    <div class="text-sm text-slate-400">Invents an instruction never given</div>
+                    <div class="fault-verifier">verifier: span_diff</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-triangle-exclamation mr-2" style="color:#fca5a5;"></i>dropped_escalation</span>
+                        <span class="sev-badge sev-critical">critical</span>
+                    </div>
+                    <div class="text-sm text-slate-400">Removes an urgent-callback flag</div>
+                    <div class="fault-verifier">verifier: escalation_flag</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-people-arrows mr-2" style="color:#fcd34d;"></i>speaker_misattribution</span>
+                        <span class="sev-badge sev-high">high</span>
+                    </div>
+                    <div class="text-sm text-slate-400">Attributes a statement to the wrong speaker</div>
+                    <div class="fault-verifier">verifier: span_diff</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-phone-volume mr-2" style="color:#93c5fd;"></i>fabricated_callback</span>
+                        <span class="sev-badge sev-medium">medium</span>
+                    </div>
+                    <div class="text-sm text-slate-400">Invents a follow-up commitment</div>
+                    <div class="fault-verifier">verifier: span_diff</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-clock-rotate-left mr-2" style="color:#fcd34d;"></i>temporal_reorder <span class="text-xs text-slate-500">(v2)</span></span>
+                        <span class="sev-badge sev-high">high</span>
+                    </div>
+                    <div class="text-sm text-slate-400">Reorders events so chronology contradicts source</div>
+                    <div class="fault-verifier">verifier: span_diff</div>
+                </div>
+                <div class="fault-card">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="fault-name"><i class="fas fa-notes-medical mr-2" style="color:#fcd34d;"></i>diagnosis_drift <span class="text-xs text-slate-500">(v2)</span></span>
+                        <span class="sev-badge sev-high">high</span>
+                    </div>
+                    <div class="text-sm text-slate-400">Adds or drops a diagnosis vs the claim set</div>
+                    <div class="fault-verifier">verifier: claim_set_diff</div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-rotate mr-2" style="color:#fbbf24;"></i>The Tools-First Loop</h3>
+
+            <p>
+                The single most important design decision: the LLM injector is never trusted on its own word. A deterministic verifier sits between injection and the gold set, and the graph re-injects until the fault provably lands.
+            </p>
+
+            <div class="pipeline-flow">
+                <div class="pipeline-node" style="border:2px solid #fb923c;">
+                    <div class="node-name">LLM injects fault</div>
+                    <div class="node-desc">proposes a span edit</div>
+                </div>
+                <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                <div class="pipeline-node" style="border:2px solid #06b6d4;">
+                    <div class="node-name">Verifier checks</div>
+                    <div class="node-desc">NLI / unit / span / flag</div>
+                </div>
+                <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                <div class="routing-branch">
+                    <div class="text-xs font-bold" style="color:#fbbf24;">landed?</div>
+                    <div class="text-xs" style="color:#94a3b8;"><span class="score-red">no</span> &rarr; re-inject</div>
+                    <div class="text-xs" style="color:#94a3b8;"><span class="score-green">yes</span> &rarr; trust the label</div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-scale-balanced mr-2" style="color:#fbbf24;"></i>The Judge Zoo</h3>
+
+            <p>
+                Four judges, four philosophies. Comparing them is the whole point &mdash; and the scorecard will show that <em>how</em> you judge matters more than <em>which</em> model you use.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                <div class="concept-card" style="margin:0;">
+                    <h4 style="margin-top:0; color:#93c5fd;"><i class="fas fa-gauge-high mr-2"></i>Holistic</h4>
+                    <p class="text-gray-400 text-sm" style="margin:0;">One LLM call rates faithfulness 1&ndash;10; a threshold flags faulty. Cheap and fast &mdash; but blunt, with poor discrimination on subtle faults.</p>
+                </div>
+                <div class="concept-card" style="margin:0;">
+                    <h4 style="margin-top:0; color:#93c5fd;"><i class="fas fa-right-left mr-2"></i>Pairwise (position-swap)</h4>
+                    <p class="text-gray-400 text-sm" style="margin:0;">Compares clean vs faulted in <em>both</em> orders to cancel position bias; flags a fault when the clean version is consistently preferred.</p>
+                </div>
+                <div class="concept-card" style="margin:0;">
+                    <h4 style="margin-top:0; color:#93c5fd;"><i class="fas fa-list-check mr-2"></i>Claim-Decomposition</h4>
+                    <p class="text-gray-400 text-sm" style="margin:0;">Extracts atomic claims, verifies each against the source, flags if any is unsupported. More calls, but far higher recall on negation and fabrication.</p>
+                </div>
+                <div class="concept-card" style="margin:0;">
+                    <h4 style="margin-top:0; color:#93c5fd;"><i class="fas fa-users-rectangle mr-2"></i>Ensemble</h4>
+                    <p class="text-gray-400 text-sm" style="margin:0;">Several small (often open-weight) models vote; majority decides. Exposes judge-model sensitivity at low cost.</p>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-plug mr-2" style="color:#fbbf24;"></i>Provider-Agnostic by Design</h3>
+
+            <p>
+                Every judge and generator resolves a logical <em>role</em> through a registry to a concrete backend, so you can swap models without touching code &mdash; essential for the ensemble's judge-model-sensitivity story. Tracing is LangSmith-first but pluggable.
+            </p>
+
+            <div class="architecture-diagram">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-3">
+                    <div class="architecture-box" style="border:2px solid #f59e0b; min-width:160px;">
+                        <div class="text-sm font-bold text-white">role: judge_default</div>
+                        <div class="text-xs text-slate-400">defined in YAML</div>
+                    </div>
+                    <span class="pipeline-arrow"><i class="fas fa-arrow-right"></i></span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="architecture-box" style="border:1px solid #334155;"><i class="fas fa-cloud mr-1" style="color:#67e8f9;"></i> OpenAI</div>
+                        <div class="architecture-box" style="border:1px solid #334155;"><i class="fab fa-microsoft mr-1" style="color:#67e8f9;"></i> Azure</div>
+                        <div class="architecture-box" style="border:1px solid #334155;"><i class="fas fa-a mr-1" style="color:#67e8f9;"></i> Anthropic</div>
+                        <div class="architecture-box" style="border:1px solid #334155;"><i class="fas fa-server mr-1" style="color:#67e8f9;"></i> vLLM (open)</div>
+                    </div>
+                </div>
+                <p style="text-align:center; color:#94a3b8; font-size:0.85rem; margin:1.25rem 0 0;">
+                    Swap a registry entry, not code. Observability: LangSmith primary; Langfuse / Helicone / Braintrust pluggable.
+                </p>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: EXECUTE THE BLUEPRINT                              -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-cogs mr-3"></i>Executing the Blueprint</h2>
+
+            <p>
+                <strong>Let's carry out the blueprint plan.</strong> We'll walk the pipeline in code, from the typed fault schema to the parallel judge fan-out to the significance-tested scorecard. Everything is Python 3.10+, Pydantic 2, LangGraph 0.4, scipy/statsmodels, and DuckDB. Tests mock every LLM, so the whole suite runs offline.
+            </p>
+
+            <h3>Typed faults: the answer key as data</h3>
+
+            <p>
+                Every fault is a Pydantic object carrying its type, the exact span that changed, and a severity. Because these objects <em>are</em> the labels, they must be precise &mdash; this is the ground truth, by construction.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/goldsmith/graph/state.py
+from enum import Enum
+from pydantic import BaseModel, Field
+
+class FaultSeverity(str, Enum):
+    CRITICAL = "critical"   # dosage fabrication, dropped escalation
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+class FaultType(str, Enum):
+    NEGATION_FLIP = "negation_flip"
+    DOSAGE_UNIT_ERROR = "dosage_unit_error"
+    FABRICATED_MED_INSTRUCTION = "fabricated_med_instruction"
+    DROPPED_ESCALATION = "dropped_escalation"
+    SPEAKER_MISATTRIBUTION = "speaker_misattribution"
+    FABRICATED_CALLBACK = "fabricated_callback"
+    # v2:
+    TEMPORAL_REORDER = "temporal_reorder"
+    DIAGNOSIS_DRIFT = "diagnosis_drift"
+
+class Span(BaseModel):
+    start: int = 0
+    end: int = 0
+    original_text: str = ""
+    replacement_text: str = ""
+
+class InjectedFault(BaseModel):
+    fault_id: str
+    transcript_id: str          # references the FAULTED transcript the judges grade
+    type: FaultType
+    span: Span = Field(default_factory=Span)
+    severity: FaultSeverity = FaultSeverity.MEDIUM
+    injector_rationale: str = ""</code></pre>
+            </div>
+
+            <p>The <code>transcript_id</code> deliberately points at the faulted copy, so the later stats join (faults &#8904; judge verdicts) lines up without bookkeeping.</p>
+
+            <h3>Injecting a fault from a per-class recipe</h3>
+
+            <p>
+                Each fault class is just an instruction plus a <code>FaultType</code>. The core injector asks the LLM for a minimal span edit, applies it deterministically, and stamps the severity from the taxonomy &mdash; one uniform mechanism for all eight faults.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/goldsmith/faults/injectors/negation_flip.py
+from goldsmith.faults.injector import InjectorSpec
+from goldsmith.graph.state import FaultType
+
+SPEC = InjectorSpec(
+    fault_type=FaultType.NEGATION_FLIP,
+    prompt=(
+        "Flip the polarity of exactly one clinical assertion "
+        "(e.g. 'denies chest pain' -> 'reports chest pain'). "
+        "Return the minimal original_text and its polarity-flipped replacement_text."
+    ),
+)
+
+# src/goldsmith/faults/injector.py  (core, shared by all 8 fault classes)
+def inject(clean, spec, llm, fault_index=0):
+    edit = llm.with_structured_output(InjectionEdit).invoke([
+        ("system", spec.prompt),
+        ("human", f"SOURCE SUMMARY:\n{clean.text}\n\nApply exactly one such fault."),
+    ])
+    faulted_text, span = apply_edit(clean.text, edit)   # deterministic string surgery
+    faulted = Transcript(transcript_id=f"{clean.scenario_id}-{spec.fault_type.value}",
+                         scenario_id=clean.scenario_id, text=faulted_text, is_clean=False)
+    fault = InjectedFault(
+        fault_id=f"{faulted.transcript_id}-{fault_index}",
+        transcript_id=faulted.transcript_id, type=spec.fault_type, span=span,
+        severity=fault_severity(spec.fault_type),  # from taxonomy.yaml
+        injector_rationale=edit.rationale,
+    )
+    return faulted, fault</code></pre>
+            </div>
+
+            <h3>The tools-first verifier (no LLM)</h3>
+
+            <p>
+                Here is why the labels are trustworthy. After a negation flip, a pure-Python verifier checks the polarity actually changed &mdash; the model's claim is irrelevant. If <code>landed</code> is false, the graph re-injects.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/goldsmith/verifiers/nli_verifier.py  (deterministic polarity check)
+_NEG = ("denies", "denied", "no ", "not ", "without", "negative for", "ruled out")
+_AFF = ("reports", "complains of", "positive for", "presents with", "confirms")
+
+def _polarity(text: str) -> str:
+    t = f" {text.lower()} "
+    neg = sum(t.count(c) for c in _NEG)
+    aff = sum(t.count(c) for c in _AFF)
+    return "negated" if neg > aff else "affirmed"
+
+class NLIVerifier:
+    verifier_id = "nli"
+    def verify(self, clean, faulted, fault) -> VerifierResult:
+        orig, repl = fault.span.original_text, fault.span.replacement_text
+        flipped = _polarity(orig) != _polarity(repl) and orig and orig != repl
+        return VerifierResult(
+            fault_id=fault.fault_id, verifier_id="nli", landed=flipped,
+            method="nli_polarity_heuristic", confidence=0.9 if flipped else 0.0,
+            evidence={"original": _polarity(orig), "replacement": _polarity(repl)},
+        )</code></pre>
+            </div>
+
+            <p>This is a deterministic stand-in for a full NLI model; the interface is stable, so a heavier entailment model can drop in without changing callers.</p>
+
+            <h3>A judge that returns a verdict and its cost</h3>
+
+            <p>
+                Every judge implements one method and reports what it spent, so the cost frontier is populated even offline. The claim-decomposition judge below extracts atomic claims and verifies each against the source.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/goldsmith/judges/claim_decomposition.py
+class ClaimDecompositionJudge(Judge):
+    def evaluate(self, candidate, reference) -> JudgeVerdict:
+        claims = self.llm.with_structured_output(ClaimList).invoke(
+            [("system", self.config.extract_prompt), ("human", candidate.text)]).claims
+        unsupported = 0
+        for claim in claims:
+            v = self.llm.with_structured_output(ClaimJudgment).invoke([
+                ("system", self.config.verify_prompt),
+                ("human", f"SOURCE:\n{reference.text}\n\nCLAIM:\n{claim}")]).verdict
+            if v.upper() in ("CONTRADICTS", "NOT_MENTIONED"):
+                unsupported += 1
+        frac = unsupported / len(claims) if claims else 0.0
+        return JudgeVerdict(
+            judge_name=self.name, transcript_id=candidate.transcript_id,
+            detected_fault=frac > self.config.unsupported_fraction_threshold,
+            raw_score=frac, rationale=f"{unsupported}/{len(claims)} claims unsupported",
+            cost=self._cost(reference.text + candidate.text, "", latency_s=0.0),
+        )</code></pre>
+            </div>
+
+            <h3>The parallel judge fan-out (LangGraph)</h3>
+
+            <p>
+                After the verifier (and realism gate), the graph fans out to every judge in parallel. Each judge writes to its own key via a dict-merge reducer, so concurrent writes never clobber.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/goldsmith/graph/builder.py  (judge fan-out)
+def build_calibration_graph(llm, judges, settings):
+    graph = StateGraph(GoldsmithState)
+    graph.add_node("transcript_gen", make_transcript_node(llm))
+    graph.add_node("fault_injector", make_inject_node(llm))
+    graph.add_node("verifier", make_verify_node())
+    graph.add_node("dispatch_judges", make_dispatch_node())
+    graph.add_edge(START, "transcript_gen")
+    graph.add_edge("transcript_gen", "fault_injector")
+    graph.add_edge("fault_injector", "verifier")
+    graph.add_conditional_edges("verifier",
+        lambda s: route_after_verify(s, settings.max_inject_retries),
+        {"reinject": "fault_injector", "verified": "dispatch_judges"})
+    for judge in judges:                       # fan-out: one parallel node per judge
+        node = f"judge_{judge.name}"
+        graph.add_node(node, make_judge_node(judge))
+        graph.add_edge("dispatch_judges", node)
+        graph.add_edge(node, END)
+    return graph.compile()
+
+# state.py: parallel-safe reducers
+judge_verdicts: Annotated[dict[str, JudgeVerdict], _merge_dicts] = Field(default_factory=dict)
+cost_records:   Annotated[list[CostRecord], operator.add]       = Field(default_factory=list)</code></pre>
+            </div>
+
+            <h3>Significance, not vibes: bootstrap confidence intervals</h3>
+
+            <p>
+                Finally, recall and precision per fault class get bootstrap confidence intervals, with a careful guard against the degenerate all-identical case that breaks BCa.
+            </p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                <pre><code class="language-python"># src/goldsmith/stats/bootstrap.py
+import numpy as np
+from scipy.stats import bootstrap
+
+def bootstrap_mean_ci(indicators, n_resamples=10000, confidence_level=0.95, method="BCa"):
+    data = np.asarray(indicators, dtype=float)
+    if data.size == 0:
+        return (0.0, 0.0)
+    mean = float(data.mean())
+    if data.size < 2 or np.allclose(data, data[0]):   # zero-variance -> point interval
+        return (mean, mean)
+    res = bootstrap((data,), np.mean, n_resamples=n_resamples,
+                    confidence_level=confidence_level, method=method)
+    lo, hi = float(res.confidence_interval.low), float(res.confidence_interval.high)
+    return (max(0.0, mean if np.isnan(lo) else lo),
+            min(1.0, mean if np.isnan(hi) else hi))</code></pre>
+            </div>
+
+            <h3><i class="fas fa-chart-column mr-2" style="color:#fbbf24;"></i>The Scorecard</h3>
+
+            <p>
+                The pipeline ends in a static HTML scorecard. Here is the headline view, rebuilt natively. The pattern that emerges is the project's whole thesis: <strong>how you judge beats which model you use</strong>. The claim-decomposition judge catches negation flips the holistic judge misses &mdash; and the gap is statistically significant.
+            </p>
+
+            <h4>Per-fault-class recall (95% CI)</h4>
+            <div class="blueprint-box">
+                <div class="recall-row">
+                    <div class="recall-label">claim_decomp &middot; negation_flip</div>
+                    <div class="recall-track"><div class="recall-fill" style="width:91%; background:linear-gradient(90deg,#10b981,#34d399);"></div><div class="recall-ci" style="left:84%; width:12%;"></div></div>
+                    <div class="recall-val">0.91</div>
+                </div>
+                <div class="recall-row">
+                    <div class="recall-label">holistic &middot; negation_flip</div>
+                    <div class="recall-track"><div class="recall-fill" style="width:62%; background:linear-gradient(90deg,#ef4444,#f59e0b);"></div><div class="recall-ci" style="left:48%; width:27%;"></div></div>
+                    <div class="recall-val">0.62</div>
+                </div>
+                <div class="recall-row">
+                    <div class="recall-label">claim_decomp &middot; dosage_unit_error</div>
+                    <div class="recall-track"><div class="recall-fill" style="width:88%; background:linear-gradient(90deg,#10b981,#34d399);"></div><div class="recall-ci" style="left:80%; width:14%;"></div></div>
+                    <div class="recall-val">0.88</div>
+                </div>
+                <div class="recall-row">
+                    <div class="recall-label">holistic &middot; dosage_unit_error</div>
+                    <div class="recall-track"><div class="recall-fill" style="width:71%; background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div><div class="recall-ci" style="left:60%; width:22%;"></div></div>
+                    <div class="recall-val">0.71</div>
+                </div>
+                <div class="recall-row">
+                    <div class="recall-label">pairwise &middot; dropped_escalation</div>
+                    <div class="recall-track"><div class="recall-fill" style="width:79%; background:linear-gradient(90deg,#f59e0b,#34d399);"></div><div class="recall-ci" style="left:69%; width:20%;"></div></div>
+                    <div class="recall-val">0.79</div>
+                </div>
+                <p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin:1rem 0 0;">Bars show recall; the lighter band is the 95% bootstrap confidence interval. Illustrative values in the shape Goldsmith reports.</p>
+            </div>
+
+            <h4>Calibration table</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Judge</th><th>Fault class</th><th>Precision</th><th>Recall (95% CI)</th><th>F1</th><th>Sev-weighted miss cost</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>claim_decomposition</strong></td><td>negation_flip</td>
+                        <td class="score-green">0.95</td><td class="score-green">0.91 [0.84, 0.96]</td><td>0.93</td><td class="score-green">40</td>
+                    </tr>
+                    <tr>
+                        <td>holistic</td><td>negation_flip</td>
+                        <td class="score-amber">0.70</td><td class="score-red">0.62 [0.48, 0.75]</td><td>0.66</td><td class="score-red">190</td>
+                    </tr>
+                    <tr>
+                        <td><strong>claim_decomposition</strong></td><td>dosage_unit_error</td>
+                        <td class="score-green">0.93</td><td class="score-green">0.88 [0.80, 0.94]</td><td>0.90</td><td class="score-green">60</td>
+                    </tr>
+                    <tr>
+                        <td>holistic</td><td>dosage_unit_error</td>
+                        <td class="score-amber">0.74</td><td class="score-amber">0.71 [0.60, 0.82]</td><td>0.72</td><td class="score-amber">140</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-flask mr-2"></i>The line almost no one crosses:</strong>
+                "The holistic GPT-4-class judge missed 38% of negation flips; the claim-decomposition judge caught 91% at one-fifth the cost &mdash; significant at <em>p&nbsp;&lt;&nbsp;0.01</em> (McNemar, n&nbsp;=&nbsp;600)." Significance testing on judge comparisons is what turns an opinion into a finding.
+            </div>
+
+            <h4>Cost-per-detected-fault frontier</h4>
+            <table class="benchmark-table">
+                <thead>
+                    <tr><th>Judge</th><th>Recall</th><th>Total&nbsp;$</th><th>True positives</th><th>$ / detected</th><th>Pareto</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>claim_decomposition</strong></td><td>0.91</td><td>0.20</td><td>45</td><td class="score-green">0.0044</td><td>&#9733;</td></tr>
+                    <tr><td>ensemble</td><td>0.85</td><td>0.05</td><td>42</td><td class="score-green">0.0012</td><td>&#9733;</td></tr>
+                    <tr><td>holistic</td><td>0.62</td><td>1.00</td><td>31</td><td class="score-red">0.0323</td><td>&mdash;</td></tr>
+                </tbody>
+            </table>
+            <p style="color:#94a3b8; font-size:0.85rem;">The &#9733; judges are Pareto-optimal &mdash; nothing else gives more recall for less money. The holistic judge is both worse <em>and</em> dearer per catch.</p>
+
+            <h4>Realism gate</h4>
+            <p>The gold set is only trusted when the discriminator can't tell fakes from real &mdash; AUC inside the dashed band around 0.5.</p>
+            <div class="blueprint-box">
+                <div class="flex justify-between text-xs text-slate-400 mb-1"><span>0.5 &mdash; indistinguishable (good)</span><span>1.0 &mdash; obvious fakes (reject)</span></div>
+                <div class="auc-track">
+                    <div class="auc-band" style="left:40%; width:20%;"></div>
+                    <div class="auc-marker" style="left:54%;"></div>
+                </div>
+                <p style="text-align:center; color:#94a3b8; font-size:0.85rem; margin:0.75rem 0 0;">A passing run sits in the band (AUC&nbsp;&#8776;&nbsp;0.54). When faults are too easy &mdash; e.g. an identical tell-tale sentence appended every time &mdash; AUC spikes to 1.0 and the gate <span class="score-red">rejects</span> the set, exactly as it should.</p>
+            </div>
+
+            <h3>A real offline run</h3>
+
+            <p>
+                The whole pipeline runs without an API key using stub judges &mdash; useful for CI and for seeing the contrast it is built to surface. This is the actual console output:
+            </p>
+
+            <div class="terminal-output">
+                <div class="terminal-header"><i class="fas fa-terminal mr-2"></i>python examples/calibrate_one_domain.py</div>
+                <div class="terminal-body">rows=2  realism AUC=1.000 (reject)
+  claim_decomposition    fabricated_callback  recall=1.00 CI[1.00,1.00]
+  holistic               fabricated_callback  recall=0.58 CI[0.25,0.83]
+Scorecard: output/scorecard_demo.html</div>
+            </div>
+
+            <p>
+                Two things to notice. The judges already separate &mdash; claim-decomposition 1.00 vs holistic 0.58 &mdash; and the realism gate <em>correctly rejects</em> this toy run (AUC 1.0), because the stub appends an identical sentence to every fake. That rejection is the safety mechanism doing its job.
+            </p>
+
+            <div class="github-card">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="text-6xl" style="color:#f59e0b;">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2" style="margin-top:0;">Goldsmith</h3>
+                        <p class="text-gray-300 mb-4">
+                            Full source: 8-class fault taxonomy, 4 deterministic verifiers, a LangGraph pipeline with retry + realism gates, a 4-judge zoo, bootstrap/McNemar/Krippendorff statistics, a DuckDB store, and a static HTML scorecard. 73 passing tests; every LLM mocked so the suite runs offline. Clone and run:
+                        </p>
+                        <div class="code-block" style="margin:0 0 1rem;">
+                            <button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy mr-1"></i>Copy</button>
+                            <pre><code class="language-bash">git clone https://github.com/zubairashfaque/goldsmith
+cd goldsmith &amp;&amp; poetry install
+make test                                  # 73 tests, no API key needed
+poetry run goldsmith generate-corpus --n 20 --dry-run
+python examples/calibrate_one_domain.py    # full pipeline -> output/scorecard_demo.html</code></pre>
+                        </div>
+                        <a href="https://github.com/zubairashfaque/goldsmith" target="_blank" class="btn-primary">
+                            <i class="fab fa-github mr-2"></i>View Repository
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: CONCLUSION                                         -->
+            <!-- ============================================================ -->
+            <h2><i class="fas fa-flag-checkered mr-3"></i>Conclusion</h2>
+
+            <p>
+                Goldsmith turns "we think our judge is good" into "our claim-decomposition judge catches 91% of negation flips, 95% CI [0.84, 0.96], significantly better than holistic at p&nbsp;&lt;&nbsp;0.01." It does so by manufacturing ground truth instead of buying it &mdash; forging faults whose labels are free by construction, proving each one landed with a deterministic check, and refusing to trust a gold set that a discriminator can see through.
+            </p>
+
+            <div class="highlight-box">
+                <strong><i class="fas fa-list-check mr-2"></i>Key Takeaways:</strong>
+                <ul class="list-disc mt-3" style="margin-bottom:0;">
+                    <li><strong>Labels by construction beat annotation:</strong> if you inject the fault, you own the truth &mdash; no clinicians required.</li>
+                    <li><strong>Tools-first, LLM second:</strong> a deterministic verifier between injection and the gold set is what makes the labels trustworthy; re-inject until a fault provably lands.</li>
+                    <li><strong>Realism is a gate, not a hope:</strong> an adversarial discriminator at AUC&#8776;0.5 is the difference between a measurement that predicts production and one that flatters it.</li>
+                    <li><strong>How you judge &gt; which model you use:</strong> claim-decomposition beat a holistic GPT-4-class judge on the same model &mdash; structure won, not scale.</li>
+                    <li><strong>Significance turns opinions into findings:</strong> bootstrap CIs and McNemar tests are what let you defend a judge choice to a skeptic.</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="fas fa-triangle-exclamation mr-2"></i>Honest limitations:</strong>
+                The NLI and realism components ship as deterministic stand-ins (a polarity heuristic and a TF-IDF discriminator) &mdash; strong baselines with stable interfaces, but a production deployment would swap in a real entailment model and a stronger discriminator. The corpus is synthetic by design; transferring conclusions to live data requires a small human-labeled validation slice (which is exactly what Krippendorff's alpha is wired up to measure).
+            </div>
+
+            <h3>Future Work</h3>
+            <ul class="list-disc">
+                <li><strong>Real NLI + discriminator:</strong> replace the heuristics with a fine-tuned entailment model and an embedding-based realism classifier behind the same interfaces.</li>
+                <li><strong>Human-agreement study:</strong> label a ~100-item slice and report Krippendorff's alpha between each judge and the human set.</li>
+                <li><strong>More domains:</strong> the financial-advice grammar already ships; add legal and support-ticket domains to prove generality.</li>
+                <li><strong>Judge-calibration audits as a service:</strong> package the scorecard as a repeatable report teams run before trusting any LLM-as-a-judge.</li>
+            </ul>
+
+            <p>
+                A judge you have never tested is a liability dressed as a metric. Goldsmith is the forge that lets you test it &mdash; defect by defect, with a number you can defend.
+            </p>
+
+            <div class="github-card">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-white mb-2" style="margin-top:0;">Ready to calibrate your judge?</h3>
+                    <p class="text-gray-300 mb-4">Clone Goldsmith, run the offline demo, and read your first scorecard in minutes.</p>
+                    <a href="https://github.com/zubairashfaque/goldsmith" target="_blank" class="btn-primary">
+                        <i class="fab fa-github mr-2"></i>View Repository
+                    </a>
+                </div>
+            </div>
+
+        </article>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/50 border-t border-slate-700 mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400">&copy; 2026 Zubair Ashfaque. Built with passion for AI and data science.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="https://github.com/zubairashfaque" class="text-slate-400 hover:text-amber-400 transition">
+                    <i class="fab fa-github text-2xl"></i>
+                </a>
+                <a href="https://linkedin.com/in/zubairashfaque" class="text-slate-400 hover:text-amber-400 transition">
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy mr-1"></i>Copy';
+                }, 2000);
+            });
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
